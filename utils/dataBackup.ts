@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 const STORAGE_KEYS: { [key: string]: string } = {
@@ -55,12 +56,17 @@ export const createBackup = async (): Promise<boolean> => {
         return false;
       }
 
-      const base64 = btoa(jsonString);
-      const dataUrl = `data:application/json;base64,${base64}`;
+      const FS = FileSystem as any;
+      if (!FS.cacheDirectory) {
+        throw new Error('Cache directory not available');
+      }
+      const fileUri = FS.cacheDirectory + fileName;
+      await FS.writeAsStringAsync(fileUri, jsonString);
       
-      await Sharing.shareAsync(dataUrl, {
+      await Sharing.shareAsync(fileUri, {
         mimeType: 'application/json',
         dialogTitle: 'Save Backup File',
+        UTI: 'public.json',
       });
       
       return true;
