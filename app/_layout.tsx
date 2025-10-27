@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, LogBox } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LoanProvider } from "@/contexts/LoanContext";
@@ -10,7 +10,10 @@ import { BorrowProvider } from "@/contexts/BorrowContext";
 import { BetsProvider } from "@/contexts/BetsContext";
 import { SportsBetsProvider } from "@/contexts/SportsBetsContext";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+LogBox.ignoreLogs([
+  'Deep imports from the \'react-native\' package are deprecated',
+]);
+
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
