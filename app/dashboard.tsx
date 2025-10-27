@@ -1,10 +1,11 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { LogOut, Edit2, X } from 'lucide-react-native';
+import { LogOut, Edit2, X, Download, Upload } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { createBackup, restoreBackup } from '@/utils/dataBackup';
 
 export default function DashboardScreen() {
   const { currentUser, logout, isLoading, updateProfile } = useAuth();
@@ -14,6 +15,8 @@ export default function DashboardScreen() {
   const [editUsername, setEditUsername] = useState<string>('');
   const [editPin, setEditPin] = useState<string>('');
   const [editConfirmPin, setEditConfirmPin] = useState<string>('');
+  const [isBackingUp, setIsBackingUp] = useState<boolean>(false);
+  const [isRestoring, setIsRestoring] = useState<boolean>(false);
 
   useEffect(() => {
     if (!currentUser && !isLoading) {
@@ -52,6 +55,65 @@ export default function DashboardScreen() {
     } else {
       Alert.alert('Error', 'Username already exists');
     }
+  };
+
+  const handleBackup = async () => {
+    setIsBackingUp(true);
+    try {
+      const success = await createBackup();
+      if (success) {
+        Alert.alert('Success', 'Backup created successfully');
+      } else {
+        Alert.alert('Error', 'Failed to create backup');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      Alert.alert('Error', 'Failed to create backup');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    Alert.alert(
+      'Restore Data',
+      'This will replace all current data with the backup. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restore',
+          style: 'destructive',
+          onPress: async () => {
+            setIsRestoring(true);
+            try {
+              const result = await restoreBackup();
+              if (result.success) {
+                Alert.alert(
+                  'Success',
+                  'Data restored successfully. Please restart the app.',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        logout();
+                        router.replace('/login');
+                      },
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert('Error', result.error || 'Failed to restore backup');
+              }
+            } catch (error) {
+              console.error('Restore error:', error);
+              Alert.alert('Error', 'Failed to restore backup');
+            } finally {
+              setIsRestoring(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (!currentUser) {
@@ -237,6 +299,44 @@ export default function DashboardScreen() {
             >
               <Text style={styles.cardTitle}>Summary</Text>
             </ImageBackground>
+          </Pressable>
+        </View>
+
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.footerButton,
+              pressed && styles.footerButtonPressed,
+              isBackingUp && styles.footerButtonDisabled,
+            ]}
+            onPress={handleBackup}
+            disabled={isBackingUp}
+            testID="backup-button"
+          >
+            {isBackingUp ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Download size={24} color="#FFFFFF" />
+            )}
+            <Text style={styles.footerButtonText}>Backup</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.footerButton,
+              pressed && styles.footerButtonPressed,
+              isRestoring && styles.footerButtonDisabled,
+            ]}
+            onPress={handleRestore}
+            disabled={isRestoring}
+            testID="restore-button"
+          >
+            {isRestoring ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Upload size={24} color="#FFFFFF" />
+            )}
+            <Text style={styles.footerButtonText}>Restore</Text>
           </Pressable>
         </View>
       </View>
@@ -540,5 +640,36 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#FFFFFF',
     letterSpacing: 1,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: 'rgba(157, 78, 221, 0.9)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  footerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  footerButtonPressed: {
+    opacity: 0.6,
+  },
+  footerButtonDisabled: {
+    opacity: 0.4,
+  },
+  footerButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });
