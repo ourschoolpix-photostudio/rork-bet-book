@@ -57,31 +57,17 @@ export const createBackup = async (): Promise<boolean> => {
       }
 
       const FS = FileSystem as any;
-      let storageDir = FS.cacheDirectory as string | null;
-      if (!storageDir) {
-        storageDir = FS.documentDirectory as string | null;
-      }
+      const storageDir = FS.cacheDirectory || FS.documentDirectory;
       
       if (!storageDir) {
-        console.log('FileSystem directories not available, using direct share with base64');
-        
-        const base64Data = Buffer.from(jsonString, 'utf8').toString('base64');
-        const dataUri = `data:application/json;base64,${base64Data}`;
-        
-        await Sharing.shareAsync(dataUri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Save Backup File',
-          UTI: 'public.json',
-        });
-        
-        return true;
+        throw new Error('FileSystem not available. Please check app setup.');
       }
       
       const fileUri = `${storageDir}${fileName}`;
       console.log('Creating backup file at:', fileUri);
       
       await FS.writeAsStringAsync(fileUri, jsonString, {
-        encoding: FS.EncodingType?.UTF8 || 'utf8',
+        encoding: 'utf8',
       });
       
       const fileInfo = await FS.getInfoAsync(fileUri);
