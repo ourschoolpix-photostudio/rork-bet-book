@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 const STORAGE_KEYS: { [key: string]: string } = {
@@ -50,14 +51,12 @@ export const createBackup = async (): Promise<boolean> => {
       URL.revokeObjectURL(url);
       return true;
     } else {
-      const FileSystem = await import('expo-file-system');
-      
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
         throw new Error('Sharing is not available on this device');
       }
 
-      const storageDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+      const storageDir = FileSystem.Paths.cache || FileSystem.Paths.document;
       
       if (!storageDir) {
         throw new Error('FileSystem not available. Please check app setup.');
