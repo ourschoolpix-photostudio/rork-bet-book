@@ -63,9 +63,18 @@ export const createBackup = async (): Promise<boolean> => {
       }
       
       if (!storageDir) {
-        console.error('FileSystem.cacheDirectory:', FS.cacheDirectory);
-        console.error('FileSystem.documentDirectory:', FS.documentDirectory);
-        throw new Error('No storage directory available. Please check app permissions.');
+        console.log('FileSystem directories not available, using direct share with base64');
+        
+        const base64Data = Buffer.from(jsonString, 'utf8').toString('base64');
+        const dataUri = `data:application/json;base64,${base64Data}`;
+        
+        await Sharing.shareAsync(dataUri, {
+          mimeType: 'application/json',
+          dialogTitle: 'Save Backup File',
+          UTI: 'public.json',
+        });
+        
+        return true;
       }
       
       const fileUri = `${storageDir}${fileName}`;
