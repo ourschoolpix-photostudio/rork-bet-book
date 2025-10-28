@@ -18,9 +18,12 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
       const loansJson = await AsyncStorage.getItem(LOANS_STORAGE_KEY);
       if (loansJson) {
         try {
-          setLoans(JSON.parse(loansJson));
+          const parsed = JSON.parse(loansJson);
+          console.log('Loaded loans:', parsed);
+          setLoans(parsed);
         } catch (parseError) {
-          console.error('Error parsing loans JSON, clearing corrupted data:', parseError);
+          console.error('Error parsing loans JSON:', parseError);
+          console.error('Corrupted data:', loansJson);
           await AsyncStorage.removeItem(LOANS_STORAGE_KEY);
           setLoans([]);
         }
@@ -47,7 +50,12 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
 
     const updatedLoans = [...loans, newLoan];
     setLoans(updatedLoans);
-    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+    try {
+      await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+      console.log('Loan added successfully');
+    } catch (error) {
+      console.error('Error saving loan:', error);
+    }
   }, [loans]);
 
   const addPayment = useCallback(async (loanId: string, paymentAmount: number) => {
@@ -97,7 +105,10 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
 
   const updateLoan = useCallback(async (loanId: string, borrowerName: string, amount: number, loanDate: string) => {
     const loan = loans.find(l => l.id === loanId);
-    if (!loan) return;
+    if (!loan) {
+      console.error('Loan not found:', loanId);
+      return;
+    }
 
     const updatedLoan: Loan = {
       ...loan,
@@ -107,8 +118,16 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     };
 
     const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
+    console.log('Updating loan:', updatedLoan);
     setLoans(updatedLoans);
-    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+    try {
+      const jsonString = JSON.stringify(updatedLoans);
+      console.log('Saving loans JSON:', jsonString.substring(0, 100));
+      await AsyncStorage.setItem(LOANS_STORAGE_KEY, jsonString);
+      console.log('Loan updated successfully');
+    } catch (error) {
+      console.error('Error saving updated loan:', error);
+    }
   }, [loans]);
 
   return useMemo(() => ({
