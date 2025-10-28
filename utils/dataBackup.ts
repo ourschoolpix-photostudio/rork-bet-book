@@ -57,13 +57,16 @@ export const createBackup = async (): Promise<boolean> => {
       }
 
       const FS = FileSystem as any;
-      if (!FS.cacheDirectory) {
-        throw new Error('Cache directory not available');
+      const cacheDir = FS.cacheDirectory || FS.documentDirectory;
+      
+      if (!cacheDir) {
+        throw new Error('No storage directory available');
       }
-      const fileUri = FS.cacheDirectory + fileName;
+      
+      const fileUri = `${cacheDir}${fileName}`;
       
       await FS.writeAsStringAsync(fileUri, jsonString, {
-        encoding: FS.EncodingType.UTF8,
+        encoding: FS.EncodingType?.UTF8 || 'utf8',
       });
       
       const fileInfo = await FS.getInfoAsync(fileUri);
