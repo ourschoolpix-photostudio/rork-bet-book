@@ -57,13 +57,13 @@ export const createBackup = async (): Promise<boolean> => {
         throw new Error('Sharing is not available on this device');
       }
 
-      const storageDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+      const storageDir = FileSystem.Paths?.cache || FileSystem.Paths?.document;
       
       if (!storageDir) {
         throw new Error('FileSystem not available. Please check app setup.');
       }
       
-      const fileUri = `${storageDir}${fileName}`;
+      const fileUri = `${storageDir}/${fileName}`;
       console.log('Creating backup file at:', fileUri);
       
       await FileSystem.writeAsStringAsync(fileUri, jsonString);
