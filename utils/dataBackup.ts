@@ -53,7 +53,7 @@ export const createBackup = async (): Promise<boolean> => {
     } else {
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
-        return false;
+        throw new Error('Sharing is not available on this device');
       }
 
       const FS = FileSystem as any;
@@ -61,7 +61,15 @@ export const createBackup = async (): Promise<boolean> => {
         throw new Error('Cache directory not available');
       }
       const fileUri = FS.cacheDirectory + fileName;
-      await FS.writeAsStringAsync(fileUri, jsonString);
+      
+      await FS.writeAsStringAsync(fileUri, jsonString, {
+        encoding: FS.EncodingType.UTF8,
+      });
+      
+      const fileInfo = await FS.getInfoAsync(fileUri);
+      if (!fileInfo.exists) {
+        throw new Error('Failed to create backup file');
+      }
       
       await Sharing.shareAsync(fileUri, {
         mimeType: 'application/json',
@@ -69,11 +77,17 @@ export const createBackup = async (): Promise<boolean> => {
         UTI: 'public.json',
       });
       
+      try {
+        await FS.deleteAsync(fileUri, { idempotent: true });
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup backup file:', cleanupError);
+      }
+      
       return true;
     }
   } catch (error) {
     console.error('Error creating backup:', error);
-    return false;
+    throw error;
   }
 };
 

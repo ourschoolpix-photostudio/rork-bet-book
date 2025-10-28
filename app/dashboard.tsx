@@ -63,12 +63,11 @@ export default function DashboardScreen() {
       const success = await createBackup();
       if (success) {
         Alert.alert('Success', 'Backup created successfully');
-      } else {
-        Alert.alert('Error', 'Failed to create backup');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Backup error:', error);
-      Alert.alert('Error', 'Failed to create backup');
+      const errorMessage = error?.message || 'Failed to create backup';
+      Alert.alert('Backup Failed', errorMessage);
     } finally {
       setIsBackingUp(false);
     }
