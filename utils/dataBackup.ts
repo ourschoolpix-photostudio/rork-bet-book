@@ -57,23 +57,32 @@ export const createBackup = async (): Promise<boolean> => {
       }
 
       const FS = FileSystem as any;
-      const cacheDir = FS.cacheDirectory || FS.documentDirectory;
-      
-      if (!cacheDir) {
-        throw new Error('No storage directory available');
+      let storageDir = FS.cacheDirectory as string | null;
+      if (!storageDir) {
+        storageDir = FS.documentDirectory as string | null;
       }
       
-      const fileUri = `${cacheDir}${fileName}`;
+      if (!storageDir) {
+        console.error('FileSystem.cacheDirectory:', FS.cacheDirectory);
+        console.error('FileSystem.documentDirectory:', FS.documentDirectory);
+        throw new Error('No storage directory available. Please check app permissions.');
+      }
+      
+      const fileUri = `${storageDir}${fileName}`;
+      console.log('Creating backup file at:', fileUri);
       
       await FS.writeAsStringAsync(fileUri, jsonString, {
         encoding: FS.EncodingType?.UTF8 || 'utf8',
       });
       
       const fileInfo = await FS.getInfoAsync(fileUri);
+      console.log('File info:', fileInfo);
+      
       if (!fileInfo.exists) {
         throw new Error('Failed to create backup file');
       }
       
+      console.log('Sharing file:', fileUri);
       await Sharing.shareAsync(fileUri, {
         mimeType: 'application/json',
         dialogTitle: 'Save Backup File',
