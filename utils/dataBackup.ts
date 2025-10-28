@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 const STORAGE_KEYS: { [key: string]: string } = {
@@ -51,13 +50,14 @@ export const createBackup = async (): Promise<boolean> => {
       URL.revokeObjectURL(url);
       return true;
     } else {
+      const FileSystem = await import('expo-file-system');
+      
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
         throw new Error('Sharing is not available on this device');
       }
 
-      const FS = FileSystem as any;
-      const storageDir = FS.cacheDirectory || FS.documentDirectory;
+      const storageDir = FileSystem.Paths.cache || FileSystem.Paths.document;
       
       if (!storageDir) {
         throw new Error('FileSystem not available. Please check app setup.');
@@ -66,11 +66,9 @@ export const createBackup = async (): Promise<boolean> => {
       const fileUri = `${storageDir}${fileName}`;
       console.log('Creating backup file at:', fileUri);
       
-      await FS.writeAsStringAsync(fileUri, jsonString, {
-        encoding: 'utf8',
-      });
+      await FileSystem.writeAsStringAsync(fileUri, jsonString);
       
-      const fileInfo = await FS.getInfoAsync(fileUri);
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
       console.log('File info:', fileInfo);
       
       if (!fileInfo.exists) {
@@ -85,7 +83,7 @@ export const createBackup = async (): Promise<boolean> => {
       });
       
       try {
-        await FS.deleteAsync(fileUri, { idempotent: true });
+        await FileSystem.deleteAsync(fileUri, { idempotent: true });
       } catch (cleanupError) {
         console.warn('Failed to cleanup backup file:', cleanupError);
       }
