@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLoans } from '@/contexts/LoanContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Trash2, DollarSign, Pencil } from 'lucide-react-native';
+import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,10 +15,12 @@ export default function LoansScreen() {
   const [showAddLoanModal, setShowAddLoanModal] = useState<boolean>(false);
   const [showEditLoanModal, setShowEditLoanModal] = useState<string | null>(null);
   const [showAddPaymentModal, setShowAddPaymentModal] = useState<string | null>(null);
+  const [showAddOnModal, setShowAddOnModal] = useState<string | null>(null);
   const [borrowerName, setBorrowerName] = useState<string>('');
   const [loanAmount, setLoanAmount] = useState<string>('');
   const [loanDate, setLoanDate] = useState<string>('');
   const [paymentAmount, setPaymentAmount] = useState<string>('');
+  const [addOnAmount, setAddOnAmount] = useState<string>('');
 
   const userLoans = loans.filter(l => l.userId === currentUser?.id);
   const totalLoansRemaining = userLoans.reduce((sum, loan) => sum + (loan.amount - loan.amountPaid), 0);
@@ -79,6 +81,19 @@ export default function LoansScreen() {
     await addPayment(loanId, amount);
     setPaymentAmount('');
     setShowAddPaymentModal(null);
+  };
+
+  const handleAddOn = async (loanId: string) => {
+    if (!addOnAmount) return;
+
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    const amount = parseFloat(addOnAmount) / 100;
+    const newTotalAmount = loan.amount + amount;
+    await updateLoan(loanId, loan.borrowerName, newTotalAmount, loan.loanDate);
+    setAddOnAmount('');
+    setShowAddOnModal(null);
   };
 
   const handleEditLoan = (loanId: string) => {
@@ -288,17 +303,31 @@ export default function LoansScreen() {
                     )}
 
                     {!isPaidOff && (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.addPaymentButton,
-                          pressed && styles.addPaymentButtonPressed,
-                        ]}
-                        onPress={() => setShowAddPaymentModal(loan.id)}
-                        testID={`add-payment-${loan.id}`}
-                      >
-                        <Plus size={18} color="#9D4EDD" />
-                        <Text style={styles.addPaymentButtonText}>Add Payment</Text>
-                      </Pressable>
+                      <View style={styles.actionsRow}>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.actionButton,
+                            pressed && styles.actionButtonPressed,
+                          ]}
+                          onPress={() => setShowAddPaymentModal(loan.id)}
+                          testID={`add-payment-${loan.id}`}
+                        >
+                          <Plus size={18} color="#9D4EDD" />
+                          <Text style={styles.actionButtonText}>Add Payment</Text>
+                        </Pressable>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.actionButton,
+                            styles.addOnButton,
+                            pressed && styles.actionButtonPressed,
+                          ]}
+                          onPress={() => setShowAddOnModal(loan.id)}
+                          testID={`add-on-${loan.id}`}
+                        >
+                          <PlusCircle size={18} color="#10B981" />
+                          <Text style={[styles.actionButtonText, styles.addOnButtonText]}>Add On</Text>
+                        </Pressable>
+                      </View>
                     )}
                   </View>
                 );
@@ -544,6 +573,70 @@ export default function LoansScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <Modal
+        visible={!!showAddOnModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddOnModal(null)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modal}>
+                <Text style={styles.modalTitle}>Add On Loan</Text>
+                
+                <View style={styles.modalBody}>
+                  <Text style={styles.modalDescription}>
+                    Add an additional amount to this loan
+                  </Text>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Additional Amount</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="$0.00"
+                      placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                      value={displayCurrency(addOnAmount)}
+                      onChangeText={(text) => handleCurrencyChange(text, setAddOnAmount)}
+                      keyboardType="numeric"
+                      testID="add-on-amount-input"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.modalFooter}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.modalButton,
+                      styles.cancelButton,
+                      pressed && styles.modalButtonPressed,
+                    ]}
+                    onPress={() => {
+                      setAddOnAmount('');
+                      setShowAddOnModal(null);
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.modalButton,
+                      styles.confirmButton,
+                      !addOnAmount && styles.confirmButtonDisabled,
+                      pressed && styles.modalButtonPressed,
+                    ]}
+                    onPress={() => showAddOnModal && handleAddOn(showAddOnModal)}
+                    disabled={!addOnAmount}
+                    testID="confirm-add-on"
+                  >
+                    <Text style={styles.confirmButtonText}>Add On</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
@@ -748,7 +841,12 @@ const styles = StyleSheet.create({
   deletePaymentButtonPressed: {
     opacity: 0.6,
   },
-  addPaymentButton: {
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -759,13 +857,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#9D4EDD',
   },
-  addPaymentButtonPressed: {
+  addOnButton: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: '#10B981',
+  },
+  actionButtonPressed: {
     opacity: 0.7,
   },
-  addPaymentButtonText: {
+  actionButtonText: {
     fontSize: 13,
     fontWeight: '700' as const,
     color: '#9D4EDD',
+  },
+  addOnButtonText: {
+    color: '#10B981',
   },
   modalOverlay: {
     flex: 1,
@@ -792,6 +897,11 @@ const styles = StyleSheet.create({
   modalBody: {
     padding: 24,
     gap: 20,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: 'rgba(36, 0, 70, 0.7)',
+    lineHeight: 20,
   },
   inputGroup: {
     gap: 8,
