@@ -9,6 +9,7 @@ import { LoanProvider } from "@/contexts/LoanContext";
 import { BorrowProvider } from "@/contexts/BorrowContext";
 import { BetsProvider } from "@/contexts/BetsContext";
 import { SportsBetsProvider } from "@/contexts/SportsBetsContext";
+import { BackupProvider } from "@/contexts/BackupContext";
 
 LogBox.ignoreLogs([
   'Deep imports from the \'react-native\' package are deprecated',
@@ -57,9 +58,11 @@ export default function RootLayout() {
           <BorrowProvider>
             <BetsProvider>
               <SportsBetsProvider>
-                <GestureHandlerRootView style={styles.container}>
-                  <RootLayoutNav />
-                </GestureHandlerRootView>
+                <BackupProvider>
+                  <GestureHandlerRootView style={styles.container}>
+                    <RootLayoutNav />
+                  </GestureHandlerRootView>
+                </BackupProvider>
               </SportsBetsProvider>
             </BetsProvider>
           </BorrowProvider>

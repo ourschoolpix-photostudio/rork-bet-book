@@ -1,13 +1,15 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useBackup } from '@/contexts/BackupContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { LogOut, Edit2, X } from 'lucide-react-native';
+import { LogOut, Edit2, X, Download, Upload } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
   const { currentUser, logout, isLoading, updateProfile } = useAuth();
+  const { createBackup, restoreBackup } = useBackup();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showEditProfileModal, setShowEditProfileModal] = useState<boolean>(false);
@@ -54,6 +56,30 @@ export default function DashboardScreen() {
     }
   };
 
+  const handleCreateBackup = async () => {
+    const success = await createBackup();
+    if (success) {
+      Alert.alert('Success', 'Backup created successfully');
+    }
+  };
+
+  const handleRestoreBackup = async () => {
+    Alert.alert(
+      'Restore Backup',
+      'This will replace all current data with the backup. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restore',
+          style: 'destructive',
+          onPress: async () => {
+            await restoreBackup();
+          },
+        },
+      ]
+    );
+  };
+
 
 
   if (!currentUser) {
@@ -95,16 +121,38 @@ export default function DashboardScreen() {
                 <Edit2 size={18} color="#FFFFFF" />
               </Pressable>
             </View>
-            <Pressable
-              style={({ pressed }) => [
-                styles.logoutButton,
-                pressed && styles.logoutButtonPressed,
-              ]}
-              onPress={handleLogout}
-              testID="logout-button"
-            >
-              <LogOut size={24} color="#FFFFFF" />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.backupButton,
+                  pressed && styles.backupButtonPressed,
+                ]}
+                onPress={handleCreateBackup}
+                testID="create-backup-button"
+              >
+                <Download size={22} color="#FFFFFF" />
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.backupButton,
+                  pressed && styles.backupButtonPressed,
+                ]}
+                onPress={handleRestoreBackup}
+                testID="restore-backup-button"
+              >
+                <Upload size={22} color="#FFFFFF" />
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.logoutButton,
+                  pressed && styles.logoutButtonPressed,
+                ]}
+                onPress={handleLogout}
+                testID="logout-button"
+              >
+                <LogOut size={24} color="#FFFFFF" />
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -370,6 +418,19 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#FFFFFF',
     letterSpacing: 0.3,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  backupButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backupButtonPressed: {
+    opacity: 0.6,
   },
   logoutButton: {
     padding: 8,
