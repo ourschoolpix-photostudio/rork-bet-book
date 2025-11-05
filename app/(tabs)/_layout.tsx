@@ -17,11 +17,9 @@ export default function TabsLayout() {
 
   const handleLoansPress = () => {
     if (showBorrows) {
-      router.push('/loans');
-      setShowBorrows(false);
-    } else {
       router.push('/borrows');
-      setShowBorrows(true);
+    } else {
+      router.push('/loans');
     }
   };
 
