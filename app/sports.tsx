@@ -478,6 +478,55 @@ export default function SportsScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.sportsSelectionContainer}>
+          <View style={styles.sportsSelectionRow}>
+            <Pressable
+              onPress={() => setSelectedSport('nfl')}
+              style={({ pressed }) => [
+                styles.sportButton,
+                selectedSport === 'nfl' && styles.sportButtonActive,
+                pressed && styles.sportButtonPressed,
+              ]}
+              testID="nfl-button"
+            >
+              <Text style={[styles.sportButtonText, selectedSport === 'nfl' && styles.sportButtonTextActive]}>NFL</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setSelectedSport('college')}
+              style={({ pressed }) => [
+                styles.sportButton,
+                selectedSport === 'college' && styles.sportButtonActive,
+                pressed && styles.sportButtonPressed,
+              ]}
+              testID="college-button"
+            >
+              <Text style={[styles.sportButtonText, selectedSport === 'college' && styles.sportButtonTextActive]}>College</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setSelectedSport('nba')}
+              style={({ pressed }) => [
+                styles.sportButton,
+                selectedSport === 'nba' && styles.sportButtonActive,
+                pressed && styles.sportButtonPressed,
+              ]}
+              testID="nba-button"
+            >
+              <Text style={[styles.sportButtonText, selectedSport === 'nba' && styles.sportButtonTextActive]}>NBA</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setSelectedSport('soccer')}
+              style={({ pressed }) => [
+                styles.sportButton,
+                selectedSport === 'soccer' && styles.sportButtonActive,
+                pressed && styles.sportButtonPressed,
+              ]}
+              testID="soccer-button"
+            >
+              <Text style={[styles.sportButtonText, selectedSport === 'soccer' && styles.sportButtonTextActive]}>Soccer</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <ScrollView
           style={styles.scrollContent}
           contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
@@ -840,77 +889,6 @@ export default function SportsScreen() {
             )}
           </View>
         </ScrollView>
-      </View>
-
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        <View style={styles.footerRow}>
-          <Pressable
-            onPress={() => setSelectedSport('nfl')}
-            style={({ pressed }) => [
-              styles.footerButton,
-              selectedSport === 'nfl' && styles.footerButtonActive,
-              pressed && styles.footerButtonPressed,
-            ]}
-            testID="nfl-button"
-          >
-            <Text style={[styles.footerButtonText, selectedSport === 'nfl' && styles.footerButtonTextActive]}>NFL</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setSelectedSport('college')}
-            style={({ pressed }) => [
-              styles.footerButton,
-              selectedSport === 'college' && styles.footerButtonActive,
-              pressed && styles.footerButtonPressed,
-            ]}
-            testID="college-button"
-          >
-            <Text style={[styles.footerButtonText, selectedSport === 'college' && styles.footerButtonTextActive]}>College</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setSelectedSport('nba')}
-            style={({ pressed }) => [
-              styles.footerButton,
-              selectedSport === 'nba' && styles.footerButtonActive,
-              pressed && styles.footerButtonPressed,
-            ]}
-            testID="nba-button"
-          >
-            <Text style={[styles.footerButtonText, selectedSport === 'nba' && styles.footerButtonTextActive]}>NBA</Text>
-          </Pressable>
-        </View>
-        <View style={styles.footerRow}>
-          <Pressable
-            onPress={() => setSelectedSport('soccer')}
-            style={({ pressed }) => [
-              styles.footerButton,
-              selectedSport === 'soccer' && styles.footerButtonActive,
-              pressed && styles.footerButtonPressed,
-            ]}
-            testID="soccer-button"
-          >
-            <Text style={[styles.footerButtonText, selectedSport === 'soccer' && styles.footerButtonTextActive]}>Soccer</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.footerButton,
-              styles.footerButtonDisabled,
-              pressed && styles.footerButtonPressed,
-            ]}
-            disabled
-          >
-            <Text style={styles.footerButtonText}></Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.footerButton,
-              styles.footerButtonDisabled,
-              pressed && styles.footerButtonPressed,
-            ]}
-            disabled
-          >
-            <Text style={styles.footerButtonText}></Text>
-          </Pressable>
-        </View>
       </View>
 
       <Modal
@@ -1801,44 +1779,38 @@ const styles = StyleSheet.create({
     color: '#1E3A8A',
     fontWeight: '500' as const,
   },
-  footer: {
+  sportsSelectionContainer: {
     paddingHorizontal: 20,
-    paddingTop: 12,
-    gap: 12,
-    backgroundColor: 'transparent',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 12,
+    backgroundColor: 'rgba(90, 24, 154, 0.6)',
   },
-  footerRow: {
+  sportsSelectionRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
-  footerButton: {
+  sportButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(157, 78, 221, 0.3)',
     borderWidth: 2,
     borderColor: 'rgba(157, 78, 221, 0.5)',
   },
-  footerButtonActive: {
-    backgroundColor: '#5A189A',
-    borderColor: '#5A189A',
+  sportButtonActive: {
+    backgroundColor: '#9D4EDD',
+    borderColor: '#9D4EDD',
   },
-  footerButtonPressed: {
+  sportButtonPressed: {
     opacity: 0.7,
   },
-  footerButtonText: {
-    fontSize: 14,
+  sportButtonText: {
+    fontSize: 13,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
-  footerButtonTextActive: {
+  sportButtonTextActive: {
     color: '#FFFFFF',
-  },
-  footerButtonDisabled: {
-    opacity: 0.3,
   },
   betIcon: {
     position: 'absolute',
