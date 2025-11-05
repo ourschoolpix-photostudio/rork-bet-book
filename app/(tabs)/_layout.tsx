@@ -93,7 +93,6 @@ export default function TabsLayout() {
         name="borrows"
         options={{
           href: null,
-          tabBarButton: () => null,
         }}
       />
       <Tabs.Screen
