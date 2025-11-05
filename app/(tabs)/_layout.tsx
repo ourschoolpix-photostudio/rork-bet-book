@@ -1,5 +1,5 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
-import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign } from 'lucide-react-native';
+import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign, Target } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 
 export default function TabsLayout() {
@@ -35,7 +35,7 @@ export default function TabsLayout() {
           borderTopColor: 'rgba(157, 78, 221, 0.3)',
         },
         tabBarLabelStyle: {
-          fontSize: 9,
+          fontSize: 8,
           fontWeight: '600' as const,
         },
       }}
@@ -45,6 +45,13 @@ export default function TabsLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="bets"
+        options={{
+          title: 'My Bets',
+          tabBarIcon: ({ color, size }) => <Target size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -86,6 +93,7 @@ export default function TabsLayout() {
         name="borrows"
         options={{
           href: null,
+          tabBarButton: () => null,
         }}
       />
       <Tabs.Screen
