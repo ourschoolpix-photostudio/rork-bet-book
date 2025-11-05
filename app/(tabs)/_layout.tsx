@@ -1,7 +1,30 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
 import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
 
 export default function TabsLayout() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [showBorrows, setShowBorrows] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (pathname === '/borrows') {
+      setShowBorrows(true);
+    } else if (pathname === '/loans') {
+      setShowBorrows(false);
+    }
+  }, [pathname]);
+
+  const handleLoansPress = () => {
+    if (showBorrows) {
+      router.push('/loans');
+      setShowBorrows(false);
+    } else {
+      router.push('/borrows');
+      setShowBorrows(true);
+    }
+  };
+
   return (
     <Tabs
       screenOptions={{
@@ -48,17 +71,23 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="borrows"
+        name="loans"
         options={{
-          title: 'Borrow',
-          tabBarIcon: ({ color, size }) => <Wallet size={size} color={color} />,
+          title: showBorrows ? 'Borrows' : 'Loans',
+          tabBarIcon: ({ color, size }) => 
+            showBorrows ? <Wallet size={size} color={color} /> : <HandCoins size={size} color={color} />,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            handleLoansPress();
+          },
         }}
       />
       <Tabs.Screen
-        name="loans"
+        name="borrows"
         options={{
-          title: 'Loans',
-          tabBarIcon: ({ color, size }) => <HandCoins size={size} color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen
