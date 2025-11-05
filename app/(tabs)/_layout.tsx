@@ -1,0 +1,67 @@
+import { Tabs } from 'expo-router';
+import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign } from 'lucide-react-native';
+
+export default function TabsLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#9D4EDD',
+        tabBarInactiveTintColor: 'rgba(157, 78, 221, 0.5)',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(157, 78, 221, 0.2)',
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600' as const,
+        },
+      }}
+    >
+
+      <Tabs.Screen
+        name="casino"
+        options={{
+          title: 'Casino',
+          tabBarIcon: ({ color, size }) => <Clover size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="lotto"
+        options={{
+          title: 'Lotto',
+          tabBarIcon: ({ color, size }) => <DollarSign size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="sports"
+        options={{
+          title: 'Sports',
+          tabBarIcon: ({ color, size }) => <Trophy size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="borrows"
+        options={{
+          title: 'Borrow',
+          tabBarIcon: ({ color, size }) => <Wallet size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="loans"
+        options={{
+          title: 'Loan',
+          tabBarIcon: ({ color, size }) => <HandCoins size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="summary"
+        options={{
+          title: 'Summary',
+          tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+        }}
+      />
+    </Tabs>
+  );
+}
