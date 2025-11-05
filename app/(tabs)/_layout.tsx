@@ -72,11 +72,8 @@ export default function TabsLayout() {
         name="loans"
         options={{
           title: showBorrows ? 'Borrows' : 'Loans',
-          tabBarIcon: ({ color, size, focused }) => {
-            const isActive = focused || pathname === '/loans';
-            const iconColor = isActive ? '#FFFFFF' : color;
-            return showBorrows ? <Wallet size={size} color={iconColor} /> : <HandCoins size={size} color={iconColor} />;
-          },
+          tabBarIcon: ({ color, size }) => 
+            showBorrows ? <Wallet size={size} color={color} /> : <HandCoins size={size} color={color} />,
         }}
         listeners={{
           tabPress: (e) => {
