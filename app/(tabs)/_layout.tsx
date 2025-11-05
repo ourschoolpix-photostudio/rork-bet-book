@@ -19,7 +19,13 @@ export default function TabsLayout() {
         },
       }}
     >
-
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="casino"
         options={{
@@ -51,7 +57,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="loans"
         options={{
-          title: 'Loan',
+          title: 'Loans',
           tabBarIcon: ({ color, size }) => <HandCoins size={size} color={color} />,
         }}
       />

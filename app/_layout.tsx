@@ -23,7 +23,6 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="dashboard" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="bets" options={{ headerShown: false }} />
       <Stack.Screen name="stats" options={{ headerShown: false }} />

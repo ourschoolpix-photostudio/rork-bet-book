@@ -16,7 +16,7 @@ export default function IndexScreen() {
   }
 
   if (currentUser) {
-    return <Redirect href="/dashboard" />;
+    return <Redirect href="/(tabs)/dashboard" />;
   }
 
   return <Redirect href="/login" />;
