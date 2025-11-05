@@ -334,11 +334,6 @@ export default function CasinoScreen() {
                 onPress={() => setDetailsSession(currentSession)}
                 testID="current-session-card"
               >
-                <ImageBackground
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/v5cx06ur8bss70an2qktw' }}
-                  style={styles.sessionCardBackground}
-                  resizeMode="cover"
-                />
                 <View style={styles.sessionHeader}>
                   <View style={styles.sessionHeaderLeft}>
                     <Text style={styles.sessionCasino}>{currentSession.casinoName}</Text>
@@ -506,11 +501,6 @@ export default function CasinoScreen() {
                     onPress={() => setDetailsSession(session)}
                     testID={`completed-session-card-${session.id}`}
                   >
-                    <ImageBackground
-                      source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/v5cx06ur8bss70an2qktw' }}
-                      style={styles.sessionCardBackground}
-                      resizeMode="cover"
-                    />
                     <View style={styles.sessionHeader}>
                       <View style={styles.sessionHeaderLeft}>
                         <Text style={styles.sessionCasino}>{session.casinoName}</Text>
