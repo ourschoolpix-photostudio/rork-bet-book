@@ -9,9 +9,9 @@ export default function TabsLayout() {
 
   useEffect(() => {
     if (pathname === '/borrows') {
-      setShowBorrows(true);
-    } else if (pathname === '/loans') {
       setShowBorrows(false);
+    } else if (pathname === '/loans') {
+      setShowBorrows(true);
     }
   }, [pathname]);
 
