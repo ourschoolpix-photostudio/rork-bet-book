@@ -6,7 +6,7 @@ import SessionDetailsModal from '@/components/SessionDetailsModal';
 import { GameType } from '@/types/user';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Clock, DollarSign, Edit2, LogOut, MapPin, ShieldOff, Trash2, X, Clover, Spade, Circle, Grid3x3, HandCoins, Wallet, ChevronRight, ArrowLeft } from 'lucide-react-native';
+import { Clock, DollarSign, Edit2, LogOut, MapPin, ShieldOff, Trash2, X, Clover, Spade, Circle, Grid3x3, ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -234,30 +234,6 @@ export default function CasinoScreen() {
               testID="logout-button"
             >
               <LogOut size={24} color="#FFFFFF" />
-            </Pressable>
-          </View>
-          <View style={styles.headerBottom}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.borrowButton,
-                pressed && styles.borrowButtonPressed,
-              ]}
-              onPress={() => router.push('/borrows')}
-              testID="borrow-button"
-            >
-              <Wallet size={20} color="#FFFFFF" />
-              <Text style={styles.borrowButtonText}>Borrow</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.loanedOutButton,
-                pressed && styles.loanedOutButtonPressed,
-              ]}
-              onPress={() => router.push('/loans')}
-              testID="loaned-out-button"
-            >
-              <HandCoins size={20} color="#FFFFFF" />
-              <Text style={styles.loanedOutButtonText}>Loaned Out</Text>
             </Pressable>
           </View>
         </View>
@@ -803,23 +779,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    minHeight: 155,
     paddingHorizontal: 20,
     paddingBottom: 20,
     backgroundColor: 'rgba(157, 78, 221, 0.9)',
-    gap: 16,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
+
   headerCenter: {
     flex: 1,
     alignItems: 'center',
@@ -1314,50 +1283,6 @@ const styles = StyleSheet.create({
   },
   emojiIcon: {
     fontSize: 16,
-  },
-  borrowButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  borrowButtonPressed: {
-    opacity: 0.7,
-  },
-  borrowButtonText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  loanedOutButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  loanedOutButtonPressed: {
-    opacity: 0.7,
-  },
-  loanedOutButtonText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
   },
   backButton: {
     padding: 8,
