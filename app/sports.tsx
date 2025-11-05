@@ -842,6 +842,77 @@ export default function SportsScreen() {
         </ScrollView>
       </View>
 
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
+        <View style={styles.footerRow}>
+          <Pressable
+            onPress={() => setSelectedSport('nfl')}
+            style={({ pressed }) => [
+              styles.footerButton,
+              selectedSport === 'nfl' && styles.footerButtonActive,
+              pressed && styles.footerButtonPressed,
+            ]}
+            testID="nfl-button"
+          >
+            <Text style={[styles.footerButtonText, selectedSport === 'nfl' && styles.footerButtonTextActive]}>NFL</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setSelectedSport('college')}
+            style={({ pressed }) => [
+              styles.footerButton,
+              selectedSport === 'college' && styles.footerButtonActive,
+              pressed && styles.footerButtonPressed,
+            ]}
+            testID="college-button"
+          >
+            <Text style={[styles.footerButtonText, selectedSport === 'college' && styles.footerButtonTextActive]}>College</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setSelectedSport('nba')}
+            style={({ pressed }) => [
+              styles.footerButton,
+              selectedSport === 'nba' && styles.footerButtonActive,
+              pressed && styles.footerButtonPressed,
+            ]}
+            testID="nba-button"
+          >
+            <Text style={[styles.footerButtonText, selectedSport === 'nba' && styles.footerButtonTextActive]}>NBA</Text>
+          </Pressable>
+        </View>
+        <View style={styles.footerRow}>
+          <Pressable
+            onPress={() => setSelectedSport('soccer')}
+            style={({ pressed }) => [
+              styles.footerButton,
+              selectedSport === 'soccer' && styles.footerButtonActive,
+              pressed && styles.footerButtonPressed,
+            ]}
+            testID="soccer-button"
+          >
+            <Text style={[styles.footerButtonText, selectedSport === 'soccer' && styles.footerButtonTextActive]}>Soccer</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.footerButton,
+              styles.footerButtonDisabled,
+              pressed && styles.footerButtonPressed,
+            ]}
+            disabled
+          >
+            <Text style={styles.footerButtonText}></Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.footerButton,
+              styles.footerButtonDisabled,
+              pressed && styles.footerButtonPressed,
+            ]}
+            disabled
+          >
+            <Text style={styles.footerButtonText}></Text>
+          </Pressable>
+        </View>
+      </View>
+
       <Modal
         visible={showAddBetModal}
         animationType="slide"
@@ -1729,6 +1800,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#1E3A8A',
     fontWeight: '500' as const,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 12,
+    backgroundColor: 'transparent',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  footerButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'rgba(157, 78, 221, 0.5)',
+  },
+  footerButtonActive: {
+    backgroundColor: '#5A189A',
+    borderColor: '#5A189A',
+  },
+  footerButtonPressed: {
+    opacity: 0.7,
+  },
+  footerButtonText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  footerButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  footerButtonDisabled: {
+    opacity: 0.3,
   },
   betIcon: {
     position: 'absolute',
