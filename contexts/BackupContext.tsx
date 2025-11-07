@@ -99,8 +99,22 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     }
 
     try {
-      const current = JSON.parse(currentValue);
-      const backup = JSON.parse(backupValue);
+      let current: any;
+      let backup: any;
+      
+      try {
+        current = JSON.parse(currentValue);
+      } catch (e) {
+        console.error('Failed to parse current value:', currentValue, e);
+        return backupValue;
+      }
+      
+      try {
+        backup = JSON.parse(backupValue);
+      } catch (e) {
+        console.error('Failed to parse backup value:', backupValue, e);
+        return currentValue;
+      }
 
       if (Array.isArray(current) && Array.isArray(backup)) {
         const mergedMap = new Map<string, any>();
