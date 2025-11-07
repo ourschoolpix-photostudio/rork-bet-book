@@ -337,6 +337,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       .sort((a, b) => new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime());
   }, [sessions, currentUser]);
 
+  const reloadAllData = useCallback(async () => {
+    await Promise.all([
+      loadData(),
+      loadLastCasino(),
+      loadSessions(),
+    ]);
+  }, []);
+
   return useMemo(() => ({
     currentUser,
     users,
@@ -356,5 +364,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updateSessionAddOn,
     updateSession,
     deleteSession,
-  }), [currentUser, users, isLoading, login, logout, register, updatePin, updateProfile, lastCasino, saveLastCasino, sessions, currentSession, completedSessions, startSession, endSession, updateSessionAddOn, updateSession, deleteSession]);
+    reloadAllData,
+  }), [currentUser, users, isLoading, login, logout, register, updatePin, updateProfile, lastCasino, saveLastCasino, sessions, currentSession, completedSessions, startSession, endSession, updateSessionAddOn, updateSession, deleteSession, reloadAllData]);
 });

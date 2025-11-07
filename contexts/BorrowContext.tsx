@@ -114,6 +114,10 @@ export const [BorrowProvider, useBorrows] = createContextHook(() => {
     await AsyncStorage.setItem(BORROWS_STORAGE_KEY, JSON.stringify(updatedBorrows));
   }, [borrows]);
 
+  const reloadBorrows = useCallback(async () => {
+    await loadBorrows();
+  }, []);
+
   return useMemo(() => ({
     borrows,
     isLoading,
@@ -122,5 +126,6 @@ export const [BorrowProvider, useBorrows] = createContextHook(() => {
     deleteBorrow,
     deletePayment,
     updateBorrow,
-  }), [borrows, isLoading, addBorrow, addPayment, deleteBorrow, deletePayment, updateBorrow]);
+    reloadBorrows,
+  }), [borrows, isLoading, addBorrow, addPayment, deleteBorrow, deletePayment, updateBorrow, reloadBorrows]);
 });

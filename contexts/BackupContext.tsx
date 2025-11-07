@@ -5,6 +5,11 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { useCallback, useMemo } from 'react';
 import { Platform, Alert } from 'react-native';
+import { useAuth } from './AuthContext';
+import { useLoans } from './LoanContext';
+import { useBorrows } from './BorrowContext';
+import { useBets } from './BetsContext';
+import { useSportsBets } from './SportsBetsContext';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -24,6 +29,11 @@ export interface BackupData {
 }
 
 export const [BackupProvider, useBackup] = createContextHook(() => {
+  const { reloadAllData } = useAuth();
+  const { reloadLoans } = useLoans();
+  const { reloadBorrows } = useBorrows();
+  const { reloadBets } = useBets();
+  const { reloadSportsBets } = useSportsBets();
   const createBackup = useCallback(async (): Promise<boolean> => {
     try {
       console.log('Starting backup creation...');
@@ -189,19 +199,19 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
                 }
               }
 
+              console.log('Reloading all contexts...');
+              await Promise.all([
+                reloadAllData(),
+                reloadLoans(),
+                reloadBorrows(),
+                reloadBets(),
+                reloadSportsBets(),
+              ]);
+              console.log('All contexts reloaded successfully');
+              
               Alert.alert(
                 'Success',
-                'Backup merged successfully. Please reload the app to see changes.',
-                [
-                  {
-                    text: 'Reload',
-                    onPress: () => {
-                      if (Platform.OS === 'web') {
-                        window.location.reload();
-                      }
-                    },
-                  },
-                ]
+                'Backup merged successfully!'
               );
               resolve(true);
             } catch (error) {
@@ -251,17 +261,19 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
           }
         }
 
+        console.log('Reloading all contexts...');
+        await Promise.all([
+          reloadAllData(),
+          reloadLoans(),
+          reloadBorrows(),
+          reloadBets(),
+          reloadSportsBets(),
+        ]);
+        console.log('All contexts reloaded successfully');
+        
         Alert.alert(
           'Success',
-          'Backup merged successfully. Please reload the app to see changes.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                console.log('Backup restore complete, app reload required');
-              },
-            },
-          ]
+          'Backup merged successfully!'
         );
         return true;
       }
@@ -270,7 +282,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, []);
+  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets]);
 
   return useMemo(() => ({
     createBackup,

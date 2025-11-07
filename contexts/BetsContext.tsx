@@ -74,11 +74,16 @@ export const [BetsProvider, useBets] = createContextHook(() => {
     await AsyncStorage.setItem(BETS_STORAGE_KEY, JSON.stringify(updatedBets));
   }, [bets]);
 
+  const reloadBets = useCallback(async () => {
+    await loadBets();
+  }, []);
+
   return useMemo(() => ({
     bets,
     isLoading,
     addBet,
     updateBet,
     deleteBet,
-  }), [bets, isLoading, addBet, updateBet, deleteBet]);
+    reloadBets,
+  }), [bets, isLoading, addBet, updateBet, deleteBet, reloadBets]);
 });

@@ -130,6 +130,10 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     }
   }, [loans]);
 
+  const reloadLoans = useCallback(async () => {
+    await loadLoans();
+  }, []);
+
   return useMemo(() => ({
     loans,
     isLoading,
@@ -138,5 +142,6 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     deleteLoan,
     deletePayment,
     updateLoan,
-  }), [loans, isLoading, addLoan, addPayment, deleteLoan, deletePayment, updateLoan]);
+    reloadLoans,
+  }), [loans, isLoading, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, reloadLoans]);
 });
