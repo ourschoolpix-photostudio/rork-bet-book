@@ -90,6 +90,47 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     }
   }, []);
 
+  const mergeData = (currentValue: string | null, backupValue: string | null): string | null => {
+    if (!currentValue || currentValue === '[]' || currentValue === '{}' || currentValue === 'null') {
+      return backupValue;
+    }
+    if (!backupValue || backupValue === '[]' || backupValue === '{}' || backupValue === 'null') {
+      return currentValue;
+    }
+
+    try {
+      const current = JSON.parse(currentValue);
+      const backup = JSON.parse(backupValue);
+
+      if (Array.isArray(current) && Array.isArray(backup)) {
+        const mergedMap = new Map<string, any>();
+        
+        current.forEach((item: any) => {
+          if (item && typeof item === 'object' && item.id) {
+            mergedMap.set(item.id, item);
+          }
+        });
+        
+        backup.forEach((item: any) => {
+          if (item && typeof item === 'object' && item.id) {
+            mergedMap.set(item.id, item);
+          }
+        });
+        
+        return JSON.stringify(Array.from(mergedMap.values()));
+      }
+      
+      if (typeof current === 'object' && typeof backup === 'object' && !Array.isArray(current) && !Array.isArray(backup)) {
+        return JSON.stringify({ ...current, ...backup });
+      }
+      
+      return backupValue;
+    } catch (error) {
+      console.error('Error merging data:', error);
+      return backupValue;
+    }
+  };
+
   const restoreBackup = useCallback(async (): Promise<boolean> => {
     try {
       console.log('Starting backup restore...');
@@ -123,18 +164,20 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
               console.log('Restoring backup from:', backupData.timestamp);
 
               for (const [key, value] of Object.entries(backupData.data)) {
-                if (value !== null) {
-                  await AsyncStorage.setItem(key, value);
-                  console.log(`Restored ${key}`);
-                } else {
-                  await AsyncStorage.removeItem(key);
-                  console.log(`Removed ${key}`);
+                const currentValue = await AsyncStorage.getItem(key);
+                const mergedValue = mergeData(currentValue, value);
+                
+                if (mergedValue !== null) {
+                  await AsyncStorage.setItem(key, mergedValue);
+                  console.log(`Merged ${key}`);
+                } else if (currentValue === null && value === null) {
+                  console.log(`Skipped ${key} (both null)`);
                 }
               }
 
               Alert.alert(
                 'Success',
-                'Backup restored successfully. Please reload the app to see changes.',
+                'Backup merged successfully. Please reload the app to see changes.',
                 [
                   {
                     text: 'Reload',
@@ -183,18 +226,20 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         console.log('Restoring backup from:', backupData.timestamp);
 
         for (const [key, value] of Object.entries(backupData.data)) {
-          if (value !== null) {
-            await AsyncStorage.setItem(key, value);
-            console.log(`Restored ${key}`);
-          } else {
-            await AsyncStorage.removeItem(key);
-            console.log(`Removed ${key}`);
+          const currentValue = await AsyncStorage.getItem(key);
+          const mergedValue = mergeData(currentValue, value);
+          
+          if (mergedValue !== null) {
+            await AsyncStorage.setItem(key, mergedValue);
+            console.log(`Merged ${key}`);
+          } else if (currentValue === null && value === null) {
+            console.log(`Skipped ${key} (both null)`);
           }
         }
 
         Alert.alert(
           'Success',
-          'Backup restored successfully. Please reload the app to see changes.',
+          'Backup merged successfully. Please reload the app to see changes.',
           [
             {
               text: 'OK',
