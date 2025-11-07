@@ -60,11 +60,11 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         console.log('Backup downloaded on web');
         return true;
       } else {
-        const cacheDir = new Directory(Paths.cache, 'backups');
-        if (!cacheDir.exists) {
-          cacheDir.create();
+        const backupDir = new Directory(Paths.cache, 'backups');
+        if (!backupDir.exists) {
+          backupDir.create({ intermediates: true });
         }
-        const file = new File(cacheDir, fileName);
+        const file = new File(backupDir, fileName);
         file.create();
         file.write(backupJson);
         console.log('Backup file created:', file.uri);
