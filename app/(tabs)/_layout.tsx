@@ -1,5 +1,5 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
-import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign, Target } from 'lucide-react-native';
+import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign, Target, Receipt } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 
 export default function TabsLayout() {
@@ -45,6 +45,7 @@ export default function TabsLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarButton: pathname === '/dashboard' ? () => null : undefined,
         }}
       />
       <Tabs.Screen
@@ -52,6 +53,7 @@ export default function TabsLayout() {
         options={{
           title: 'My Bets',
           tabBarIcon: ({ color, size }) => <Target size={size} color={color} />,
+          tabBarButton: pathname === '/bets' ? () => null : undefined,
         }}
       />
       <Tabs.Screen
@@ -59,6 +61,7 @@ export default function TabsLayout() {
         options={{
           title: 'Casino',
           tabBarIcon: ({ color, size }) => <Clover size={size} color={color} />,
+          tabBarButton: pathname === '/casino' ? () => null : undefined,
         }}
       />
       <Tabs.Screen
@@ -66,6 +69,7 @@ export default function TabsLayout() {
         options={{
           title: 'Lotto',
           tabBarIcon: ({ color, size }) => <DollarSign size={size} color={color} />,
+          tabBarButton: pathname === '/lotto' ? () => null : undefined,
         }}
       />
       <Tabs.Screen
@@ -73,6 +77,7 @@ export default function TabsLayout() {
         options={{
           title: 'Sports',
           tabBarIcon: ({ color, size }) => <Trophy size={size} color={color} />,
+          tabBarButton: pathname === '/sports' ? () => null : undefined,
         }}
       />
       <Tabs.Screen
@@ -81,6 +86,7 @@ export default function TabsLayout() {
           title: showBorrows ? 'Borrows' : 'Loans',
           tabBarIcon: ({ color, size }) => 
             showBorrows ? <Wallet size={size} color={color} /> : <HandCoins size={size} color={color} />,
+          tabBarButton: (pathname === '/loans' || pathname === '/borrows') ? () => null : undefined,
         }}
         listeners={{
           tabPress: (e) => {
@@ -100,6 +106,15 @@ export default function TabsLayout() {
         options={{
           title: 'Summary',
           tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+          tabBarButton: pathname === '/summary' ? () => null : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="expenses"
+        options={{
+          title: 'My Expenses',
+          tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
+          tabBarButton: pathname === '/expenses' ? () => null : undefined,
         }}
       />
     </Tabs>
