@@ -492,15 +492,17 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   listTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#240046',
+    color: '#FFFFFF',
     paddingHorizontal: 20,
     marginBottom: 16,
   },
@@ -510,12 +512,12 @@ const styles = StyleSheet.create({
   },
   expenseItem: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(157, 78, 221, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     gap: 12,
   },
   expenseInfo: {
@@ -525,22 +527,22 @@ const styles = StyleSheet.create({
   expenseCategory: {
     fontSize: 12,
     fontWeight: '700' as const,
-    color: '#9D4EDD',
+    color: '#FFFFFF',
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
   expenseDescription: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#240046',
+    color: '#FFFFFF',
   },
   expenseMerchant: {
     fontSize: 14,
-    color: '#5A189A',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   expenseDate: {
     fontSize: 12,
-    color: 'rgba(36, 0, 70, 0.6)',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   expenseActions: {
     alignItems: 'flex-end',
@@ -549,7 +551,7 @@ const styles = StyleSheet.create({
   expenseAmount: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#240046',
+    color: '#FFFFFF',
   },
   expenseButtons: {
     flexDirection: 'row',
@@ -558,7 +560,7 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 6,
     borderRadius: 6,
-    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   iconButtonPressed: {
     opacity: 0.6,
@@ -570,12 +572,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: '#240046',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: 'rgba(36, 0, 70, 0.6)',
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center' as const,
   },
   modalOverlay: {
