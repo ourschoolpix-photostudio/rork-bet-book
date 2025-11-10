@@ -11,21 +11,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   const [recurringBills, setRecurringBills] = useState<RecurringBill[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  const loadAllData = async () => {
-    try {
-      await Promise.all([loadExpenses(), loadRecurringBills()]);
-    } catch (error) {
-      console.error('Error loading expenses data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadExpenses = async () => {
+  const loadExpenses = useCallback(async () => {
     try {
       const expensesJson = await AsyncStorage.getItem(EXPENSES_STORAGE_KEY);
       if (expensesJson) {
@@ -40,9 +26,9 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     } catch (error) {
       console.error('Error loading expenses:', error);
     }
-  };
+  }, []);
 
-  const loadRecurringBills = async () => {
+  const loadRecurringBills = useCallback(async () => {
     try {
       const billsJson = await AsyncStorage.getItem(RECURRING_BILLS_STORAGE_KEY);
       if (billsJson) {
@@ -57,7 +43,21 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     } catch (error) {
       console.error('Error loading recurring bills:', error);
     }
-  };
+  }, []);
+
+  const loadAllData = useCallback(async () => {
+    try {
+      await Promise.all([loadExpenses(), loadRecurringBills()]);
+    } catch (error) {
+      console.error('Error loading expenses data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadExpenses, loadRecurringBills]);
+
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
 
   const addExpense = useCallback(async (
     userId: string,
@@ -165,7 +165,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
 
   const reloadAllData = useCallback(async () => {
     await loadAllData();
-  }, []);
+  }, [loadAllData]);
 
   return useMemo(() => ({
     expenses,
