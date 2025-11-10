@@ -103,9 +103,15 @@ export default function ReceiptScannerModal({
       
       let receiptDate = new Date();
       if (dateMatch && dateMatch[1] !== 'NOT_FOUND') {
-        const parsedDate = new Date(dateMatch[1]);
-        if (!isNaN(parsedDate.getTime())) {
-          receiptDate = parsedDate;
+        const dateParts = dateMatch[1].split('-');
+        if (dateParts.length === 3) {
+          const year = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const day = parseInt(dateParts[2], 10);
+          const parsedDate = new Date(year, month, day);
+          if (!isNaN(parsedDate.getTime())) {
+            receiptDate = parsedDate;
+          }
         }
       }
 
