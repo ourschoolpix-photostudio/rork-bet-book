@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   },
   expenseItem: {
     flexDirection: 'row',
-    backgroundColor: '#9D4EDD',
+    backgroundColor: '#5A189A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   },
   expenseItemPressed: {
     opacity: 0.8,
-    backgroundColor: '#B57FE6',
+    backgroundColor: '#7B2CBF',
   },
   expenseInfo: {
     flex: 1,
