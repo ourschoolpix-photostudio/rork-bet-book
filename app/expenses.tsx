@@ -1,12 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses } from '@/contexts/ExpensesContext';
+import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses, useExpensesByMonth } from '@/contexts/ExpensesContext';
 import { ExpenseCategory } from '@/types/expense';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3 } from 'lucide-react-native';
+import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
 import RecurringBillsModal from '@/components/RecurringBillsModal';
@@ -37,6 +37,7 @@ export default function ExpensesScreen() {
   const [showRecurringBillsModal, setShowRecurringBillsModal] = useState<boolean>(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState<boolean>(false);
   const [showSummary, setShowSummary] = useState<boolean>(false);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!currentUser) {
@@ -48,9 +49,22 @@ export default function ExpensesScreen() {
   const expensesByCategory = useExpensesByCategory(currentUser?.id || '');
   const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
+  const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
   const { deleteExpense, addExpense, addRecurringBill, deleteRecurringBill } = useExpenses();
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+  const toggleMonth = (monthKey: string) => {
+    setExpandedMonths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(monthKey)) {
+        newSet.delete(monthKey);
+      } else {
+        newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
 
   const handleDeleteExpense = (expenseId: string) => {
     Alert.alert(
@@ -167,48 +181,106 @@ export default function ExpensesScreen() {
         </View>
 
         <View style={styles.listContainer}>
-          <Text style={styles.listTitle}>Recent Expenses</Text>
-          <FlatList
-            data={expenses}
-            keyExtractor={(item) => item.id}
+          <Text style={styles.listTitle}>
+            {selectedCategory ? `${selectedCategory} - By Month` : 'Expenses By Month'}
+          </Text>
+          <ScrollView
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <View style={styles.expenseItem}>
-                <View style={styles.expenseInfo}>
-                  <Text style={styles.expenseCategory}>{item.category}</Text>
-                  <Text style={styles.expenseDescription}>{item.description}</Text>
-                  {item.merchant && (
-                    <Text style={styles.expenseMerchant}>{item.merchant}</Text>
-                  )}
-                  <Text style={styles.expenseDate}>
-                    {new Date(item.date).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.expenseActions}>
-                  <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
-                  <View style={styles.expenseButtons}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.iconButton,
-                        pressed && styles.iconButtonPressed,
-                      ]}
-                      onPress={() => handleDeleteExpense(item.id)}
-                    >
-                      <Trash2 size={18} color="#240046" />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            )}
-            ListEmptyComponent={
+            showsVerticalScrollIndicator={false}
+          >
+            {expensesByMonth.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No expenses yet</Text>
                 <Text style={styles.emptySubtext}>
                   Add an expense or scan a receipt to get started
                 </Text>
               </View>
-            }
-          />
+            ) : (
+              expensesByMonth
+                .filter(monthGroup => 
+                  !selectedCategory || 
+                  monthGroup.expenses.some(e => e.category === selectedCategory)
+                )
+                .map((monthGroup) => {
+                  const isExpanded = expandedMonths.has(monthGroup.monthKey);
+                  const filteredExpenses = selectedCategory
+                    ? monthGroup.expenses.filter(e => e.category === selectedCategory)
+                    : monthGroup.expenses;
+                  const displayTotal = selectedCategory
+                    ? filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
+                    : monthGroup.total;
+
+                  return (
+                    <View key={monthGroup.monthKey} style={styles.monthCard}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.monthHeader,
+                          pressed && styles.monthHeaderPressed,
+                        ]}
+                        onPress={() => toggleMonth(monthGroup.monthKey)}
+                      >
+                        <View style={styles.monthHeaderLeft}>
+                          <View style={styles.monthIconContainer}>
+                            <ChevronRight
+                              size={20}
+                              color="#240046"
+                              style={{
+                                transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
+                              }}
+                            />
+                          </View>
+                          <View>
+                            <Text style={styles.monthLabel}>
+                              {monthGroup.monthLabel}
+                              {monthGroup.isCurrentMonth && (
+                                <Text style={styles.currentMonthBadge}> • Current</Text>
+                              )}
+                            </Text>
+                            <Text style={styles.monthCount}>
+                              {filteredExpenses.length} expense{filteredExpenses.length !== 1 ? 's' : ''}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.monthTotal}>${displayTotal.toFixed(2)}</Text>
+                      </Pressable>
+
+                      {isExpanded && (
+                        <View style={styles.monthExpensesList}>
+                          {filteredExpenses.map((item) => (
+                            <View key={item.id} style={styles.expenseItem}>
+                              <View style={styles.expenseInfo}>
+                                <Text style={styles.expenseCategory}>{item.category}</Text>
+                                <Text style={styles.expenseDescription}>{item.description}</Text>
+                                {item.merchant && (
+                                  <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                )}
+                                <Text style={styles.expenseDate}>
+                                  {new Date(item.date).toLocaleDateString()}
+                                </Text>
+                              </View>
+                              <View style={styles.expenseActions}>
+                                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                <View style={styles.expenseButtons}>
+                                  <Pressable
+                                    style={({ pressed }) => [
+                                      styles.iconButton,
+                                      pressed && styles.iconButtonPressed,
+                                    ]}
+                                    onPress={() => handleDeleteExpense(item.id)}
+                                  >
+                                    <Trash2 size={18} color="#240046" />
+                                  </Pressable>
+                                </View>
+                              </View>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  );
+                })
+            )}
+          </ScrollView>
         </View>
       </View>
 
@@ -753,5 +825,63 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(157, 78, 221, 0.2)',
     marginVertical: 24,
+  },
+  monthCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  monthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  monthHeaderPressed: {
+    opacity: 0.7,
+  },
+  monthHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  monthIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthLabel: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  currentMonthBadge: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  monthCount: {
+    fontSize: 12,
+    color: '#5A189A',
+    marginTop: 2,
+  },
+  monthTotal: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  monthExpensesList: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 8,
   },
 });

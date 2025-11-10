@@ -336,3 +336,70 @@ export function useYearToDateExpenses(userId: string) {
     return { total, byCategory, expenses: ytdExpenses };
   }, [expenses, userId]);
 }
+
+export interface MonthlyExpenseGroup {
+  monthKey: string;
+  monthLabel: string;
+  year: number;
+  month: number;
+  expenses: Expense[];
+  total: number;
+  isCurrentMonth: boolean;
+}
+
+export function useExpensesByMonth(userId: string) {
+  const { expenses } = useExpenses();
+  
+  return useMemo(() => {
+    const userExpenses = expenses.filter(e => e.userId === userId);
+    
+    const groupedByMonth = userExpenses.reduce((acc, expense) => {
+      const expenseDate = new Date(expense.date);
+      const year = expenseDate.getFullYear();
+      const month = expenseDate.getMonth();
+      const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+      
+      if (!acc[monthKey]) {
+        acc[monthKey] = [];
+      }
+      acc[monthKey].push(expense);
+      return acc;
+    }, {} as Record<string, Expense[]>);
+    
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const monthlyGroups: MonthlyExpenseGroup[] = Object.entries(groupedByMonth)
+      .map(([monthKey, monthExpenses]) => {
+        const [yearStr, monthStr] = monthKey.split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10) - 1;
+        
+        const monthDate = new Date(year, month, 1);
+        const monthLabel = monthDate.toLocaleDateString('en-US', { 
+          month: 'long', 
+          year: 'numeric' 
+        });
+        
+        const total = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+        
+        return {
+          monthKey,
+          monthLabel,
+          year,
+          month,
+          expenses: monthExpenses.sort((a, b) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          ),
+          total,
+          isCurrentMonth: monthKey === currentMonthKey,
+        };
+      })
+      .sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+      });
+    
+    return monthlyGroups;
+  }, [expenses, userId]);
+}

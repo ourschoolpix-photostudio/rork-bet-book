@@ -1,12 +1,13 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBets } from '@/contexts/BetsContext';
 import { useSportsBets } from '@/contexts/SportsBetsContext';
-import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser } from '@/contexts/ExpensesContext';
+import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight } from 'lucide-react-native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 export default function SummaryScreen() {
   const { currentUser, completedSessions } = useAuth();
@@ -14,14 +15,28 @@ export default function SummaryScreen() {
   const { sportsBets } = useSportsBets();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
+  const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
 
   const activeRecurringBills = recurringBills.filter(bill => bill.isActive);
   const monthlyRecurringTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
   const additionalExpensesTotal = monthlyExpenses.total - monthlyRecurringTotal;
+
+  const toggleMonth = (monthKey: string) => {
+    setExpandedMonths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(monthKey)) {
+        newSet.delete(monthKey);
+      } else {
+        newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
 
   const casinoStats = completedSessions.reduce(
     (acc, session) => {
@@ -224,6 +239,75 @@ export default function SummaryScreen() {
               </View>
             </View>
           </View>
+
+          <View style={styles.categoriesContainer}>
+            <Text style={styles.sectionTitle}>Monthly Expense History</Text>
+            
+            {expensesByMonth.length === 0 ? (
+              <View style={styles.emptyMonthsContainer}>
+                <Text style={styles.emptyMonthsText}>No expenses recorded yet</Text>
+              </View>
+            ) : (
+              expensesByMonth.map((monthGroup) => {
+                const isExpanded = expandedMonths.has(monthGroup.monthKey);
+                return (
+                  <View key={monthGroup.monthKey} style={styles.monthCard}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.monthCardHeader,
+                        pressed && styles.monthCardHeaderPressed,
+                      ]}
+                      onPress={() => toggleMonth(monthGroup.monthKey)}
+                    >
+                      <View style={styles.monthCardHeaderLeft}>
+                        <View style={styles.monthIconContainer}>
+                          <ChevronRight
+                            size={18}
+                            color="#240046"
+                            style={{
+                              transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
+                            }}
+                          />
+                        </View>
+                        <View>
+                          <Text style={styles.monthCardLabel}>
+                            {monthGroup.monthLabel}
+                            {monthGroup.isCurrentMonth && (
+                              <Text style={styles.currentMonthBadge}> • Current</Text>
+                            )}
+                          </Text>
+                          <Text style={styles.monthCardCount}>
+                            {monthGroup.expenses.length} expense{monthGroup.expenses.length !== 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.monthCardTotal}>${monthGroup.total.toFixed(2)}</Text>
+                    </Pressable>
+
+                    {isExpanded && (
+                      <View style={styles.monthExpensesList}>
+                        {monthGroup.expenses.map((expense) => (
+                          <View key={expense.id} style={styles.expenseRow}>
+                            <View style={styles.expenseRowLeft}>
+                              <Text style={styles.expenseRowCategory}>{expense.category}</Text>
+                              <Text style={styles.expenseRowDescription}>{expense.description}</Text>
+                              {expense.merchant && (
+                                <Text style={styles.expenseRowMerchant}>{expense.merchant}</Text>
+                              )}
+                              <Text style={styles.expenseRowDate}>
+                                {new Date(expense.date).toLocaleDateString()}
+                              </Text>
+                            </View>
+                            <Text style={styles.expenseRowAmount}>${expense.amount.toFixed(2)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
         </ScrollView>
       </View>
     </View>
@@ -405,6 +489,115 @@ const styles = StyleSheet.create({
   },
   expenseValue: {
     fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  emptyMonthsContainer: {
+    backgroundColor: 'rgba(220, 190, 255, 0.95)',
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  emptyMonthsText: {
+    fontSize: 16,
+    color: 'rgba(36, 0, 70, 0.7)',
+    fontWeight: '600' as const,
+  },
+  monthCard: {
+    backgroundColor: 'rgba(220, 190, 255, 0.95)',
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  monthCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  monthCardHeaderPressed: {
+    opacity: 0.7,
+  },
+  monthCardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  monthIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthCardLabel: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  currentMonthBadge: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  monthCardCount: {
+    fontSize: 12,
+    color: '#5A189A',
+    marginTop: 2,
+  },
+  monthCardTotal: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  monthExpensesList: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(157, 78, 221, 0.2)',
+  },
+  expenseRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 12,
+  },
+  expenseRowLeft: {
+    flex: 1,
+    gap: 2,
+  },
+  expenseRowCategory: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#5A189A',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  expenseRowDescription: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#240046',
+  },
+  expenseRowMerchant: {
+    fontSize: 12,
+    color: '#7B2CBF',
+  },
+  expenseRowDate: {
+    fontSize: 11,
+    color: '#9D4EDD',
+  },
+  expenseRowAmount: {
+    fontSize: 16,
     fontWeight: '700' as const,
     color: '#240046',
   },
