@@ -403,10 +403,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   positiveValue: {
-    color: '#047857',
+    color: '#FFD700',
   },
   negativeValue: {
-    color: '#B91C1C',
+    color: '#EF4444',
   },
   grandTotalStats: {
     flexDirection: 'row',
