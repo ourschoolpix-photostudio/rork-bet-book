@@ -366,10 +366,10 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   positiveNet: {
-    color: '#FFD700',
+    color: '#10B981',
   },
   negativeNet: {
-    color: '#EF4444',
+    color: '#B91C1C',
   },
   scrollContent: {
     flex: 1,
@@ -403,10 +403,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   positiveValue: {
-    color: '#FFD700',
+    color: '#10B981',
   },
   negativeValue: {
-    color: '#EF4444',
+    color: '#B91C1C',
   },
   grandTotalStats: {
     flexDirection: 'row',
