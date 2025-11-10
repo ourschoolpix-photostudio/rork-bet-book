@@ -340,7 +340,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     width: '100%',
     maxWidth: 600,
-    maxHeight: '90%',
+    maxHeight: '80%',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -366,6 +367,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   body: {
+    flex: 1,
     padding: 24,
   },
   inputGroup: {
