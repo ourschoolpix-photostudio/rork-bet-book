@@ -7,7 +7,12 @@ export type ExpenseCategory =
   | 'Travel'
   | 'Monthly Bill'
   | 'Entertainment'
-  | 'Auto Repair';
+  | 'Auto Repair'
+  | 'Gas'
+  | 'Lottery'
+  | 'Shoes'
+  | 'Electronics'
+  | 'Recreation';
 
 export interface Expense {
   id: string;

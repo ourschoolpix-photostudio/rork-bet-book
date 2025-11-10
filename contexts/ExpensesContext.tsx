@@ -231,6 +231,11 @@ export function useExpensesByCategory(userId: string) {
       'Monthly Bill': 0,
       'Entertainment': 0,
       'Auto Repair': 0,
+      'Gas': 0,
+      'Lottery': 0,
+      'Shoes': 0,
+      'Electronics': 0,
+      'Recreation': 0,
     };
     
     userExpenses.forEach(expense => {
@@ -277,6 +282,11 @@ export function useMonthlyExpenses(userId: string) {
       'Monthly Bill': 0,
       'Entertainment': 0,
       'Auto Repair': 0,
+      'Gas': 0,
+      'Lottery': 0,
+      'Shoes': 0,
+      'Electronics': 0,
+      'Recreation': 0,
     };
     
     monthlyExpenses.forEach(expense => {
@@ -312,6 +322,11 @@ export function useYearToDateExpenses(userId: string) {
       'Monthly Bill': 0,
       'Entertainment': 0,
       'Auto Repair': 0,
+      'Gas': 0,
+      'Lottery': 0,
+      'Shoes': 0,
+      'Electronics': 0,
+      'Recreation': 0,
     };
     
     ytdExpenses.forEach(expense => {

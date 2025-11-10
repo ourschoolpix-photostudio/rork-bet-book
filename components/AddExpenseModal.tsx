@@ -25,6 +25,11 @@ const categories: ExpenseCategory[] = [
   'Monthly Bill',
   'Entertainment',
   'Auto Repair',
+  'Gas',
+  'Lottery',
+  'Shoes',
+  'Electronics',
+  'Recreation',
 ];
 
 export default function AddExpenseModal({ visible, onClose, onSubmit }: AddExpenseModalProps) {
