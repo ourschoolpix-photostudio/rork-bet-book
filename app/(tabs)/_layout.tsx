@@ -2,9 +2,11 @@ import { Tabs, usePathname } from 'expo-router';
 import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign, Target, Receipt } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
   const [showBorrows, setShowBorrows] = useState<boolean>(false);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const visibleTabs = tabs.filter(tab => tab.route !== pathname);
 
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
       {visibleTabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = pathname === tab.route;
