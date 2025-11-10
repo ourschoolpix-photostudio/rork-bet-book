@@ -203,10 +203,11 @@ export default function ExpensesScreen() {
         transparent={true}
         onRequestClose={() => setShowCategoryPicker(false)}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowCategoryPicker(false)}
-        >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFill}
+            onPress={() => setShowCategoryPicker(false)}
+          />
           <View style={styles.categoryPickerModal}>
             <Text style={styles.categoryPickerTitle}>Select Category</Text>
             <ScrollView style={styles.categoryPickerList}>
@@ -244,7 +245,7 @@ export default function ExpensesScreen() {
               ))}
             </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       <Modal
@@ -253,10 +254,11 @@ export default function ExpensesScreen() {
         transparent={true}
         onRequestClose={() => setShowSummary(false)}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowSummary(false)}
-        >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFill}
+            onPress={() => setShowSummary(false)}
+          />
           <View style={styles.summaryModal}>
             <View style={styles.summaryHeader}>
               <Text style={styles.summaryTitle}>Expense Summary</Text>
@@ -307,7 +309,7 @@ export default function ExpensesScreen() {
               )}
             </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       <AddExpenseModal
@@ -517,7 +519,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '70%',
+    height: '70%',
     paddingTop: 24,
   },
   categoryPickerTitle: {
@@ -562,7 +564,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '80%',
+    height: '85%',
   },
   summaryHeader: {
     flexDirection: 'row',
