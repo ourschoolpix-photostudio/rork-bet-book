@@ -24,7 +24,9 @@ export default function SummaryScreen() {
 
   const activeRecurringBills = recurringBills.filter(bill => bill.isActive);
   const monthlyRecurringTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
-  const additionalExpensesTotal = monthlyExpenses.total - monthlyRecurringTotal;
+  
+  const nonRecurringExpenses = monthlyExpenses.expenses.filter(e => !e.isRecurring);
+  const additionalExpensesTotal = nonRecurringExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const toggleMonth = (monthKey: string) => {
     setExpandedMonths(prev => {
