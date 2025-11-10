@@ -225,7 +225,7 @@ export default function SummaryScreen() {
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryHeaderLeft}>
                   <Receipt size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Additional Expenses (Month)</Text>
+                  <Text style={styles.categoryName}>Monthly Expenses</Text>
                 </View>
                 <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
               </View>
