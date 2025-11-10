@@ -47,6 +47,7 @@ export default function ReceiptScannerModal({
     amount: string;
     description: string;
     merchant: string;
+    date: Date;
   } | null>(null);
 
   const handleTakePicture = async () => {
@@ -74,11 +75,13 @@ export default function ReceiptScannerModal({
                 - Total amount (just the number, no currency symbol)
                 - Merchant/Store name
                 - Brief description of items or type of purchase
+                - Date of the receipt (if visible, in YYYY-MM-DD format)
                 
                 Respond in this exact format:
                 AMOUNT: [amount]
                 MERCHANT: [merchant name]
-                DESCRIPTION: [brief description]`,
+                DESCRIPTION: [brief description]
+                DATE: [YYYY-MM-DD or "NOT_FOUND" if no date is visible]`,
               },
               {
                 type: 'image',
@@ -92,16 +95,26 @@ export default function ReceiptScannerModal({
       const amountMatch = result.match(/AMOUNT:\s*([0-9.]+)/);
       const merchantMatch = result.match(/MERCHANT:\s*(.+)/);
       const descriptionMatch = result.match(/DESCRIPTION:\s*(.+)/);
+      const dateMatch = result.match(/DATE:\s*([\d-]+|NOT_FOUND)/);
 
       const amount = amountMatch ? amountMatch[1] : '';
       const merchant = merchantMatch ? merchantMatch[1].trim() : '';
       const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+      
+      let receiptDate = new Date();
+      if (dateMatch && dateMatch[1] !== 'NOT_FOUND') {
+        const parsedDate = new Date(dateMatch[1]);
+        if (!isNaN(parsedDate.getTime())) {
+          receiptDate = parsedDate;
+        }
+      }
 
       setScannedData({
         category: 'Grocery',
         amount,
         description,
         merchant,
+        date: receiptDate,
       });
     } catch (error) {
       console.error('Error processing receipt:', error);
@@ -129,7 +142,7 @@ export default function ReceiptScannerModal({
       scannedData.category,
       parsedAmount,
       scannedData.description.trim(),
-      new Date(),
+      scannedData.date,
       scannedData.merchant.trim() || undefined
     );
 
@@ -265,6 +278,49 @@ export default function ReceiptScannerModal({
                     setScannedData({ ...scannedData, merchant: text })
                   }
                 />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Date</Text>
+                <Pressable
+                  style={styles.dateButton}
+                  onPress={() => {
+                    const dateStr = scannedData.date.toISOString().split('T')[0];
+                    Alert.prompt(
+                      'Edit Date',
+                      'Enter date in YYYY-MM-DD format',
+                      [
+                        {
+                          text: 'Cancel',
+                          style: 'cancel',
+                        },
+                        {
+                          text: 'OK',
+                          onPress: (text?: string) => {
+                            if (text) {
+                              const newDate = new Date(text);
+                              if (!isNaN(newDate.getTime())) {
+                                setScannedData({ ...scannedData, date: newDate });
+                              } else {
+                                Alert.alert('Invalid Date', 'Please enter a valid date');
+                              }
+                            }
+                          },
+                        },
+                      ],
+                      'plain-text',
+                      dateStr
+                    );
+                  }}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {scannedData.date.toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </Pressable>
               </View>
             </ScrollView>
 
@@ -562,6 +618,18 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#9D4EDD',
     letterSpacing: 1,
+  },
+  dateButton: {
+    backgroundColor: 'rgba(157, 78, 221, 0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: '#240046',
   },
   receiptFrame: {
     position: 'absolute' as const,
