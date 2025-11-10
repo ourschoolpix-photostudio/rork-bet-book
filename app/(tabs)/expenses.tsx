@@ -234,7 +234,7 @@ export default function ExpensesScreen() {
                           <View style={styles.monthIconContainer}>
                             <ChevronRight
                               size={20}
-                              color="#240046"
+                              color="#FFFFFF"
                               style={{
                                 transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
                               }}
@@ -286,7 +286,7 @@ export default function ExpensesScreen() {
                                     ]}
                                     onPress={() => handleDeleteExpense(item.id)}
                                   >
-                                    <Trash2 size={18} color="#240046" />
+                                    <Trash2 size={18} color="#FFFFFF" />
                                   </Pressable>
                                 </View>
                               </View>
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   summaryCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#9D4EDD',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#9D4EDD',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#9D4EDD',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   },
   expenseItem: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: '#9D4EDD',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -638,8 +638,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   expenseItemPressed: {
-    opacity: 0.7,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    opacity: 0.8,
+    backgroundColor: '#B57FE6',
   },
   expenseInfo: {
     flex: 1,
@@ -648,22 +648,22 @@ const styles = StyleSheet.create({
   expenseCategory: {
     fontSize: 12,
     fontWeight: '700' as const,
-    color: '#240046',
+    color: '#FFFFFF',
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
   expenseDescription: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#240046',
+    color: '#FFFFFF',
   },
   expenseMerchant: {
     fontSize: 14,
-    color: '#5A189A',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   expenseDate: {
     fontSize: 12,
-    color: '#7B2CBF',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   expenseActions: {
     alignItems: 'flex-end',
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   expenseAmount: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#240046',
+    color: '#FFFFFF',
   },
   expenseButtons: {
     flexDirection: 'row',
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 6,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   iconButtonPressed: {
     opacity: 0.6,
@@ -875,7 +875,7 @@ const styles = StyleSheet.create({
     marginVertical: 24,
   },
   monthCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#9D4EDD',
     borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden' as const,
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: '#9D4EDD',
   },
   monthHeaderPressed: {
     opacity: 0.7,
@@ -902,29 +902,29 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   monthLabel: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: '#240046',
+    color: '#FFFFFF',
   },
   currentMonthBadge: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: '#9D4EDD',
+    color: '#FFD700',
   },
   monthCount: {
     fontSize: 12,
-    color: '#5A189A',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
   monthTotal: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#240046',
+    color: '#FFFFFF',
   },
   monthExpensesList: {
     paddingHorizontal: 12,
