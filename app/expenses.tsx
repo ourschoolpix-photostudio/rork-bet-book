@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useExpenses, useFilteredExpenses, useExpensesByCategory } from '@/contexts/ExpensesContext';
+import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses } from '@/contexts/ExpensesContext';
 import { ExpenseCategory } from '@/types/expense';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
@@ -40,6 +40,8 @@ export default function ExpensesScreen() {
 
   const expenses = useFilteredExpenses(currentUser?.id || '', selectedCategory);
   const expensesByCategory = useExpensesByCategory(currentUser?.id || '');
+  const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
+  const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const { deleteExpense, addExpense, addRecurringBill, deleteRecurringBill } = useExpenses();
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -273,40 +275,87 @@ export default function ExpensesScreen() {
               </Pressable>
             </View>
             <ScrollView style={styles.summaryContent}>
-              <View style={styles.summaryTotalCard}>
-                <Text style={styles.summaryTotalLabel}>Total Expenses</Text>
-                <Text style={styles.summaryTotalAmount}>${totalExpenses.toFixed(2)}</Text>
-              </View>
-              
-              <Text style={styles.summarySubtitle}>By Category</Text>
-              {Object.entries(expensesByCategory)
-                .filter(([_, amount]) => amount > 0)
-                .sort(([_, a], [__, b]) => b - a)
-                .map(([category, amount]) => {
-                  const percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
-                  return (
-                    <View key={category} style={styles.categoryRow}>
-                      <View style={styles.categoryRowInfo}>
-                        <Text style={styles.categoryRowName}>{category}</Text>
-                        <Text style={styles.categoryRowPercentage}>{percentage.toFixed(1)}%</Text>
-                      </View>
-                      <View style={styles.categoryRowBar}>
-                        <View
-                          style={[
-                            styles.categoryRowBarFill,
-                            { width: `${percentage}%` },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.categoryRowAmount}>${amount.toFixed(2)}</Text>
-                    </View>
-                  );
-                })}
-              {Object.values(expensesByCategory).every(amount => amount === 0) && (
-                <View style={styles.emptySummary}>
-                  <Text style={styles.emptySummaryText}>No expenses to display</Text>
+              <View style={styles.summarySection}>
+                <Text style={styles.sectionTitle}>Current Month</Text>
+                <View style={styles.summaryTotalCard}>
+                  <Text style={styles.summaryTotalLabel}>
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </Text>
+                  <Text style={styles.summaryTotalAmount}>${monthlyExpenses.total.toFixed(2)}</Text>
+                  <Text style={styles.summaryCount}>{monthlyExpenses.expenses.length} expense{monthlyExpenses.expenses.length !== 1 ? 's' : ''}</Text>
                 </View>
-              )}
+                
+                {Object.entries(monthlyExpenses.byCategory)
+                  .filter(([_, amount]) => amount > 0)
+                  .sort(([_, a], [__, b]) => b - a)
+                  .map(([category, amount]) => {
+                    const percentage = monthlyExpenses.total > 0 ? (amount / monthlyExpenses.total) * 100 : 0;
+                    return (
+                      <View key={`monthly-${category}`} style={styles.categoryRow}>
+                        <View style={styles.categoryRowInfo}>
+                          <Text style={styles.categoryRowName}>{category}</Text>
+                          <Text style={styles.categoryRowPercentage}>{percentage.toFixed(1)}%</Text>
+                        </View>
+                        <View style={styles.categoryRowBar}>
+                          <View
+                            style={[
+                              styles.categoryRowBarFill,
+                              { width: `${percentage}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.categoryRowAmount}>${amount.toFixed(2)}</Text>
+                      </View>
+                    );
+                  })}
+                {Object.values(monthlyExpenses.byCategory).every(amount => amount === 0) && (
+                  <View style={styles.emptySummary}>
+                    <Text style={styles.emptySummaryText}>No expenses this month</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.summaryDivider} />
+
+              <View style={styles.summarySection}>
+                <Text style={styles.sectionTitle}>Year to Date</Text>
+                <View style={styles.summaryTotalCard}>
+                  <Text style={styles.summaryTotalLabel}>
+                    {new Date().getFullYear()} Total
+                  </Text>
+                  <Text style={styles.summaryTotalAmount}>${ytdExpenses.total.toFixed(2)}</Text>
+                  <Text style={styles.summaryCount}>{ytdExpenses.expenses.length} expense{ytdExpenses.expenses.length !== 1 ? 's' : ''}</Text>
+                </View>
+                
+                {Object.entries(ytdExpenses.byCategory)
+                  .filter(([_, amount]) => amount > 0)
+                  .sort(([_, a], [__, b]) => b - a)
+                  .map(([category, amount]) => {
+                    const percentage = ytdExpenses.total > 0 ? (amount / ytdExpenses.total) * 100 : 0;
+                    return (
+                      <View key={`ytd-${category}`} style={styles.categoryRow}>
+                        <View style={styles.categoryRowInfo}>
+                          <Text style={styles.categoryRowName}>{category}</Text>
+                          <Text style={styles.categoryRowPercentage}>{percentage.toFixed(1)}%</Text>
+                        </View>
+                        <View style={styles.categoryRowBar}>
+                          <View
+                            style={[
+                              styles.categoryRowBarFill,
+                              { width: `${percentage}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.categoryRowAmount}>${amount.toFixed(2)}</Text>
+                      </View>
+                    );
+                  })}
+                {Object.values(ytdExpenses.byCategory).every(amount => amount === 0) && (
+                  <View style={styles.emptySummary}>
+                    <Text style={styles.emptySummaryText}>No expenses this year</Text>
+                  </View>
+                )}
+              </View>
             </ScrollView>
           </View>
         </View>
@@ -662,5 +711,25 @@ const styles = StyleSheet.create({
   emptySummaryText: {
     fontSize: 16,
     color: 'rgba(36, 0, 70, 0.6)',
+  },
+  summarySection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#240046',
+    marginBottom: 16,
+  },
+  summaryCount: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#7B2CBF',
+    marginTop: 8,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: 'rgba(157, 78, 221, 0.2)',
+    marginVertical: 24,
   },
 });

@@ -250,3 +250,74 @@ export function useRecurringBillsByUser(userId: string) {
       .sort((a, b) => a.dueDay - b.dueDay);
   }, [recurringBills, userId]);
 }
+
+export function useMonthlyExpenses(userId: string) {
+  const { expenses } = useExpenses();
+  
+  return useMemo(() => {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const monthlyExpenses = expenses.filter(e => {
+      if (e.userId !== userId) return false;
+      const expenseDate = new Date(e.date);
+      return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth;
+    });
+    
+    const total = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    const byCategory: Record<ExpenseCategory, number> = {
+      'Grocery': 0,
+      'Household': 0,
+      'Fast Food': 0,
+      'Convenience Store': 0,
+      'Clothing': 0,
+      'Travel': 0,
+      'Monthly Bill': 0,
+      'Entertainment': 0,
+      'Auto Repair': 0,
+    };
+    
+    monthlyExpenses.forEach(expense => {
+      byCategory[expense.category] += expense.amount;
+    });
+    
+    return { total, byCategory, expenses: monthlyExpenses };
+  }, [expenses, userId]);
+}
+
+export function useYearToDateExpenses(userId: string) {
+  const { expenses } = useExpenses();
+  
+  return useMemo(() => {
+    const now = new Date();
+    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+    
+    const ytdExpenses = expenses.filter(e => {
+      if (e.userId !== userId) return false;
+      const expenseDate = new Date(e.date);
+      return expenseDate >= firstDayOfYear;
+    });
+    
+    const total = ytdExpenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    const byCategory: Record<ExpenseCategory, number> = {
+      'Grocery': 0,
+      'Household': 0,
+      'Fast Food': 0,
+      'Convenience Store': 0,
+      'Clothing': 0,
+      'Travel': 0,
+      'Monthly Bill': 0,
+      'Entertainment': 0,
+      'Auto Repair': 0,
+    };
+    
+    ytdExpenses.forEach(expense => {
+      byCategory[expense.category] += expense.amount;
+    });
+    
+    return { total, byCategory, expenses: ytdExpenses };
+  }, [expenses, userId]);
+}
