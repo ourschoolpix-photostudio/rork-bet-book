@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
 import RecurringBillsModal from '@/components/RecurringBillsModal';
@@ -84,9 +84,16 @@ export default function ExpensesScreen() {
         }}
       />
 
-      <LinearGradient
-        colors={['#9D4EDD', '#7B2CBF', '#5A189A']}
+      <ImageBackground
+        source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/pmhxsgkxjukxadd3cvfc3' }}
         style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      >
+        <View style={styles.purpleOverlay} />
+      </ImageBackground>
+      <LinearGradient
+        colors={['rgba(157, 78, 221, 0.7)', 'rgba(123, 44, 191, 0.7)', 'rgba(90, 24, 154, 0.7)', 'rgba(36, 0, 70, 0.7)', 'rgba(16, 0, 43, 0.7)']}
+        style={styles.gradientOverlay}
       />
 
       <View style={styles.contentWrapper}>
@@ -406,6 +413,13 @@ export default function ExpensesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  purpleOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(157, 78, 221, 0.3)',
+  },
+  gradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   contentWrapper: {
     flex: 1,
