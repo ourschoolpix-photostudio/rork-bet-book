@@ -16,20 +16,20 @@ interface AddExpenseModalProps {
 }
 
 const categories: ExpenseCategory[] = [
+  'Auto Repair',
+  'Clothing',
+  'Convenience Store',
+  'Electronics',
+  'Entertainment',
+  'Fast Food',
+  'Gas',
   'Grocery',
   'Household',
-  'Fast Food',
-  'Convenience Store',
-  'Clothing',
-  'Travel',
-  'Monthly Bill',
-  'Entertainment',
-  'Auto Repair',
-  'Gas',
   'Lottery',
-  'Shoes',
-  'Electronics',
+  'Monthly Bill',
   'Recreation',
+  'Shoes',
+  'Travel',
 ];
 
 export default function AddExpenseModal({ visible, onClose, onSubmit }: AddExpenseModalProps) {

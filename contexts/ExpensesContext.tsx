@@ -222,20 +222,20 @@ export function useExpensesByCategory(userId: string) {
   return useMemo(() => {
     const userExpenses = expenses.filter(e => e.userId === userId);
     const byCategory: Record<ExpenseCategory, number> = {
+      'Auto Repair': 0,
+      'Clothing': 0,
+      'Convenience Store': 0,
+      'Electronics': 0,
+      'Entertainment': 0,
+      'Fast Food': 0,
+      'Gas': 0,
       'Grocery': 0,
       'Household': 0,
-      'Fast Food': 0,
-      'Convenience Store': 0,
-      'Clothing': 0,
-      'Travel': 0,
-      'Monthly Bill': 0,
-      'Entertainment': 0,
-      'Auto Repair': 0,
-      'Gas': 0,
       'Lottery': 0,
-      'Shoes': 0,
-      'Electronics': 0,
+      'Monthly Bill': 0,
       'Recreation': 0,
+      'Shoes': 0,
+      'Travel': 0,
     };
     
     userExpenses.forEach(expense => {
@@ -273,20 +273,20 @@ export function useMonthlyExpenses(userId: string) {
     const total = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
     
     const byCategory: Record<ExpenseCategory, number> = {
+      'Auto Repair': 0,
+      'Clothing': 0,
+      'Convenience Store': 0,
+      'Electronics': 0,
+      'Entertainment': 0,
+      'Fast Food': 0,
+      'Gas': 0,
       'Grocery': 0,
       'Household': 0,
-      'Fast Food': 0,
-      'Convenience Store': 0,
-      'Clothing': 0,
-      'Travel': 0,
-      'Monthly Bill': 0,
-      'Entertainment': 0,
-      'Auto Repair': 0,
-      'Gas': 0,
       'Lottery': 0,
-      'Shoes': 0,
-      'Electronics': 0,
+      'Monthly Bill': 0,
       'Recreation': 0,
+      'Shoes': 0,
+      'Travel': 0,
     };
     
     monthlyExpenses.forEach(expense => {
@@ -313,20 +313,20 @@ export function useYearToDateExpenses(userId: string) {
     const total = ytdExpenses.reduce((sum, e) => sum + e.amount, 0);
     
     const byCategory: Record<ExpenseCategory, number> = {
+      'Auto Repair': 0,
+      'Clothing': 0,
+      'Convenience Store': 0,
+      'Electronics': 0,
+      'Entertainment': 0,
+      'Fast Food': 0,
+      'Gas': 0,
       'Grocery': 0,
       'Household': 0,
-      'Fast Food': 0,
-      'Convenience Store': 0,
-      'Clothing': 0,
-      'Travel': 0,
-      'Monthly Bill': 0,
-      'Entertainment': 0,
-      'Auto Repair': 0,
-      'Gas': 0,
       'Lottery': 0,
-      'Shoes': 0,
-      'Electronics': 0,
+      'Monthly Bill': 0,
       'Recreation': 0,
+      'Shoes': 0,
+      'Travel': 0,
     };
     
     ytdExpenses.forEach(expense => {

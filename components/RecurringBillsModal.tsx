@@ -18,15 +18,20 @@ interface RecurringBillsModalProps {
 }
 
 const categories: ExpenseCategory[] = [
+  'Auto Repair',
+  'Clothing',
+  'Convenience Store',
+  'Electronics',
+  'Entertainment',
+  'Fast Food',
+  'Gas',
   'Grocery',
   'Household',
-  'Fast Food',
-  'Convenience Store',
-  'Clothing',
-  'Travel',
+  'Lottery',
   'Monthly Bill',
-  'Entertainment',
-  'Auto Repair',
+  'Recreation',
+  'Shoes',
+  'Travel',
 ];
 
 export default function RecurringBillsModal({

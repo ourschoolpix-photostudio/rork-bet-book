@@ -1,18 +1,18 @@
 export type ExpenseCategory = 
+  | 'Auto Repair'
+  | 'Clothing'
+  | 'Convenience Store'
+  | 'Electronics'
+  | 'Entertainment'
+  | 'Fast Food'
+  | 'Gas'
   | 'Grocery'
   | 'Household'
-  | 'Fast Food'
-  | 'Convenience Store'
-  | 'Clothing'
-  | 'Travel'
-  | 'Monthly Bill'
-  | 'Entertainment'
-  | 'Auto Repair'
-  | 'Gas'
   | 'Lottery'
+  | 'Monthly Bill'
+  | 'Recreation'
   | 'Shoes'
-  | 'Electronics'
-  | 'Recreation';
+  | 'Travel';
 
 export interface Expense {
   id: string;
