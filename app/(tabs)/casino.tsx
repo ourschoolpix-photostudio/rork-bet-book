@@ -576,6 +576,7 @@ export default function CasinoScreen() {
             borrowFrom: editingCompletedSession.borrowFrom,
             startDate: new Date(editingCompletedSession.startTime),
             endDate: editingCompletedSession.endTime ? new Date(editingCompletedSession.endTime) : undefined,
+            endAmount: editingCompletedSession.endAmount,
           }}
           isCompleted={true}
         />

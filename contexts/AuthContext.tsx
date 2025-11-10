@@ -160,6 +160,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     borrowFrom?: string;
     startDate: Date;
     endDate?: Date;
+    endAmount?: number;
   }) => {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) return;
@@ -179,10 +180,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       totalInvestment,
       startTime: data.startDate.toISOString(),
       endTime: data.endDate ? data.endDate.toISOString() : session.endTime,
+      endAmount: data.endAmount !== undefined ? data.endAmount : session.endAmount,
     };
 
-    if (data.endDate && session.endAmount !== undefined) {
-      updatedSession.winLoss = session.endAmount - updatedSession.totalInvestment;
+    if (updatedSession.endAmount !== undefined) {
+      updatedSession.winLoss = updatedSession.endAmount - updatedSession.totalInvestment;
     }
 
     const updatedSessions = sessions.map(s => s.id === sessionId ? updatedSession : s);

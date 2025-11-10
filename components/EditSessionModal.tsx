@@ -25,6 +25,7 @@ interface EditSessionModalProps {
     borrowFrom?: string;
     startDate: Date;
     endDate?: Date;
+    endAmount?: number;
   }) => void;
   initialData: {
     casinoName: string;
@@ -36,6 +37,7 @@ interface EditSessionModalProps {
     borrowFrom?: string;
     startDate: Date;
     endDate?: Date;
+    endAmount?: number;
   };
   isCompleted?: boolean;
 }
@@ -55,6 +57,7 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
   const [endDateString, setEndDateString] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [endAmPm, setEndAmPm] = useState<'AM' | 'PM'>('AM');
+  const [endAmount, setEndAmount] = useState<string>('');
   const [gameType, setGameType] = useState<GameType | undefined>(undefined);
 
   useEffect(() => {
@@ -97,10 +100,12 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
         if (endHours12 === 0) endHours12 = 12;
         setEndTime(`${String(endHours12).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`);
         setEndAmPm(endIsAM ? 'AM' : 'PM');
+        setEndAmount((initialData.endAmount * 100).toString());
       } else {
         setEndDateString('');
         setEndTime('');
         setEndAmPm('AM');
+        setEndAmount('');
       }
     }
   }, [visible, initialData]);
@@ -159,6 +164,7 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
         borrowFrom: addOnCategory === 'Borrow' ? borrowFrom : undefined,
         startDate: finalStartDate,
         endDate: finalEndDate,
+        endAmount: isCompleted && endAmount ? parseFloat(endAmount) / 100 : undefined,
       });
       handleClose();
     }
@@ -589,6 +595,19 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
                         </View>
                       </View>
                     </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Ending Amount</Text>
+                      <TextInput
+                        style={styles.currencyInput}
+                        placeholder="$0.00"
+                        placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                        value={displayCurrency(endAmount)}
+                        onChangeText={(text) => handleCurrencyChange(text, setEndAmount)}
+                        keyboardType="numeric"
+                        testID="edit-end-amount-input"
+                      />
+                    </View>
                   </>
                 )}
 
@@ -703,10 +722,10 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
           <View style={styles.modalFooter}>
             <Pressable
               onPress={handleSubmit}
-              disabled={!selectedState || !selectedCasino || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime))}
+              disabled={!selectedState || !selectedCasino || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime || !endAmount))}
               style={({ pressed }) => [
                 styles.submitButton,
-                (!selectedState || !selectedCasino || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime))) && styles.submitButtonDisabled,
+                (!selectedState || !selectedCasino || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime || !endAmount))) && styles.submitButtonDisabled,
                 pressed && styles.submitButtonPressed,
               ]}
               testID="submit-edit-session-button"
