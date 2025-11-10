@@ -194,7 +194,7 @@ export default function ExpensesScreen() {
                       ]}
                       onPress={() => handleDeleteExpense(item.id)}
                     >
-                      <Trash2 size={18} color="#FFFFFF" />
+                      <Trash2 size={18} color="#240046" />
                     </Pressable>
                   </View>
                 </View>
@@ -528,22 +528,22 @@ const styles = StyleSheet.create({
   expenseCategory: {
     fontSize: 12,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    color: '#240046',
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
   expenseDescription: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#FFFFFF',
+    color: '#240046',
   },
   expenseMerchant: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#5A189A',
   },
   expenseDate: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: '#7B2CBF',
   },
   expenseActions: {
     alignItems: 'flex-end',
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   expenseAmount: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    color: '#240046',
   },
   expenseButtons: {
     flexDirection: 'row',
