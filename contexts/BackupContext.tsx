@@ -10,6 +10,7 @@ import { useLoans } from './LoanContext';
 import { useBorrows } from './BorrowContext';
 import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
+import { useExpenses } from './ExpensesContext';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -20,6 +21,8 @@ const STORAGE_KEYS = [
   '@casino_tracker_borrows',
   '@casino_tracker_bets',
   '@casino_tracker_sports_bets',
+  '@casino_tracker_expenses',
+  '@casino_tracker_recurring_bills',
 ];
 
 export interface BackupData {
@@ -34,6 +37,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadBorrows } = useBorrows();
   const { reloadBets } = useBets();
   const { reloadSportsBets } = useSportsBets();
+  const { reloadAllData: reloadExpenses } = useExpenses();
   const createBackup = useCallback(async (): Promise<boolean> => {
     try {
       console.log('Starting backup creation...');
@@ -206,6 +210,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
                 reloadBorrows(),
                 reloadBets(),
                 reloadSportsBets(),
+                reloadExpenses(),
               ]);
               console.log('All contexts reloaded successfully');
               
@@ -268,6 +273,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
           reloadBorrows(),
           reloadBets(),
           reloadSportsBets(),
+          reloadExpenses(),
         ]);
         console.log('All contexts reloaded successfully');
         
@@ -282,7 +288,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets]);
+  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
 
   return useMemo(() => ({
     createBackup,
