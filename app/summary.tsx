@@ -1,9 +1,10 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBets } from '@/contexts/BetsContext';
 import { useSportsBets } from '@/contexts/SportsBetsContext';
+import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar } from 'lucide-react-native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,6 +14,14 @@ export default function SummaryScreen() {
   const { sportsBets } = useSportsBets();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
+  const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
+  const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
+
+  const activeRecurringBills = recurringBills.filter(bill => bill.isActive);
+  const monthlyRecurringTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const additionalExpensesTotal = monthlyExpenses.total - monthlyRecurringTotal;
 
   const casinoStats = completedSessions.reduce(
     (acc, session) => {
@@ -171,6 +180,46 @@ export default function SummaryScreen() {
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Bets</Text>
                   <Text style={styles.categoryStatValue}>{userSportsBets.length}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.categoriesContainer}>
+            <Text style={styles.sectionTitle}>Expenses</Text>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Calendar size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Monthly Recurring Bills</Text>
+                </View>
+                <Text style={styles.expenseValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.categoryStats}>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Active Bills</Text>
+                  <Text style={styles.categoryStatValue}>{activeRecurringBills.length}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Receipt size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Additional Expenses (Month)</Text>
+                </View>
+                <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.categoryStats}>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Total Expenses</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyExpenses.total.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
+                  <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
                 </View>
               </View>
             </View>
@@ -345,6 +394,17 @@ const styles = StyleSheet.create({
   },
   categoryStatValue: {
     fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  categoryHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  expenseValue: {
+    fontSize: 18,
     fontWeight: '700' as const,
     color: '#240046',
   },
