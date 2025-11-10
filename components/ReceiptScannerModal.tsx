@@ -2,7 +2,7 @@ import { ExpenseCategory } from '@/types/expense';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { X, Camera as CameraIcon } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { generateText } from '@rork-ai/toolkit-sdk';
 
 interface ReceiptScannerModalProps {
@@ -308,6 +308,13 @@ export default function ReceiptScannerModal({
               <Text style={styles.instructionText}>Position receipt in frame</Text>
             </View>
 
+            <View style={styles.receiptFrame}>
+              <View style={styles.frameCorner} />
+              <View style={[styles.frameCorner, styles.frameCornerTopRight]} />
+              <View style={[styles.frameCorner, styles.frameCornerBottomLeft]} />
+              <View style={[styles.frameCorner, styles.frameCornerBottomRight]} />
+            </View>
+
             <View style={styles.cameraControls}>
               <Pressable
                 onPress={handleTakePicture}
@@ -345,8 +352,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     width: '100%',
     maxWidth: 600,
-    maxHeight: '80%',
-    overflow: 'hidden',
+    maxHeight: Platform.OS === 'web' ? '85%' : Dimensions.get('window').height * 0.85,
   },
   header: {
     flexDirection: 'row',
@@ -372,7 +378,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   body: {
-    flex: 1,
+    maxHeight: Platform.OS === 'web' ? '500px' : Dimensions.get('window').height * 0.5,
     padding: 24,
   },
   inputGroup: {
@@ -556,5 +562,55 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#9D4EDD',
     letterSpacing: 1,
+  },
+  receiptFrame: {
+    position: 'absolute' as const,
+    top: '20%',
+    left: '10%',
+    right: '10%',
+    bottom: '25%',
+    borderWidth: 2,
+    borderColor: '#9D4EDD',
+    borderRadius: 12,
+  },
+  frameCorner: {
+    position: 'absolute' as const,
+    width: 40,
+    height: 40,
+    borderColor: '#FFFFFF',
+    borderWidth: 4,
+    top: -2,
+    left: -2,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderTopLeftRadius: 12,
+  },
+  frameCornerTopRight: {
+    left: undefined,
+    right: -2,
+    borderLeftWidth: 0,
+    borderRightWidth: 4,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 12,
+  },
+  frameCornerBottomLeft: {
+    top: undefined,
+    bottom: -2,
+    borderTopWidth: 0,
+    borderBottomWidth: 4,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 12,
+  },
+  frameCornerBottomRight: {
+    top: undefined,
+    bottom: -2,
+    left: undefined,
+    right: -2,
+    borderLeftWidth: 0,
+    borderRightWidth: 4,
+    borderTopWidth: 0,
+    borderBottomWidth: 4,
+    borderTopLeftRadius: 0,
+    borderBottomRightRadius: 12,
   },
 });
