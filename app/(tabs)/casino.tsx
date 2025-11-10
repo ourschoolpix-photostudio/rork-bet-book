@@ -172,6 +172,22 @@ export default function CasinoScreen() {
     return `${hours}h ${minutes}m`;
   };
 
+  const calculateWinsPerTime = (winLoss: number, startTime: string, endTime?: string) => {
+    const start = new Date(startTime);
+    const end = endTime ? new Date(endTime) : new Date();
+    const diffMs = end.getTime() - start.getTime();
+    const hours = diffMs / (1000 * 60 * 60);
+    const minutes = diffMs / (1000 * 60);
+    
+    if (hours < 1) {
+      const winsPerMinute = winLoss / minutes;
+      return `${winsPerMinute.toFixed(2)}/min`;
+    } else {
+      const winsPerHour = winLoss / hours;
+      return `${winsPerHour.toFixed(2)}/hr`;
+    }
+  };
+
   const totalStats = completedSessions.reduce(
     (acc, session) => {
       const winLoss = session.winLoss || 0;
@@ -524,6 +540,12 @@ export default function CasinoScreen() {
                           <Text style={styles.sessionStatLabel}>Amount Won</Text>
                           <Text style={[styles.sessionStatValue, styles.amountWonText]}>
                             {session.winLoss! >= 0 ? '+' : ''}${session.winLoss!.toFixed(2)}
+                          </Text>
+                        </View>
+                        <View style={styles.sessionStatRightItem}>
+                          <Text style={styles.sessionStatLabel}>Wins Per Time</Text>
+                          <Text style={[styles.sessionStatValue, session.winLoss! >= 0 ? styles.winText : styles.lossText]}>
+                            {calculateWinsPerTime(session.winLoss!, session.startTime, session.endTime)}
                           </Text>
                         </View>
                       </View>
