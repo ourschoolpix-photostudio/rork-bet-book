@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   positiveNet: {
-    color: '#10B981',
+    color: '#047857',
   },
   negativeNet: {
     color: '#B91C1C',
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   positiveValue: {
-    color: '#10B981',
+    color: '#047857',
   },
   negativeValue: {
     color: '#B91C1C',
