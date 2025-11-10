@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses, useExpensesByMonth } from '@/contexts/ExpensesContext';
-import { ExpenseCategory } from '@/types/expense';
+import { ExpenseCategory, Expense } from '@/types/expense';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
@@ -38,6 +38,7 @@ export default function ExpensesScreen() {
   const [showCategoryPicker, setShowCategoryPicker] = useState<boolean>(false);
   const [showSummary, setShowSummary] = useState<boolean>(false);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
     if (!currentUser) {
@@ -50,7 +51,7 @@ export default function ExpensesScreen() {
   const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
-  const { deleteExpense, addExpense, addRecurringBill, deleteRecurringBill } = useExpenses();
+  const { deleteExpense, addExpense, updateExpense, addRecurringBill, deleteRecurringBill } = useExpenses();
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
@@ -64,6 +65,11 @@ export default function ExpensesScreen() {
       }
       return newSet;
     });
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setShowAddExpenseModal(true);
   };
 
   const handleDeleteExpense = (expenseId: string) => {
@@ -81,6 +87,11 @@ export default function ExpensesScreen() {
         },
       ]
     );
+  };
+
+  const handleCloseModal = () => {
+    setShowAddExpenseModal(false);
+    setEditingExpense(null);
   };
 
   if (!currentUser) {
@@ -247,7 +258,14 @@ export default function ExpensesScreen() {
                       {isExpanded && (
                         <View style={styles.monthExpensesList}>
                           {filteredExpenses.map((item) => (
-                            <View key={item.id} style={styles.expenseItem}>
+                            <Pressable
+                              key={item.id}
+                              style={({ pressed }) => [
+                                styles.expenseItem,
+                                pressed && styles.expenseItemPressed,
+                              ]}
+                              onPress={() => handleEditExpense(item)}
+                            >
                               <View style={styles.expenseInfo}>
                                 <Text style={styles.expenseCategory}>{item.category}</Text>
                                 <Text style={styles.expenseDescription}>{item.description}</Text>
@@ -272,7 +290,7 @@ export default function ExpensesScreen() {
                                   </Pressable>
                                 </View>
                               </View>
-                            </View>
+                            </Pressable>
                           ))}
                         </View>
                       )}
@@ -448,10 +466,15 @@ export default function ExpensesScreen() {
 
       <AddExpenseModal
         visible={showAddExpenseModal}
-        onClose={() => setShowAddExpenseModal(false)}
+        onClose={handleCloseModal}
+        editingExpense={editingExpense}
         onSubmit={async (category, amount, description, date, merchant) => {
           if (currentUser) {
-            await addExpense(currentUser.id, category, amount, description, date, merchant);
+            if (editingExpense) {
+              await updateExpense(editingExpense.id, category, amount, description, date, merchant);
+            } else {
+              await addExpense(currentUser.id, category, amount, description, date, merchant);
+            }
           }
         }}
       />
@@ -592,6 +615,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     gap: 12,
+  },
+  expenseItemPressed: {
+    opacity: 0.7,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
   },
   expenseInfo: {
     flex: 1,

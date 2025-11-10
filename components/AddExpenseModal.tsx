@@ -1,6 +1,6 @@
-import { ExpenseCategory } from '@/types/expense';
+import { ExpenseCategory, Expense } from '@/types/expense';
 import { X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
 interface AddExpenseModalProps {
@@ -13,6 +13,7 @@ interface AddExpenseModalProps {
     date: Date,
     merchant?: string
   ) => Promise<void>;
+  editingExpense?: Expense | null;
 }
 
 const categories: ExpenseCategory[] = [
@@ -32,12 +33,28 @@ const categories: ExpenseCategory[] = [
   'Travel',
 ];
 
-export default function AddExpenseModal({ visible, onClose, onSubmit }: AddExpenseModalProps) {
+export default function AddExpenseModal({ visible, onClose, onSubmit, editingExpense }: AddExpenseModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory>('Grocery');
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [merchant, setMerchant] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (editingExpense) {
+      setSelectedCategory(editingExpense.category);
+      setAmount(editingExpense.amount.toString());
+      setDescription(editingExpense.description);
+      setMerchant(editingExpense.merchant || '');
+      setDate(new Date(editingExpense.date));
+    } else {
+      setSelectedCategory('Grocery');
+      setAmount('');
+      setDescription('');
+      setMerchant('');
+      setDate(new Date());
+    }
+  }, [editingExpense, visible]);
 
   const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount);
@@ -77,7 +94,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit }: AddExpen
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.modal}>
               <View style={styles.header}>
-                <Text style={styles.title}>Add Expense</Text>
+                <Text style={styles.title}>{editingExpense ? 'Edit Expense' : 'Add Expense'}</Text>
                 <Pressable
                   onPress={onClose}
                   style={({ pressed }) => [
@@ -179,7 +196,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit }: AddExpen
                   ]}
                   testID="submit-expense-button"
                 >
-                  <Text style={styles.submitButtonText}>Add Expense</Text>
+                  <Text style={styles.submitButtonText}>{editingExpense ? 'Update Expense' : 'Add Expense'}</Text>
                 </Pressable>
               </View>
             </View>
