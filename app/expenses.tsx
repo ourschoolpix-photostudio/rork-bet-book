@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#D4A5F5',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
