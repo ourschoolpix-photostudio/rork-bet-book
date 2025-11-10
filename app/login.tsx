@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { LogIn, UserPlus } from 'lucide-react-native';
@@ -83,7 +84,7 @@ export default function LoginScreen() {
   if (isLoading) {
     return (
       <ImageBackground
-        source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/pmhxsgkxjukxadd3cvfc3' }}
+        source={{ uri: WALLPAPER_URL }}
         style={styles.container}
         resizeMode="cover"
       >
@@ -103,7 +104,7 @@ export default function LoginScreen() {
 
   return (
     <ImageBackground
-      source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/pmhxsgkxjukxadd3cvfc3' }}
+      source={{ uri: WALLPAPER_URL }}
       style={styles.container}
       resizeMode="cover"
     >

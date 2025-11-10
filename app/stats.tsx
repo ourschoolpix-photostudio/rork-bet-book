@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
@@ -28,7 +29,7 @@ export default function StatsScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/pmhxsgkxjukxadd3cvfc3' }}
+        source={{ uri: WALLPAPER_URL }}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       >

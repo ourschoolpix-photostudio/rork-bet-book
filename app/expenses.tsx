@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses } from '@/contexts/ExpensesContext';
 import { ExpenseCategory } from '@/types/expense';
+import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3 } from 'lucide-react-native';
@@ -85,7 +86,7 @@ export default function ExpensesScreen() {
       />
 
       <ImageBackground
-        source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/pmhxsgkxjukxadd3cvfc3' }}
+        source={{ uri: WALLPAPER_URL }}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       >

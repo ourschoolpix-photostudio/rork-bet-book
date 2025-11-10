@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBorrows } from '@/contexts/BorrowContext';
+import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Plus, Trash2, DollarSign, Pencil } from 'lucide-react-native';
@@ -158,7 +159,7 @@ export default function BorrowsScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/pmhxsgkxjukxadd3cvfc3' }}
+        source={{ uri: WALLPAPER_URL }}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       >
