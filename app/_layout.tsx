@@ -10,6 +10,7 @@ import { BorrowProvider } from "@/contexts/BorrowContext";
 import { BetsProvider } from "@/contexts/BetsContext";
 import { SportsBetsProvider } from "@/contexts/SportsBetsContext";
 import { BackupProvider } from "@/contexts/BackupContext";
+import { ExpensesProvider } from "@/contexts/ExpensesContext";
 
 LogBox.ignoreLogs([
   'Deep imports from the \'react-native\' package are deprecated',
@@ -26,6 +27,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="bets" options={{ headerShown: false }} />
       <Stack.Screen name="stats" options={{ headerShown: false }} />
+      <Stack.Screen name="expenses" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );
@@ -52,11 +54,13 @@ export default function RootLayout() {
           <BorrowProvider>
             <BetsProvider>
               <SportsBetsProvider>
-                <BackupProvider>
-                  <GestureHandlerRootView style={styles.container}>
-                    <RootLayoutNav />
-                  </GestureHandlerRootView>
-                </BackupProvider>
+                <ExpensesProvider>
+                  <BackupProvider>
+                    <GestureHandlerRootView style={styles.container}>
+                      <RootLayoutNav />
+                    </GestureHandlerRootView>
+                  </BackupProvider>
+                </ExpensesProvider>
               </SportsBetsProvider>
             </BetsProvider>
           </BorrowProvider>

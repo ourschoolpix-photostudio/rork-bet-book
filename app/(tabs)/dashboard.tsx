@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBackup } from '@/contexts/BackupContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { LogOut, Edit2, X, Download, Upload } from 'lucide-react-native';
+import { LogOut, Edit2, X, Download, Upload, DollarSign } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -154,6 +154,20 @@ export default function DashboardScreen() {
               </Pressable>
             </View>
           </View>
+        </View>
+
+        <View style={styles.expensesButtonContainer}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.expensesButton,
+              pressed && styles.expensesButtonPressed,
+            ]}
+            onPress={() => router.push('/expenses')}
+            testID="my-expenses-button"
+          >
+            <DollarSign size={24} color="#FFFFFF" />
+            <Text style={styles.expensesButtonText}>My Expenses</Text>
+          </Pressable>
         </View>
 
         <View style={styles.cardsContainer}>
@@ -581,6 +595,32 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(157, 78, 221, 0.2)',
     letterSpacing: 8,
     textAlign: 'center' as const,
+  },
+  expensesButtonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  expensesButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  expensesButtonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
+  },
+  expensesButtonText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   editProfileFooter: {
     padding: 24,
