@@ -66,7 +66,8 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     description: string,
     date: Date,
     merchant?: string,
-    isRecurring?: boolean
+    isRecurring?: boolean,
+    notes?: string
   ) => {
     const newExpense: Expense = {
       id: `expense-${Date.now()}`,
@@ -78,6 +79,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
       date: date.toISOString(),
       createdAt: new Date().toISOString(),
       isRecurring,
+      notes,
     };
 
     const updatedExpenses = [...expenses, newExpense];
@@ -91,11 +93,12 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     amount: number,
     description: string,
     date: Date,
-    merchant?: string
+    merchant?: string,
+    notes?: string
   ) => {
     const updatedExpenses = expenses.map(e =>
       e.id === expenseId
-        ? { ...e, category, amount, description, date: date.toISOString(), merchant }
+        ? { ...e, category, amount, description, date: date.toISOString(), merchant, notes }
         : e
     );
     setExpenses(updatedExpenses);

@@ -24,6 +24,7 @@ export interface Expense {
   date: string;
   createdAt: string;
   isRecurring?: boolean;
+  notes?: string;
 }
 
 export interface RecurringBill {

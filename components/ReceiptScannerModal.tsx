@@ -13,7 +13,8 @@ interface ReceiptScannerModalProps {
     amount: number,
     description: string,
     date: Date,
-    merchant?: string
+    merchant?: string,
+    notes?: string
   ) => Promise<void>;
 }
 
@@ -48,6 +49,7 @@ export default function ReceiptScannerModal({
     description: string;
     merchant: string;
     date: Date;
+    notes: string;
   } | null>(null);
 
   const handleTakePicture = async () => {
@@ -76,12 +78,16 @@ export default function ReceiptScannerModal({
                 - Merchant/Store name
                 - Brief description of items or type of purchase
                 - Date of the receipt (if visible, in YYYY-MM-DD format)
+                - Determine if this is an auto repair receipt
+                - If it's an auto repair, extract detailed notes about the services/items (as bullet points)
                 
                 Respond in this exact format:
                 AMOUNT: [amount]
                 MERCHANT: [merchant name]
                 DESCRIPTION: [brief description]
-                DATE: [YYYY-MM-DD or "NOT_FOUND" if no date is visible]`,
+                DATE: [YYYY-MM-DD or "NOT_FOUND" if no date is visible]
+                IS_AUTO_REPAIR: [YES or NO]
+                NOTES: [bullet points of services/items, separated by newlines with "• " prefix, or "NONE" if not auto repair or no details]`,
               },
               {
                 type: 'image',
@@ -93,13 +99,22 @@ export default function ReceiptScannerModal({
       });
 
       const amountMatch = result.match(/AMOUNT:\s*([0-9.]+)/);
-      const merchantMatch = result.match(/MERCHANT:\s*(.+)/);
-      const descriptionMatch = result.match(/DESCRIPTION:\s*(.+)/);
+      const merchantMatch = result.match(/MERCHANT:\s*(.+?)(?=\n|$)/);
+      const descriptionMatch = result.match(/DESCRIPTION:\s*(.+?)(?=\n|$)/);
       const dateMatch = result.match(/DATE:\s*([\d-]+|NOT_FOUND)/);
+      const isAutoRepairMatch = result.match(/IS_AUTO_REPAIR:\s*(YES|NO)/);
+      const notesMatch = result.match(/NOTES:\s*([\s\S]+?)(?=\n\n|$)/);
 
       const amount = amountMatch ? amountMatch[1] : '';
       const merchant = merchantMatch ? merchantMatch[1].trim() : '';
-      const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+      let description = descriptionMatch ? descriptionMatch[1].trim() : '';
+      const isAutoRepair = isAutoRepairMatch && isAutoRepairMatch[1] === 'YES';
+      let notes = '';
+      
+      if (isAutoRepair && notesMatch && notesMatch[1].trim() !== 'NONE') {
+        notes = notesMatch[1].trim();
+        description = '';
+      }
       
       let receiptDate = new Date();
       if (dateMatch && dateMatch[1] !== 'NOT_FOUND') {
@@ -116,11 +131,12 @@ export default function ReceiptScannerModal({
       }
 
       setScannedData({
-        category: 'Grocery',
+        category: isAutoRepair ? 'Auto Repair' : 'Grocery',
         amount,
         description,
         merchant,
         date: receiptDate,
+        notes,
       });
     } catch (error) {
       console.error('Error processing receipt:', error);
@@ -139,8 +155,8 @@ export default function ReceiptScannerModal({
       return;
     }
 
-    if (!scannedData.description.trim()) {
-      Alert.alert('Error', 'Please enter a description');
+    if (!scannedData.description.trim() && !scannedData.notes.trim()) {
+      Alert.alert('Error', 'Please enter a description or notes');
       return;
     }
 
@@ -149,7 +165,8 @@ export default function ReceiptScannerModal({
       parsedAmount,
       scannedData.description.trim(),
       scannedData.date,
-      scannedData.merchant.trim() || undefined
+      scannedData.merchant.trim() || undefined,
+      scannedData.notes.trim() || undefined
     );
 
     setScannedData(null);
@@ -283,6 +300,21 @@ export default function ReceiptScannerModal({
                   onChangeText={(text) =>
                     setScannedData({ ...scannedData, merchant: text })
                   }
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Notes</Text>
+                <TextInput
+                  style={[styles.textInput, styles.notesInput]}
+                  value={scannedData.notes}
+                  onChangeText={(text) =>
+                    setScannedData({ ...scannedData, notes: text })
+                  }
+                  multiline
+                  numberOfLines={4}
+                  placeholder="Additional notes (e.g., • Service 1\n• Service 2)"
+                  placeholderTextColor="rgba(36, 0, 70, 0.4)"
                 />
               </View>
 
@@ -636,6 +668,11 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: 16,
     color: '#240046',
+  },
+  notesInput: {
+    height: 100,
+    textAlignVertical: 'top' as const,
+    paddingTop: 14,
   },
   receiptFrame: {
     position: 'absolute' as const,

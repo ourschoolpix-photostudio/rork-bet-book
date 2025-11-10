@@ -272,6 +272,9 @@ export default function ExpensesScreen() {
                                 {item.merchant && (
                                   <Text style={styles.expenseMerchant}>{item.merchant}</Text>
                                 )}
+                                {item.notes && (
+                                  <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                )}
                                 <Text style={styles.expenseDate}>
                                   {new Date(item.date).toLocaleDateString()}
                                 </Text>
@@ -482,9 +485,9 @@ export default function ExpensesScreen() {
       <ReceiptScannerModal
         visible={showReceiptScanner}
         onClose={() => setShowReceiptScanner(false)}
-        onSubmit={async (category, amount, description, date, merchant) => {
+        onSubmit={async (category, amount, description, date, merchant, notes) => {
           if (currentUser) {
-            await addExpense(currentUser.id, category, amount, description, date, merchant);
+            await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes);
           }
         }}
       />
@@ -660,6 +663,12 @@ const styles = StyleSheet.create({
   expenseMerchant: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  expenseNotes: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontStyle: 'italic' as const,
+    lineHeight: 18,
   },
   expenseDate: {
     fontSize: 12,
