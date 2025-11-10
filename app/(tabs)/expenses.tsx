@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
 import RecurringBillsModal from '@/components/RecurringBillsModal';
@@ -31,6 +32,7 @@ const categories: ExpenseCategory[] = [
 export default function ExpensesScreen() {
   const { currentUser } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | undefined>(undefined);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
   const [showReceiptScanner, setShowReceiptScanner] = useState<boolean>(false);
@@ -113,6 +115,14 @@ export default function ExpensesScreen() {
       />
 
       <View style={styles.contentWrapper}>
+        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+          <View style={styles.headerTop}>
+            <View style={styles.headerCenter}>
+              <Text style={styles.casinoTitle}>MY EXPENSES</Text>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.topSection}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>
@@ -509,6 +519,27 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(157, 78, 221, 0.9)',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  casinoTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
   },
   topSection: {
     padding: 20,
