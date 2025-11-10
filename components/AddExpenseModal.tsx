@@ -189,13 +189,13 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 20,
   },
   modal: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     width: '100%',
     maxWidth: 600,
     maxHeight: '90%',
