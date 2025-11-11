@@ -128,8 +128,8 @@ export default function DashboardScreen() {
                   styles.backupButton,
                   pressed && styles.backupButtonPressed,
                 ]}
-                onPress={handleCreateBackup}
-                testID="create-backup-button"
+                onPress={handleRestoreBackup}
+                testID="restore-backup-button"
               >
                 <Download size={22} color="#FFFFFF" />
               </Pressable>
@@ -138,8 +138,8 @@ export default function DashboardScreen() {
                   styles.backupButton,
                   pressed && styles.backupButtonPressed,
                 ]}
-                onPress={handleRestoreBackup}
-                testID="restore-backup-button"
+                onPress={handleCreateBackup}
+                testID="create-backup-button"
               >
                 <Upload size={22} color="#FFFFFF" />
               </Pressable>
