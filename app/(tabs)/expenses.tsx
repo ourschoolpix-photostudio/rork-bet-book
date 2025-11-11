@@ -40,6 +40,7 @@ export default function ExpensesScreen() {
   const [showCategoryPicker, setShowCategoryPicker] = useState<boolean>(false);
   const [showSummary, setShowSummary] = useState<boolean>(false);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
@@ -64,6 +65,18 @@ export default function ExpensesScreen() {
         newSet.delete(monthKey);
       } else {
         newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleYear = (year: number) => {
+    setExpandedYears(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(year)) {
+        newSet.delete(year);
+      } else {
+        newSet.add(year);
       }
       return newSet;
     });
@@ -206,13 +219,169 @@ export default function ExpensesScreen() {
                   Add an expense or scan a receipt to get started
                 </Text>
               </View>
-            ) : (
-              expensesByMonth
-                .filter(monthGroup => 
-                  !selectedCategory || 
-                  monthGroup.expenses.some(e => e.category === selectedCategory)
-                )
-                .map((monthGroup) => {
+            ) : (() => {
+              const filteredMonths = expensesByMonth.filter(monthGroup => 
+                !selectedCategory || 
+                monthGroup.expenses.some(e => e.category === selectedCategory)
+              );
+
+              const groupedByYear = filteredMonths.reduce((acc, monthGroup) => {
+                const year = monthGroup.year;
+                if (!acc[year]) {
+                  acc[year] = [];
+                }
+                acc[year].push(monthGroup);
+                return acc;
+              }, {} as Record<number, typeof filteredMonths>);
+
+              const currentYear = new Date().getFullYear();
+              const years = Object.keys(groupedByYear)
+                .map(Number)
+                .sort((a, b) => b - a);
+
+              return years.map((year) => {
+                const yearMonths = groupedByYear[year];
+                const isPastYear = year < currentYear;
+                const isYearExpanded = expandedYears.has(year);
+                
+                const yearTotal = yearMonths.reduce((sum, m) => {
+                  const monthFilteredExpenses = selectedCategory
+                    ? m.expenses.filter(e => e.category === selectedCategory)
+                    : m.expenses;
+                  return sum + monthFilteredExpenses.reduce((s, e) => s + e.amount, 0);
+                }, 0);
+                
+                const yearExpenseCount = yearMonths.reduce((sum, m) => {
+                  const monthFilteredExpenses = selectedCategory
+                    ? m.expenses.filter(e => e.category === selectedCategory)
+                    : m.expenses;
+                  return sum + monthFilteredExpenses.length;
+                }, 0);
+
+                if (isPastYear) {
+                  return (
+                    <View key={`year-${year}`} style={styles.yearCard}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.yearHeader,
+                          pressed && styles.yearHeaderPressed,
+                        ]}
+                        onPress={() => toggleYear(year)}
+                      >
+                        <View style={styles.yearHeaderLeft}>
+                          <View style={styles.yearIconContainer}>
+                            <ChevronRight
+                              size={22}
+                              color="#FFFFFF"
+                              style={{
+                                transform: [{ rotate: isYearExpanded ? '90deg' : '0deg' }],
+                              }}
+                            />
+                          </View>
+                          <View>
+                            <Text style={styles.yearLabel}>{year}</Text>
+                            <Text style={styles.yearCount}>
+                              {yearExpenseCount} expense{yearExpenseCount !== 1 ? 's' : ''}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.yearTotal}>${yearTotal.toFixed(2)}</Text>
+                      </Pressable>
+
+                      {isYearExpanded && (
+                        <View style={styles.yearMonthsList}>
+                          {yearMonths.map((monthGroup) => {
+                            const isExpanded = expandedMonths.has(monthGroup.monthKey);
+                            const filteredExpenses = selectedCategory
+                              ? monthGroup.expenses.filter(e => e.category === selectedCategory)
+                              : monthGroup.expenses;
+                            const displayTotal = selectedCategory
+                              ? filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
+                              : monthGroup.total;
+
+                            return (
+                              <View key={monthGroup.monthKey} style={styles.monthCard}>
+                                <Pressable
+                                  style={({ pressed }) => [
+                                    styles.monthHeader,
+                                    pressed && styles.monthHeaderPressed,
+                                  ]}
+                                  onPress={() => toggleMonth(monthGroup.monthKey)}
+                                >
+                                  <View style={styles.monthHeaderLeft}>
+                                    <View style={styles.monthIconContainer}>
+                                      <ChevronRight
+                                        size={20}
+                                        color="#FFFFFF"
+                                        style={{
+                                          transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
+                                        }}
+                                      />
+                                    </View>
+                                    <View>
+                                      <Text style={styles.monthLabel}>
+                                        {monthGroup.monthLabel}
+                                      </Text>
+                                      <Text style={styles.monthCount}>
+                                        {filteredExpenses.length} expense{filteredExpenses.length !== 1 ? 's' : ''}
+                                      </Text>
+                                    </View>
+                                  </View>
+                                  <Text style={styles.monthTotal}>${displayTotal.toFixed(2)}</Text>
+                                </Pressable>
+
+                                {isExpanded && (
+                                  <View style={styles.monthExpensesList}>
+                                    {filteredExpenses.map((item) => (
+                                      <Pressable
+                                        key={item.id}
+                                        style={({ pressed }) => [
+                                          styles.expenseItem,
+                                          pressed && styles.expenseItemPressed,
+                                        ]}
+                                        onPress={() => handleEditExpense(item)}
+                                      >
+                                        <View style={styles.expenseInfo}>
+                                          <Text style={styles.expenseCategory}>{item.category}</Text>
+                                          <Text style={styles.expenseDescription}>{item.description}</Text>
+                                          {item.merchant && (
+                                            <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                          )}
+                                          {item.notes && (
+                                            <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                          )}
+                                          <Text style={styles.expenseDate}>
+                                            {new Date(item.date).toLocaleDateString()}
+                                          </Text>
+                                        </View>
+                                        <View style={styles.expenseActions}>
+                                          <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                          <View style={styles.expenseButtons}>
+                                            <Pressable
+                                              style={({ pressed }) => [
+                                                styles.iconButton,
+                                                pressed && styles.iconButtonPressed,
+                                              ]}
+                                              onPress={() => handleDeleteExpense(item.id)}
+                                            >
+                                              <Trash2 size={18} color="#FFFFFF" />
+                                            </Pressable>
+                                          </View>
+                                        </View>
+                                      </Pressable>
+                                    ))}
+                                  </View>
+                                )}
+                              </View>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </View>
+                  );
+                }
+
+                return yearMonths.map((monthGroup) => {
                   const isExpanded = expandedMonths.has(monthGroup.monthKey);
                   const filteredExpenses = selectedCategory
                     ? monthGroup.expenses.filter(e => e.category === selectedCategory)
@@ -299,8 +468,9 @@ export default function ExpensesScreen() {
                       )}
                     </View>
                   );
-                })
-            )}
+                });
+              });
+            })()}
           </ScrollView>
         </View>
       </View>
@@ -940,5 +1110,58 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
     gap: 8,
+  },
+  yearCard: {
+    backgroundColor: '#7B2CBF',
+    borderRadius: 18,
+    marginBottom: 20,
+    overflow: 'hidden' as const,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  yearHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 18,
+    backgroundColor: '#7B2CBF',
+  },
+  yearHeaderPressed: {
+    opacity: 0.7,
+  },
+  yearHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    flex: 1,
+  },
+  yearIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  yearLabel: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  yearCount: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 3,
+  },
+  yearTotal: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  yearMonthsList: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 12,
   },
 });
