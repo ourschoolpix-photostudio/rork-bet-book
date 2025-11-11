@@ -34,7 +34,12 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
     { name: 'expenses', title: 'My Expenses', icon: Receipt, route: '/expenses' },
   ];
 
-  const visibleTabs = tabs.filter(tab => tab.route !== pathname);
+  const visibleTabs = tabs.filter(tab => {
+    if (tab.isLoansTab) {
+      return true;
+    }
+    return tab.route !== pathname;
+  });
 
   return (
     <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
