@@ -11,7 +11,8 @@ interface AddExpenseModalProps {
     amount: number,
     description: string,
     date: Date,
-    merchant?: string
+    merchant?: string,
+    notes?: string
   ) => Promise<void>;
   editingExpense?: Expense | null;
 }
@@ -38,6 +39,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [merchant, setMerchant] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -46,12 +48,14 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
       setAmount(editingExpense.amount.toString());
       setDescription(editingExpense.description);
       setMerchant(editingExpense.merchant || '');
+      setNotes(editingExpense.notes || '');
       setDate(new Date(editingExpense.date));
     } else {
       setSelectedCategory('Grocery');
       setAmount('');
       setDescription('');
       setMerchant('');
+      setNotes('');
       setDate(new Date());
     }
   }, [editingExpense, visible]);
@@ -71,12 +75,14 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
       parsedAmount,
       description.trim(),
       date,
-      merchant.trim() || undefined
+      merchant.trim() || undefined,
+      notes.trim() || undefined
     );
 
     setAmount('');
     setDescription('');
     setMerchant('');
+    setNotes('');
     setDate(new Date());
     setSelectedCategory('Grocery');
     onClose();
@@ -180,6 +186,21 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                     value={merchant}
                     onChangeText={setMerchant}
                     testID="expense-merchant-input"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Notes (optional)</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.notesInput]}
+                    placeholder="Additional notes"
+                    placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    testID="expense-notes-input"
                   />
                 </View>
               </ScrollView>
@@ -315,5 +336,9 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#FFFFFF',
     letterSpacing: 1,
+  },
+  notesInput: {
+    minHeight: 100,
+    paddingTop: 14,
   },
 });
