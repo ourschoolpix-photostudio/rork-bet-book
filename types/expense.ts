@@ -1,5 +1,6 @@
 export type ExpenseCategory = 
   | 'Auto Repair'
+  | 'Beauty & Health'
   | 'Clothing'
   | 'Convenience Store'
   | 'Electronics'

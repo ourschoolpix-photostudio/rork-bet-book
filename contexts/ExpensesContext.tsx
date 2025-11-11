@@ -226,6 +226,7 @@ export function useExpensesByCategory(userId: string) {
     const userExpenses = expenses.filter(e => e.userId === userId);
     const byCategory: Record<ExpenseCategory, number> = {
       'Auto Repair': 0,
+      'Beauty & Health': 0,
       'Clothing': 0,
       'Convenience Store': 0,
       'Electronics': 0,
@@ -277,6 +278,7 @@ export function useMonthlyExpenses(userId: string) {
     
     const byCategory: Record<ExpenseCategory, number> = {
       'Auto Repair': 0,
+      'Beauty & Health': 0,
       'Clothing': 0,
       'Convenience Store': 0,
       'Electronics': 0,
@@ -317,6 +319,7 @@ export function useYearToDateExpenses(userId: string) {
     
     const byCategory: Record<ExpenseCategory, number> = {
       'Auto Repair': 0,
+      'Beauty & Health': 0,
       'Clothing': 0,
       'Convenience Store': 0,
       'Electronics': 0,

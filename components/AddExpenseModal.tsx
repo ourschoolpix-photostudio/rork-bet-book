@@ -19,6 +19,7 @@ interface AddExpenseModalProps {
 
 const categories: ExpenseCategory[] = [
   'Auto Repair',
+  'Beauty & Health',
   'Clothing',
   'Convenience Store',
   'Electronics',
