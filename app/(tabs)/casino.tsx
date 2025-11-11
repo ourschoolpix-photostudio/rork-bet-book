@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 24,
+    paddingBottom: 4,
   },
   statsHeader: {
     flexDirection: 'row',
