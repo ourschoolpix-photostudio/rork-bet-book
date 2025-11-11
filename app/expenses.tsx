@@ -104,7 +104,7 @@ export default function ExpensesScreen() {
         options={{
           headerShown: true,
           title: 'My Expenses',
-          headerStyle: { backgroundColor: '#9D4EDD' },
+          headerStyle: { backgroundColor: '#3D1F66' },
           headerTintColor: '#FFFFFF',
           headerTitleStyle: { fontWeight: '700' as const },
         }}
