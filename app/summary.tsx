@@ -27,6 +27,7 @@ export default function SummaryScreen() {
   
   const nonRecurringExpenses = monthlyExpenses.expenses.filter(e => !e.isRecurring);
   const additionalExpensesTotal = nonRecurringExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalMonthlyExpenses = monthlyRecurringTotal + additionalExpensesTotal;
 
   const toggleMonth = (monthKey: string) => {
     setExpandedMonths(prev => {
@@ -237,6 +238,26 @@ export default function SummaryScreen() {
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
                   <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.categoryCard, styles.grandTotalExpenseCard]}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <DollarSign size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Total Monthly Spending</Text>
+                </View>
+                <Text style={styles.grandTotalExpenseValue}>${totalMonthlyExpenses.toFixed(2)}</Text>
+              </View>
+              <View style={styles.categoryStats}>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Recurring Bills</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Other Expenses</Text>
+                  <Text style={styles.categoryStatValue}>${additionalExpensesTotal.toFixed(2)}</Text>
                 </View>
               </View>
             </View>
@@ -602,5 +623,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#240046',
+  },
+  grandTotalExpenseCard: {
+    borderWidth: 2,
+    borderColor: '#9D4EDD',
+    backgroundColor: 'rgba(230, 210, 255, 0.95)',
+  },
+  grandTotalExpenseValue: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#5A189A',
   },
 });
