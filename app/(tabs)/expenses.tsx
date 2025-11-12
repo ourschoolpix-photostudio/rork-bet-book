@@ -263,7 +263,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
               ]}
               onPress={() => setShowAddExpenseModal(true)}
             >
-              <Plus size={24} color="#FFFFFF" />
+              <Plus size={18} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Add Expense</Text>
             </Pressable>
 
@@ -274,7 +274,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
               ]}
               onPress={() => setShowReceiptScanner(true)}
             >
-              <Receipt size={24} color="#FFFFFF" />
+              <Receipt size={18} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Scan Receipt</Text>
             </Pressable>
 
@@ -285,7 +285,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
               ]}
               onPress={() => setShowRecurringBillsModal(true)}
             >
-              <CreditCard size={24} color="#FFFFFF" />
+              <CreditCard size={18} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Recurring Bills</Text>
             </Pressable>
 
@@ -296,7 +296,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
               ]}
               onPress={() => setShowSummary(true)}
             >
-              <BarChart3 size={24} color="#FFFFFF" />
+              <BarChart3 size={18} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Summary</Text>
             </Pressable>
           </View>
@@ -830,20 +830,20 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     backgroundColor: '#9D4EDD',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 10,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '600' as const,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   summaryAmount: {
-    fontSize: 36,
+    fontSize: 24,
     fontWeight: '700' as const,
     color: '#FFFFFF',
   },
@@ -874,10 +874,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: '45%',
     backgroundColor: '#9D4EDD',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 10,
+    padding: 8,
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   actionButtonText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600' as const,
     color: '#FFFFFF',
     textAlign: 'center' as const,
