@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap } from 'lucide-react-native';
 import { useEffect, useState, useRef } from 'react';
-import { Alert, ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ImageBackground, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
@@ -45,11 +45,10 @@ export default function ExpensesScreen() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }: {
+function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
   userId: string;
   monthKey: string;
   onUpdateUtilities: (userId: string, monthKey: string, electric: number, naturalGas: number, water: number) => Promise<void>;
-  scrollViewRef: React.RefObject<ScrollView>;
 }) {
   const existingUtilities = useUtilitiesByMonth(userId, monthKey);
   const [electric, setElectric] = useState<string>(
@@ -61,7 +60,6 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
   const [water, setWater] = useState<string>(
     existingUtilities?.water.toString() || ''
   );
-  const [utilityViewLayout, setUtilityViewLayout] = useState<{ y: number } | null>(null);
 
   useEffect(() => {
     if (existingUtilities) {
@@ -81,25 +79,8 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
 
   const utilitiesTotal = (parseFloat(electric) || 0) + (parseFloat(naturalGas) || 0) + (parseFloat(water) || 0);
 
-  const handleFocus = () => {
-    if (utilityViewLayout && scrollViewRef.current) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({
-          y: utilityViewLayout.y - 100,
-          animated: true,
-        });
-      }, 100);
-    }
-  };
-
   return (
-    <View 
-      style={styles.utilitiesSection}
-      onLayout={(event) => {
-        const layout = event.nativeEvent.layout;
-        setUtilityViewLayout({ y: layout.y });
-      }}
-    >
+    <View style={styles.utilitiesSection}>
       <View style={styles.utilitiesSectionHeader}>
         <Zap size={20} color="#FFFFFF" />
         <Text style={styles.utilitiesSectionTitle}>Monthly Utilities</Text>
@@ -118,7 +99,6 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
               onChangeText={setElectric}
               keyboardType="decimal-pad"
               onBlur={handleSave}
-              onFocus={handleFocus}
             />
           </View>
         </View>
@@ -134,7 +114,6 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
               onChangeText={setNaturalGas}
               keyboardType="decimal-pad"
               onBlur={handleSave}
-              onFocus={handleFocus}
             />
           </View>
         </View>
@@ -150,7 +129,6 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
               onChangeText={setWater}
               keyboardType="decimal-pad"
               onBlur={handleSave}
-              onFocus={handleFocus}
             />
           </View>
         </View>
@@ -243,7 +221,11 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
         style={styles.gradientOverlay}
       />
 
-      <View style={styles.contentWrapper}>
+      <KeyboardAvoidingView 
+        style={styles.contentWrapper}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <View style={styles.headerTop}>
             <View style={styles.headerCenter}>
@@ -454,7 +436,6 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
                                       userId={currentUser?.id || ''}
                                       monthKey={monthGroup.monthKey}
                                       onUpdateUtilities={updateUtilities}
-                                      scrollViewRef={scrollViewRef}
                                     />
                                     {filteredExpenses.map((item) => (
                                       <Pressable
@@ -554,7 +535,6 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
                             userId={currentUser?.id || ''}
                             monthKey={monthGroup.monthKey}
                             onUpdateUtilities={updateUtilities}
-                            scrollViewRef={scrollViewRef}
                           />
                           {filteredExpenses.map((item) => (
                             <Pressable
@@ -603,7 +583,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities, scrollViewRef }
             })()}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={showCategoryPicker}
