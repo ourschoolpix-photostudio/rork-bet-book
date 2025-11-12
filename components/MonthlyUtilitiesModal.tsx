@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 60,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
@@ -194,7 +194,6 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 24,
-    paddingBottom: 200,
     gap: 20,
   },
   inputGroup: {

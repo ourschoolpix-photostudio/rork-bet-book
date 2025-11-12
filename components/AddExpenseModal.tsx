@@ -1,7 +1,7 @@
 import { ExpenseCategory, Expense } from '@/types/expense';
 import { X } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
 interface AddExpenseModalProps {
   visible: boolean;
@@ -98,11 +98,8 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.modal}
-            >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modal}>
               <View style={styles.header}>
                 <Text style={styles.title}>{editingExpense ? 'Edit Expense' : 'Add Expense'}</Text>
                 <Pressable
@@ -224,7 +221,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                   <Text style={styles.submitButtonText}>{editingExpense ? 'Update Expense' : 'Add Expense'}</Text>
                 </Pressable>
               </View>
-            </KeyboardAvoidingView>
+            </View>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -272,7 +269,6 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 24,
-    paddingBottom: 240,
   },
   inputGroup: {
     marginBottom: 20,
