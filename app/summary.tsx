@@ -4,11 +4,10 @@ import { useSportsBets } from '@/contexts/SportsBetsContext';
 import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useExpenses } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight, Zap, Droplet, Edit } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight, Zap, Droplet } from 'lucide-react-native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import MonthlyUtilitiesModal from '@/components/MonthlyUtilitiesModal';
 
 export default function SummaryScreen() {
   const { currentUser, completedSessions } = useAuth();
@@ -17,15 +16,12 @@ export default function SummaryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
-  const [showUtilitiesModal, setShowUtilitiesModal] = useState<boolean>(false);
-  const [selectedMonthKey, setSelectedMonthKey] = useState<string>('');
-  const [selectedMonthLabel, setSelectedMonthLabel] = useState<string>('');
 
   const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
-  const { updateMonthlyUtility, getMonthlyUtility } = useExpenses();
+  const { getMonthlyUtility } = useExpenses();
 
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -238,24 +234,6 @@ export default function SummaryScreen() {
               <View style={styles.utilitiesSection}>
                 <View style={styles.utilitiesHeader}>
                   <Text style={styles.utilitiesSectionTitle}>Current Month Utilities</Text>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.editUtilitiesButton,
-                      pressed && styles.editUtilitiesButtonPressed,
-                    ]}
-                    onPress={() => {
-                      setSelectedMonthKey(currentMonthKey);
-                      const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                      setSelectedMonthLabel(monthDate.toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        year: 'numeric' 
-                      }));
-                      setShowUtilitiesModal(true);
-                    }}
-                  >
-                    <Edit size={16} color="#9D4EDD" />
-                    <Text style={styles.editUtilitiesButtonText}>Edit</Text>
-                  </Pressable>
                 </View>
                 <View style={styles.utilityRow}>
                   <View style={styles.utilityRowLeft}>
@@ -368,20 +346,6 @@ export default function SummaryScreen() {
                         <View style={styles.monthUtilitiesSection}>
                           <View style={styles.monthUtilitiesHeader}>
                             <Text style={styles.monthUtilitiesTitle}>Monthly Utilities</Text>
-                            <Pressable
-                              style={({ pressed }) => [
-                                styles.monthEditUtilitiesButton,
-                                pressed && styles.editUtilitiesButtonPressed,
-                              ]}
-                              onPress={() => {
-                                setSelectedMonthKey(monthGroup.monthKey);
-                                setSelectedMonthLabel(monthGroup.monthLabel);
-                                setShowUtilitiesModal(true);
-                              }}
-                            >
-                              <Edit size={14} color="#9D4EDD" />
-                              <Text style={styles.monthEditUtilitiesButtonText}>Edit</Text>
-                            </Pressable>
                           </View>
                           <View style={styles.monthUtilityItem}>
                             <View style={styles.utilityRowLeft}>
@@ -427,19 +391,6 @@ export default function SummaryScreen() {
         </ScrollView>
       </View>
 
-      <MonthlyUtilitiesModal
-        visible={showUtilitiesModal}
-        onClose={() => setShowUtilitiesModal(false)}
-        monthKey={selectedMonthKey}
-        monthLabel={selectedMonthLabel}
-        electricity={getMonthlyUtility(currentUser?.id || '', selectedMonthKey)?.electricity || 0}
-        water={getMonthlyUtility(currentUser?.id || '', selectedMonthKey)?.water || 0}
-        onSave={async (electricity, water) => {
-          if (currentUser) {
-            await updateMonthlyUtility(currentUser.id, selectedMonthKey, electricity, water);
-          }
-        }}
-      />
     </View>
   );
 }
