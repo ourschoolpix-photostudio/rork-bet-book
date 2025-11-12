@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 24,
-    paddingBottom: 120,
+    paddingBottom: 200,
     gap: 20,
   },
   inputGroup: {
