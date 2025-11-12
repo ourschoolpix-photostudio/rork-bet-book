@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
   const { currentUser, logout, isLoading, updateProfile } = useAuth();
-  const { createBackup, restoreBackup } = useBackup();
+  const { createBackup, restoreFromCloud, restoreFromDevice } = useBackup();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showEditProfileModal, setShowEditProfileModal] = useState<boolean>(false);
@@ -67,14 +67,48 @@ export default function DashboardScreen() {
   const handleRestoreBackup = async () => {
     Alert.alert(
       'Restore Backup',
-      'This will replace all current data with the backup. Are you sure?',
+      'Choose where to restore from:',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel' 
+        },
         {
-          text: 'Restore',
-          style: 'destructive',
+          text: 'From Cloud',
           onPress: async () => {
-            await restoreBackup();
+            Alert.alert(
+              'Confirm Restore',
+              'This will replace all current data with the cloud backup. Are you sure?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Restore',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await restoreFromCloud();
+                  },
+                },
+              ]
+            );
+          },
+        },
+        {
+          text: 'From Device',
+          onPress: async () => {
+            Alert.alert(
+              'Confirm Restore',
+              'This will replace all current data with the device backup. Are you sure?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Restore',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await restoreFromDevice();
+                  },
+                },
+              ]
+            );
           },
         },
       ]

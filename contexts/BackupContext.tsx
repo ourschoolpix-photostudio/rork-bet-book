@@ -1,5 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 
 import { useCallback, useMemo } from 'react';
 import { Platform, Alert } from 'react-native';
@@ -132,7 +134,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
 
 
-  const restoreBackup = useCallback(async (backupId?: string): Promise<boolean> => {
+  const restoreFromCloud = useCallback(async (backupId?: string): Promise<boolean> => {
     try {
       console.log('Starting backup restore...');
       
@@ -166,7 +168,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
             const buttons = backupsResult.backups.map((backup) => ({
               text: new Date(backup.timestamp).toLocaleString(),
               onPress: async () => {
-                const success = await restoreBackup(backup.id);
+                const success = await restoreFromCloud(backup.id);
                 resolve(success);
               },
             }));
@@ -177,7 +179,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
               onPress: () => resolve(false),
             });
             
-            Alert.alert('Select Backup', 'Choose a backup to restore:', buttons);
+            Alert.alert('Select Cloud Backup', 'Choose a backup to restore:', buttons);
           });
         }
       }
@@ -229,8 +231,71 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     }
   }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
 
+  const restoreFromDevice = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('Starting device backup restore...');
+      
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      
+      if (result.canceled) {
+        return false;
+      }
+      
+      const fileUri = result.assets[0].uri;
+      let content: string;
+      
+      if (Platform.OS === 'web') {
+        const response = await fetch(fileUri);
+        content = await response.text();
+      } else {
+        content = await FileSystem.readAsStringAsync(fileUri);
+      }
+      
+      const backupData = JSON.parse(content) as BackupData;
+      
+      console.log('Restoring backup from device:', backupData.timestamp);
+      
+      for (const [key, value] of Object.entries(backupData.data)) {
+        const currentValue = await AsyncStorage.getItem(key);
+        const mergedValue = mergeData(currentValue, value);
+        
+        if (mergedValue !== null) {
+          await AsyncStorage.setItem(key, mergedValue);
+          console.log(`Merged ${key}`);
+        } else if (currentValue === null && value === null) {
+          console.log(`Skipped ${key} (both null)`);
+        }
+      }
+      
+      console.log('Reloading all contexts...');
+      await Promise.all([
+        reloadAllData(),
+        reloadLoans(),
+        reloadBorrows(),
+        reloadBets(),
+        reloadSportsBets(),
+        reloadExpenses(),
+      ]);
+      console.log('All contexts reloaded successfully');
+      
+      Alert.alert(
+        'Success',
+        `Backup restored successfully from device!\n\nFrom: ${new Date(backupData.timestamp).toLocaleString()}`
+      );
+      return true;
+    } catch (error) {
+      console.error('Error restoring backup from device:', error);
+      Alert.alert('Error', 'Failed to restore backup from device: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      return false;
+    }
+  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+
   return useMemo(() => ({
     createBackup,
-    restoreBackup,
-  }), [createBackup, restoreBackup]);
+    restoreFromCloud,
+    restoreFromDevice,
+  }), [createBackup, restoreFromCloud, restoreFromDevice]);
 });
