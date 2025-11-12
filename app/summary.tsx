@@ -1,13 +1,14 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBets } from '@/contexts/BetsContext';
 import { useSportsBets } from '@/contexts/SportsBetsContext';
-import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth } from '@/contexts/ExpensesContext';
+import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useExpenses } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight, Zap, Droplet, Edit } from 'lucide-react-native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
+import MonthlyUtilitiesModal from '@/components/MonthlyUtilitiesModal';
 
 export default function SummaryScreen() {
   const { currentUser, completedSessions } = useAuth();
@@ -16,14 +17,24 @@ export default function SummaryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [showUtilitiesModal, setShowUtilitiesModal] = useState<boolean>(false);
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>('');
+  const [selectedMonthLabel, setSelectedMonthLabel] = useState<string>('');
 
   const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
+  const { updateMonthlyUtility, getMonthlyUtility } = useExpenses();
+
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthUtility = getMonthlyUtility(currentUser?.id || '', currentMonthKey);
+  const currentMonthUtilitiesTotal = (currentMonthUtility?.electricity || 0) + (currentMonthUtility?.water || 0);
 
   const activeRecurringBills = recurringBills.filter(bill => bill.isActive);
-  const monthlyRecurringTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const monthlyRecurringBillsTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const monthlyRecurringTotal = monthlyRecurringBillsTotal + currentMonthUtilitiesTotal;
   
   const nonRecurringExpenses = monthlyExpenses.expenses.filter(e => !e.isRecurring);
   const additionalExpensesTotal = nonRecurringExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -216,8 +227,49 @@ export default function SummaryScreen() {
               </View>
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Active Bills</Text>
-                  <Text style={styles.categoryStatValue}>{activeRecurringBills.length}</Text>
+                  <Text style={styles.categoryStatLabel}>Regular Bills</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyRecurringBillsTotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Utilities</Text>
+                  <Text style={styles.categoryStatValue}>${currentMonthUtilitiesTotal.toFixed(2)}</Text>
+                </View>
+              </View>
+              <View style={styles.utilitiesSection}>
+                <View style={styles.utilitiesHeader}>
+                  <Text style={styles.utilitiesSectionTitle}>Current Month Utilities</Text>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.editUtilitiesButton,
+                      pressed && styles.editUtilitiesButtonPressed,
+                    ]}
+                    onPress={() => {
+                      setSelectedMonthKey(currentMonthKey);
+                      const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                      setSelectedMonthLabel(monthDate.toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        year: 'numeric' 
+                      }));
+                      setShowUtilitiesModal(true);
+                    }}
+                  >
+                    <Edit size={16} color="#9D4EDD" />
+                    <Text style={styles.editUtilitiesButtonText}>Edit</Text>
+                  </Pressable>
+                </View>
+                <View style={styles.utilityRow}>
+                  <View style={styles.utilityRowLeft}>
+                    <Zap size={16} color="#5A189A" />
+                    <Text style={styles.utilityName}>Electricity</Text>
+                  </View>
+                  <Text style={styles.utilityValue}>${(currentMonthUtility?.electricity || 0).toFixed(2)}</Text>
+                </View>
+                <View style={styles.utilityRow}>
+                  <View style={styles.utilityRowLeft}>
+                    <Droplet size={16} color="#5A189A" />
+                    <Text style={styles.utilityName}>Water</Text>
+                  </View>
+                  <Text style={styles.utilityValue}>${(currentMonthUtility?.water || 0).toFixed(2)}</Text>
                 </View>
               </View>
             </View>
@@ -253,7 +305,11 @@ export default function SummaryScreen() {
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Recurring Bills</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyRecurringBillsTotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Utilities</Text>
+                  <Text style={styles.categoryStatValue}>${currentMonthUtilitiesTotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Other Expenses</Text>
@@ -333,6 +389,20 @@ export default function SummaryScreen() {
           </View>
         </ScrollView>
       </View>
+
+      <MonthlyUtilitiesModal
+        visible={showUtilitiesModal}
+        onClose={() => setShowUtilitiesModal(false)}
+        monthKey={selectedMonthKey}
+        monthLabel={selectedMonthLabel}
+        electricity={getMonthlyUtility(currentUser?.id || '', selectedMonthKey)?.electricity || 0}
+        water={getMonthlyUtility(currentUser?.id || '', selectedMonthKey)?.water || 0}
+        onSave={async (electricity, water) => {
+          if (currentUser) {
+            await updateMonthlyUtility(currentUser.id, selectedMonthKey, electricity, water);
+          }
+        }}
+      />
     </View>
   );
 }
@@ -631,6 +701,65 @@ const styles = StyleSheet.create({
   },
   grandTotalExpenseValue: {
     fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#5A189A',
+  },
+  utilitiesSection: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(157, 78, 221, 0.2)',
+    paddingTop: 16,
+    gap: 12,
+  },
+  utilitiesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  utilitiesSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#240046',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  editUtilitiesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(157, 78, 221, 0.15)',
+    borderRadius: 8,
+  },
+  editUtilitiesButtonPressed: {
+    opacity: 0.7,
+  },
+  editUtilitiesButtonText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  utilityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 10,
+    padding: 12,
+  },
+  utilityRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  utilityName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#240046',
+  },
+  utilityValue: {
+    fontSize: 15,
     fontWeight: '700' as const,
     color: '#5A189A',
   },
