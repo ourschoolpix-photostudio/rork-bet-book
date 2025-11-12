@@ -169,7 +169,7 @@ export default function ExpensesScreen() {
               ]}
               onPress={() => setShowAddExpenseModal(true)}
             >
-              <Plus size={24} color="#FFFFFF" />
+              <Plus size={16} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Add Expense</Text>
             </Pressable>
 
@@ -180,7 +180,7 @@ export default function ExpensesScreen() {
               ]}
               onPress={() => setShowReceiptScanner(true)}
             >
-              <Receipt size={24} color="#FFFFFF" />
+              <Receipt size={16} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Scan Receipt</Text>
             </Pressable>
 
@@ -191,7 +191,7 @@ export default function ExpensesScreen() {
               ]}
               onPress={() => setShowRecurringBillsModal(true)}
             >
-              <CreditCard size={24} color="#FFFFFF" />
+              <CreditCard size={16} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Recurring Bills</Text>
             </Pressable>
 
@@ -202,7 +202,7 @@ export default function ExpensesScreen() {
               ]}
               onPress={() => setShowSummary(true)}
             >
-              <BarChart3 size={24} color="#FFFFFF" />
+              <BarChart3 size={16} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Summary</Text>
             </Pressable>
           </View>
@@ -803,19 +803,19 @@ const styles = StyleSheet.create({
   summaryCard: {
     backgroundColor: '#9D4EDD',
     borderRadius: 16,
-    padding: 20,
+    padding: 10,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600' as const,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   summaryAmount: {
-    fontSize: 36,
+    fontSize: 24,
     fontWeight: '700' as const,
     color: '#FFFFFF',
   },
@@ -847,9 +847,9 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     backgroundColor: '#9D4EDD',
     borderRadius: 12,
-    padding: 14,
+    padding: 8,
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   actionButtonText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600' as const,
     color: '#FFFFFF',
     textAlign: 'center' as const,
