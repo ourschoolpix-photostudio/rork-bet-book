@@ -15,6 +15,8 @@ export type ExpenseCategory =
   | 'Shoes'
   | 'Travel';
 
+export type ExpenseType = 'standard' | 'vacation';
+
 export interface Expense {
   id: string;
   userId: string;
@@ -26,6 +28,7 @@ export interface Expense {
   createdAt: string;
   isRecurring?: boolean;
   notes?: string;
+  expenseType?: ExpenseType;
 }
 
 export interface RecurringBill {

@@ -641,12 +641,12 @@ export default function ExpensesScreen() {
         visible={showAddExpenseModal}
         onClose={handleCloseModal}
         editingExpense={editingExpense}
-        onSubmit={async (category, amount, description, date, merchant, notes) => {
+        onSubmit={async (category, amount, description, date, merchant, notes, expenseType) => {
           if (currentUser) {
             if (editingExpense) {
-              await updateExpense(editingExpense.id, category, amount, description, date, merchant, notes);
+              await updateExpense(editingExpense.id, category, amount, description, date, merchant, notes, expenseType);
             } else {
-              await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes);
+              await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes, expenseType);
             }
           }
         }}

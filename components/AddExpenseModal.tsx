@@ -1,4 +1,4 @@
-import { ExpenseCategory, Expense } from '@/types/expense';
+import { ExpenseCategory, Expense, ExpenseType } from '@/types/expense';
 import { X } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
@@ -12,7 +12,8 @@ interface AddExpenseModalProps {
     description: string,
     date: Date,
     merchant?: string,
-    notes?: string
+    notes?: string,
+    expenseType?: ExpenseType
   ) => Promise<void>;
   editingExpense?: Expense | null;
 }
@@ -42,6 +43,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
   const [merchant, setMerchant] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
+  const [expenseType, setExpenseType] = useState<ExpenseType>('standard');
 
   useEffect(() => {
     if (editingExpense) {
@@ -51,6 +53,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
       setMerchant(editingExpense.merchant || '');
       setNotes(editingExpense.notes || '');
       setDate(new Date(editingExpense.date));
+      setExpenseType(editingExpense.expenseType || 'standard');
     } else {
       setSelectedCategory('Grocery');
       setAmount('');
@@ -58,6 +61,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
       setMerchant('');
       setNotes('');
       setDate(new Date());
+      setExpenseType('standard');
     }
   }, [editingExpense, visible]);
 
@@ -77,7 +81,8 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
       description.trim(),
       date,
       merchant.trim() || undefined,
-      notes.trim() || undefined
+      notes.trim() || undefined,
+      expenseType
     );
 
     setAmount('');
@@ -86,6 +91,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     setNotes('');
     setDate(new Date());
     setSelectedCategory('Grocery');
+    setExpenseType('standard');
     onClose();
   };
 
@@ -115,6 +121,48 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
               </View>
 
               <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Expense Type</Text>
+                  <View style={styles.expenseTypeContainer}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.expenseTypeButton,
+                        expenseType === 'standard' && styles.expenseTypeButtonSelected,
+                        pressed && styles.expenseTypeButtonPressed,
+                      ]}
+                      onPress={() => setExpenseType('standard')}
+                      testID="expense-type-standard"
+                    >
+                      <Text
+                        style={[
+                          styles.expenseTypeText,
+                          expenseType === 'standard' && styles.expenseTypeTextSelected,
+                        ]}
+                      >
+                        Standard Expense
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.expenseTypeButton,
+                        expenseType === 'vacation' && styles.expenseTypeButtonSelected,
+                        pressed && styles.expenseTypeButtonPressed,
+                      ]}
+                      onPress={() => setExpenseType('vacation')}
+                      testID="expense-type-vacation"
+                    >
+                      <Text
+                        style={[
+                          styles.expenseTypeText,
+                          expenseType === 'vacation' && styles.expenseTypeTextSelected,
+                        ]}
+                      >
+                        Vacation Expense
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Category</Text>
                   <ScrollView
@@ -341,5 +389,34 @@ const styles = StyleSheet.create({
   notesInput: {
     minHeight: 100,
     paddingTop: 14,
+  },
+  expenseTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  expenseTypeButton: {
+    flex: 1,
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    alignItems: 'center',
+  },
+  expenseTypeButtonSelected: {
+    backgroundColor: '#9D4EDD',
+    borderColor: '#9D4EDD',
+  },
+  expenseTypeButtonPressed: {
+    opacity: 0.6,
+  },
+  expenseTypeText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  expenseTypeTextSelected: {
+    color: '#FFFFFF',
   },
 });
