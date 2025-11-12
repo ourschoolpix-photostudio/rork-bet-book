@@ -18,27 +18,34 @@ export const createBackupProcedure = publicProcedure
     data: z.record(z.string(), z.string().nullable()),
   }))
   .mutation(async ({ input }) => {
-    console.log('Creating backup on server:', input.timestamp);
-    
-    const backupId = `backup-${Date.now()}`;
-    
-    const backupData: BackupData = {
-      id: backupId,
-      version: input.version,
-      timestamp: input.timestamp,
-      data: input.data,
-      createdAt: new Date().toISOString(),
-    };
-    
-    backupsStore.set(backupId, backupData);
-    console.log('Backup saved to memory store:', backupId);
-    console.log('Total backups in store:', backupsStore.size);
-    
-    return {
-      success: true,
-      backupId,
-      timestamp: input.timestamp,
-    };
+    try {
+      console.log('🔵 CREATE BACKUP - Received request');
+      console.log('🔵 Backup timestamp:', input.timestamp);
+      console.log('🔵 Data keys:', Object.keys(input.data));
+      
+      const backupId = `backup-${Date.now()}`;
+      
+      const backupData: BackupData = {
+        id: backupId,
+        version: input.version,
+        timestamp: input.timestamp,
+        data: input.data,
+        createdAt: new Date().toISOString(),
+      };
+      
+      backupsStore.set(backupId, backupData);
+      console.log('✅ Backup saved to memory store:', backupId);
+      console.log('📊 Total backups in store:', backupsStore.size);
+      
+      return {
+        success: true,
+        backupId,
+        timestamp: input.timestamp,
+      };
+    } catch (error) {
+      console.error('❌ CREATE BACKUP ERROR:', error);
+      throw error;
+    }
   });
 
 export { backupsStore };
