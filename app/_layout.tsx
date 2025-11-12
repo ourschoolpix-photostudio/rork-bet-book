@@ -11,7 +11,7 @@ import { BetsProvider } from "@/contexts/BetsContext";
 import { SportsBetsProvider } from "@/contexts/SportsBetsContext";
 import { BackupProvider } from "@/contexts/BackupContext";
 import { ExpensesProvider } from "@/contexts/ExpensesContext";
-import { trpc, trpcClient } from "@/lib/trpc";
+import { trpc, trpcReactClient } from "@/lib/trpc";
 
 LogBox.ignoreLogs([
   'Deep imports from the \'react-native\' package are deprecated',
@@ -49,7 +49,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+    <trpc.Provider client={trpcReactClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <LoanProvider>

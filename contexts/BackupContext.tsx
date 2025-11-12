@@ -11,7 +11,7 @@ import { useBorrows } from './BorrowContext';
 import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
-import { trpc } from '@/lib/trpc';
+import { trpcClient } from '@/lib/trpc';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -40,7 +40,6 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadBets } = useBets();
   const { reloadSportsBets } = useSportsBets();
   const { reloadAllData: reloadExpenses } = useExpenses();
-  const createBackupMutation = trpc.backup.create.useMutation();
 
   const createBackup = useCallback(async (): Promise<boolean> => {
     try {
@@ -63,7 +62,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       }
 
       console.log('Sending backup to server...');
-      const result = await createBackupMutation.mutateAsync(backupData);
+      const result = await trpcClient.backup.create.mutate(backupData);
       console.log('Server backup result:', result);
 
       const backupJson = JSON.stringify(backupData, null, 2);
@@ -112,7 +111,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to create backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [createBackupMutation]);
+  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
 
   const mergeData = (currentValue: string | null, backupValue: string | null): string | null => {
     if (!currentValue || currentValue === '[]' || currentValue === '{}' || currentValue === 'null') {
@@ -169,7 +168,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     }
   };
 
-  const restoreBackupMutation = trpc.backup.restore.useMutation();
+
 
   const restoreBackup = useCallback(async (): Promise<boolean> => {
     try {
@@ -204,7 +203,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
               console.log('Restoring backup from:', backupData.timestamp);
 
               console.log('Sending restore request to server...');
-              const serverResult = await restoreBackupMutation.mutateAsync(backupData);
+              const serverResult = await trpcClient.backup.restore.mutate(backupData);
               console.log('Server restore result:', serverResult);
 
               for (const [key, value] of Object.entries(backupData.data)) {
@@ -271,7 +270,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         console.log('Restoring backup from:', backupData.timestamp);
 
         console.log('Sending restore request to server...');
-        const serverResult = await restoreBackupMutation.mutateAsync(backupData);
+        const serverResult = await trpcClient.backup.restore.mutate(backupData);
         console.log('Server restore result:', serverResult);
 
         for (const [key, value] of Object.entries(backupData.data)) {
@@ -308,7 +307,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [restoreBackupMutation, reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
 
   return useMemo(() => ({
     createBackup,
