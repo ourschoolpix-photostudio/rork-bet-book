@@ -1,9 +1,6 @@
 import { publicProcedure } from "@/backend/trpc/create-context";
 import { z } from "zod";
-import { promises as fs } from "fs";
-import path from "path";
-
-const BACKUPS_DIR = path.join(process.cwd(), '.backups');
+import { backupsStore } from './create-backup/route';
 
 export const restoreBackupProcedure = publicProcedure
   .input(z.object({
@@ -12,19 +9,19 @@ export const restoreBackupProcedure = publicProcedure
   .mutation(async ({ input }) => {
     console.log('Restoring backup on server:', input.backupId);
     
-    const filePath = path.join(BACKUPS_DIR, `${input.backupId}.json`);
+    const backupData = backupsStore.get(input.backupId);
     
-    try {
-      const content = await fs.readFile(filePath, 'utf-8');
-      const backupData = JSON.parse(content);
-      
-      return {
-        success: true,
-        message: 'Backup retrieved successfully',
-        data: backupData,
-      };
-    } catch (error) {
-      console.error('Error reading backup:', error);
-      throw new Error('Backup not found or could not be read');
+    if (!backupData) {
+      console.error('Backup not found:', input.backupId);
+      console.log('Available backups:', Array.from(backupsStore.keys()));
+      throw new Error('Backup not found');
     }
+    
+    console.log('Backup retrieved successfully:', input.backupId);
+    
+    return {
+      success: true,
+      message: 'Backup retrieved successfully',
+      data: backupData,
+    };
   });

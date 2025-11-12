@@ -1,17 +1,15 @@
 import { publicProcedure } from "@/backend/trpc/create-context";
 import { z } from "zod";
-import { promises as fs } from "fs";
-import path from "path";
 
-const BACKUPS_DIR = path.join(process.cwd(), '.backups');
-
-async function ensureBackupsDir() {
-  try {
-    await fs.mkdir(BACKUPS_DIR, { recursive: true });
-  } catch (error) {
-    console.error('Error creating backups directory:', error);
-  }
+interface BackupData {
+  id: string;
+  version: string;
+  timestamp: string;
+  data: Record<string, string | null>;
+  createdAt: string;
 }
+
+const backupsStore = new Map<string, BackupData>();
 
 export const createBackupProcedure = publicProcedure
   .input(z.object({
@@ -22,13 +20,9 @@ export const createBackupProcedure = publicProcedure
   .mutation(async ({ input }) => {
     console.log('Creating backup on server:', input.timestamp);
     
-    await ensureBackupsDir();
-    
     const backupId = `backup-${Date.now()}`;
-    const fileName = `${backupId}.json`;
-    const filePath = path.join(BACKUPS_DIR, fileName);
     
-    const backupData = {
+    const backupData: BackupData = {
       id: backupId,
       version: input.version,
       timestamp: input.timestamp,
@@ -36,8 +30,9 @@ export const createBackupProcedure = publicProcedure
       createdAt: new Date().toISOString(),
     };
     
-    await fs.writeFile(filePath, JSON.stringify(backupData, null, 2), 'utf-8');
-    console.log('Backup saved to:', filePath);
+    backupsStore.set(backupId, backupData);
+    console.log('Backup saved to memory store:', backupId);
+    console.log('Total backups in store:', backupsStore.size);
     
     return {
       success: true,
@@ -45,3 +40,5 @@ export const createBackupProcedure = publicProcedure
       timestamp: input.timestamp,
     };
   });
+
+export { backupsStore };
