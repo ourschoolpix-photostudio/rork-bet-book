@@ -58,7 +58,7 @@ export default function MonthlyUtilitiesModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
             <View style={styles.modal}>
               <View style={styles.header}>
                 <Text style={styles.title}>Monthly Utilities</Text>
@@ -160,6 +160,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    flex: 1,
     justifyContent: 'flex-end',
   },
   modal: {
