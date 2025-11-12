@@ -11,6 +11,7 @@ import { useBorrows } from './BorrowContext';
 import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
+import { trpc } from '@/lib/trpc';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -23,6 +24,7 @@ const STORAGE_KEYS = [
   '@casino_tracker_sports_bets',
   '@casino_tracker_expenses',
   '@casino_tracker_recurring_bills',
+  '@casino_tracker_utilities',
 ];
 
 export interface BackupData {
@@ -38,6 +40,8 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadBets } = useBets();
   const { reloadSportsBets } = useSportsBets();
   const { reloadAllData: reloadExpenses } = useExpenses();
+  const createBackupMutation = trpc.backup.create.useMutation();
+
   const createBackup = useCallback(async (): Promise<boolean> => {
     try {
       console.log('Starting backup creation...');
@@ -58,6 +62,10 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         }
       }
 
+      console.log('Sending backup to server...');
+      const result = await createBackupMutation.mutateAsync(backupData);
+      console.log('Server backup result:', result);
+
       const backupJson = JSON.stringify(backupData, null, 2);
       const fileName = `casino_tracker_backup_${new Date().toISOString().split('T')[0]}_${Date.now()}.json`;
 
@@ -72,6 +80,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         console.log('Backup downloaded on web');
+        Alert.alert('Success', 'Backup created and saved to server successfully!');
         return true;
       } else {
         const backupDir = new Directory(Paths.cache, 'backups');
@@ -91,6 +100,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
             UTI: 'public.json',
           });
           console.log('Backup shared successfully');
+          Alert.alert('Success', 'Backup created and saved to server successfully!');
           return true;
         } else {
           Alert.alert('Error', 'Sharing is not available on this device');
@@ -102,7 +112,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to create backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, []);
+  }, [createBackupMutation]);
 
   const mergeData = (currentValue: string | null, backupValue: string | null): string | null => {
     if (!currentValue || currentValue === '[]' || currentValue === '{}' || currentValue === 'null') {
@@ -159,6 +169,8 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     }
   };
 
+  const restoreBackupMutation = trpc.backup.restore.useMutation();
+
   const restoreBackup = useCallback(async (): Promise<boolean> => {
     try {
       console.log('Starting backup restore...');
@@ -191,6 +203,10 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
               console.log('Restoring backup from:', backupData.timestamp);
 
+              console.log('Sending restore request to server...');
+              const serverResult = await restoreBackupMutation.mutateAsync(backupData);
+              console.log('Server restore result:', serverResult);
+
               for (const [key, value] of Object.entries(backupData.data)) {
                 const currentValue = await AsyncStorage.getItem(key);
                 const mergedValue = mergeData(currentValue, value);
@@ -216,7 +232,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
               
               Alert.alert(
                 'Success',
-                'Backup merged successfully!'
+                'Backup merged and restored successfully!'
               );
               resolve(true);
             } catch (error) {
@@ -254,6 +270,10 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
         console.log('Restoring backup from:', backupData.timestamp);
 
+        console.log('Sending restore request to server...');
+        const serverResult = await restoreBackupMutation.mutateAsync(backupData);
+        console.log('Server restore result:', serverResult);
+
         for (const [key, value] of Object.entries(backupData.data)) {
           const currentValue = await AsyncStorage.getItem(key);
           const mergedValue = mergeData(currentValue, value);
@@ -279,7 +299,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         
         Alert.alert(
           'Success',
-          'Backup merged successfully!'
+          'Backup merged and restored successfully!'
         );
         return true;
       }
@@ -288,7 +308,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+  }, [restoreBackupMutation, reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
 
   return useMemo(() => ({
     createBackup,
