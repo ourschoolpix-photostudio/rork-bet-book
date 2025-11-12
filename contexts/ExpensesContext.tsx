@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Expense, RecurringBill, ExpenseCategory, MonthlyUtility, MainExpenseCategory, ExpenseSubCategory } from '@/types/expense';
+import { Expense, RecurringBill, ExpenseCategory, MonthlyUtility } from '@/types/expense';
 
 const EXPENSES_STORAGE_KEY = '@casino_tracker_expenses';
 const RECURRING_BILLS_STORAGE_KEY = '@casino_tracker_recurring_bills';
@@ -80,8 +80,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
 
   const addExpense = useCallback(async (
     userId: string,
-    mainCategory: MainExpenseCategory,
-    subCategory: ExpenseSubCategory,
+    category: ExpenseCategory,
     amount: number,
     description: string,
     date: Date,
@@ -92,9 +91,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     const newExpense: Expense = {
       id: `expense-${Date.now()}`,
       userId,
-      mainCategory,
-      subCategory,
-      category: subCategory,
+      category,
       amount,
       description,
       merchant,
@@ -111,8 +108,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
 
   const updateExpense = useCallback(async (
     expenseId: string,
-    mainCategory: MainExpenseCategory,
-    subCategory: ExpenseSubCategory,
+    category: ExpenseCategory,
     amount: number,
     description: string,
     date: Date,
@@ -121,7 +117,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   ) => {
     const updatedExpenses = expenses.map(e =>
       e.id === expenseId
-        ? { ...e, mainCategory, subCategory, category: subCategory, amount, description, date: date.toISOString(), merchant, notes }
+        ? { ...e, category, amount, description, date: date.toISOString(), merchant, notes }
         : e
     );
     setExpenses(updatedExpenses);

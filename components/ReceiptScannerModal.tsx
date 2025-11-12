@@ -1,4 +1,4 @@
-import { MainExpenseCategory, ExpenseSubCategory } from '@/types/expense';
+import { ExpenseCategory } from '@/types/expense';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { X, Camera as CameraIcon } from 'lucide-react-native';
 import { useState } from 'react';
@@ -9,8 +9,7 @@ interface ReceiptScannerModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (
-    mainCategory: MainExpenseCategory,
-    subCategory: ExpenseSubCategory,
+    category: ExpenseCategory,
     amount: number,
     description: string,
     date: Date,
@@ -19,7 +18,7 @@ interface ReceiptScannerModalProps {
   ) => Promise<void>;
 }
 
-const subCategories: ExpenseSubCategory[] = [
+const categories: ExpenseCategory[] = [
   'Auto Repair',
   'Clothing',
   'Convenience Store',
@@ -45,8 +44,7 @@ export default function ReceiptScannerModal({
   const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [scannedData, setScannedData] = useState<{
-    mainCategory: MainExpenseCategory;
-    subCategory: ExpenseSubCategory;
+    category: ExpenseCategory;
     amount: string;
     description: string;
     merchant: string;
@@ -133,8 +131,7 @@ export default function ReceiptScannerModal({
       }
 
       setScannedData({
-        mainCategory: 'Standard Expense',
-        subCategory: isAutoRepair ? 'Auto Repair' : 'Grocery',
+        category: isAutoRepair ? 'Auto Repair' : 'Grocery',
         amount,
         description,
         merchant,
@@ -164,8 +161,7 @@ export default function ReceiptScannerModal({
     }
 
     await onSubmit(
-      scannedData.mainCategory,
-      scannedData.subCategory,
+      scannedData.category,
       parsedAmount,
       scannedData.description.trim(),
       scannedData.date,
@@ -241,72 +237,28 @@ export default function ReceiptScannerModal({
 
             <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Main Category</Text>
-                <View style={styles.mainCategoriesContainer}>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.mainCategoryButton,
-                      scannedData.mainCategory === 'Standard Expense' && styles.mainCategoryButtonSelected,
-                      pressed && styles.mainCategoryButtonPressed,
-                    ]}
-                    onPress={() =>
-                      setScannedData({ ...scannedData, mainCategory: 'Standard Expense' })
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.mainCategoryText,
-                        scannedData.mainCategory === 'Standard Expense' && styles.mainCategoryTextSelected,
-                      ]}
-                    >
-                      Standard Expense
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.mainCategoryButton,
-                      scannedData.mainCategory === 'Vacation Expense' && styles.mainCategoryButtonSelected,
-                      pressed && styles.mainCategoryButtonPressed,
-                    ]}
-                    onPress={() =>
-                      setScannedData({ ...scannedData, mainCategory: 'Vacation Expense' })
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.mainCategoryText,
-                        scannedData.mainCategory === 'Vacation Expense' && styles.mainCategoryTextSelected,
-                      ]}
-                    >
-                      Vacation Expense
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Sub Category</Text>
+                <Text style={styles.inputLabel}>Category</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.categoriesContainer}
                 >
-                  {subCategories.map((category) => (
+                  {categories.map((category) => (
                     <Pressable
                       key={category}
                       style={({ pressed }) => [
                         styles.categoryChip,
-                        scannedData.subCategory === category && styles.categoryChipSelected,
+                        scannedData.category === category && styles.categoryChipSelected,
                         pressed && styles.categoryChipPressed,
                       ]}
                       onPress={() =>
-                        setScannedData({ ...scannedData, subCategory: category })
+                        setScannedData({ ...scannedData, category })
                       }
                     >
                       <Text
                         style={[
                           styles.categoryChipText,
-                          scannedData.subCategory === category && styles.categoryChipTextSelected,
+                          scannedData.category === category && styles.categoryChipTextSelected,
                         ]}
                       >
                         {category}
@@ -541,35 +493,6 @@ const styles = StyleSheet.create({
     color: '#240046',
     borderWidth: 1,
     borderColor: 'rgba(157, 78, 221, 0.2)',
-  },
-  mainCategoriesContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  mainCategoryButton: {
-    flex: 1,
-    backgroundColor: 'rgba(157, 78, 221, 0.1)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(157, 78, 221, 0.2)',
-    alignItems: 'center',
-  },
-  mainCategoryButtonSelected: {
-    backgroundColor: '#9D4EDD',
-    borderColor: '#9D4EDD',
-  },
-  mainCategoryButtonPressed: {
-    opacity: 0.6,
-  },
-  mainCategoryText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: '#9D4EDD',
-  },
-  mainCategoryTextSelected: {
-    color: '#FFFFFF',
   },
   categoriesContainer: {
     gap: 8,
