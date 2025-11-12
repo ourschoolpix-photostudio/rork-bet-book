@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBets } from '@/contexts/BetsContext';
 import { useSportsBets } from '@/contexts/SportsBetsContext';
-import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useMonthlyUtilitiesTotal } from '@/contexts/ExpensesContext';
+import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useMonthlyUtilitiesTotal, useUtilitiesByMonth } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight } from 'lucide-react-native';
@@ -22,6 +22,10 @@ export default function SummaryScreen() {
   const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
   const monthlyUtilitiesTotal = useMonthlyUtilitiesTotal(currentUser?.id || '');
+  
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentUtilities = useUtilitiesByMonth(currentUser?.id || '', currentMonthKey);
 
   const activeRecurringBills = recurringBills.filter(bill => bill.isActive);
   const monthlyRecurringTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
@@ -207,58 +211,6 @@ export default function SummaryScreen() {
           <View style={styles.categoriesContainer}>
             <Text style={styles.sectionTitle}>Expenses</Text>
 
-            <View style={styles.categoryCard}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryHeaderLeft}>
-                  <Calendar size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Monthly Recurring Bills</Text>
-                </View>
-                <Text style={styles.expenseValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.categoryStats}>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Active Bills</Text>
-                  <Text style={styles.categoryStatValue}>{activeRecurringBills.length}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.categoryCard}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryHeaderLeft}>
-                  <Receipt size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Monthly Expenses</Text>
-                </View>
-                <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.categoryStats}>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Total Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyExpenses.total.toFixed(2)}</Text>
-                </View>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.categoryCard}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryHeaderLeft}>
-                  <Receipt size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Monthly Utilities</Text>
-                </View>
-                <Text style={styles.expenseValue}>${monthlyUtilitiesTotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.categoryStats}>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Variable Costs</Text>
-                  <Text style={styles.categoryStatValue}>Electric, Gas, Water</Text>
-                </View>
-              </View>
-            </View>
-
             <View style={[styles.categoryCard, styles.grandTotalExpenseCard]}>
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryHeaderLeft}>
@@ -279,6 +231,84 @@ export default function SummaryScreen() {
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Other Expenses</Text>
                   <Text style={styles.categoryStatValue}>${additionalExpensesTotal.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Calendar size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Monthly Recurring Bills</Text>
+                </View>
+                <Text style={styles.expenseValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+              </View>
+              {activeRecurringBills.length > 0 ? (
+                <View style={styles.itemsList}>
+                  {activeRecurringBills.map((bill) => (
+                    <View key={bill.id} style={styles.itemRow}>
+                      <Text style={styles.itemName}>{bill.name}</Text>
+                      <Text style={styles.itemAmount}>${bill.amount.toFixed(2)}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.categoryStats}>
+                  <View style={styles.categoryStatItem}>
+                    <Text style={styles.categoryStatLabel}>No active bills</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Receipt size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Monthly Utilities</Text>
+                </View>
+                <Text style={styles.expenseValue}>${monthlyUtilitiesTotal.toFixed(2)}</Text>
+              </View>
+              {currentUtilities ? (
+                <View style={styles.itemsList}>
+                  <View style={styles.itemRow}>
+                    <Text style={styles.itemName}>Electric</Text>
+                    <Text style={styles.itemAmount}>${currentUtilities.electric.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.itemRow}>
+                    <Text style={styles.itemName}>Natural Gas</Text>
+                    <Text style={styles.itemAmount}>${currentUtilities.naturalGas.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.itemRow}>
+                    <Text style={styles.itemName}>Water</Text>
+                    <Text style={styles.itemAmount}>${currentUtilities.water.toFixed(2)}</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.categoryStats}>
+                  <View style={styles.categoryStatItem}>
+                    <Text style={styles.categoryStatLabel}>No utilities entered</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Receipt size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Monthly Expenses</Text>
+                </View>
+                <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.categoryStats}>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Total Expenses</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyExpenses.total.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
+                  <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
                 </View>
               </View>
             </View>
@@ -652,6 +682,29 @@ const styles = StyleSheet.create({
   },
   grandTotalExpenseValue: {
     fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#5A189A',
+  },
+  itemsList: {
+    gap: 8,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 8,
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#240046',
+    flex: 1,
+  },
+  itemAmount: {
+    fontSize: 15,
     fontWeight: '700' as const,
     color: '#5A189A',
   },
