@@ -62,8 +62,12 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       }
 
       console.log('Sending backup to server...');
-      const result = await trpcClient.backup.create.mutate(backupData);
-      console.log('Server backup result:', result);
+      try {
+        const result = await trpcClient.backup.create.mutate(backupData);
+        console.log('Server backup result:', result);
+      } catch (serverError) {
+        console.error('Server backup failed (non-critical):', serverError);
+      }
 
       const backupJson = JSON.stringify(backupData, null, 2);
       const fileName = `casino_tracker_backup_${new Date().toISOString().split('T')[0]}_${Date.now()}.json`;
@@ -203,8 +207,12 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
               console.log('Restoring backup from:', backupData.timestamp);
 
               console.log('Sending restore request to server...');
-              const serverResult = await trpcClient.backup.restore.mutate(backupData);
-              console.log('Server restore result:', serverResult);
+              try {
+                const serverResult = await trpcClient.backup.restore.mutate(backupData);
+                console.log('Server restore result:', serverResult);
+              } catch (serverError) {
+                console.error('Server restore failed (non-critical):', serverError);
+              }
 
               for (const [key, value] of Object.entries(backupData.data)) {
                 const currentValue = await AsyncStorage.getItem(key);
@@ -270,8 +278,12 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         console.log('Restoring backup from:', backupData.timestamp);
 
         console.log('Sending restore request to server...');
-        const serverResult = await trpcClient.backup.restore.mutate(backupData);
-        console.log('Server restore result:', serverResult);
+        try {
+          const serverResult = await trpcClient.backup.restore.mutate(backupData);
+          console.log('Server restore result:', serverResult);
+        } catch (serverError) {
+          console.error('Server restore failed (non-critical):', serverError);
+        }
 
         for (const [key, value] of Object.entries(backupData.data)) {
           const currentValue = await AsyncStorage.getItem(key);
