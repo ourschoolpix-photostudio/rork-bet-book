@@ -1,6 +1,6 @@
 import { X } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
-import { Alert, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
 interface MonthlyUtilitiesModalProps {
   visible: boolean;
@@ -53,93 +53,105 @@ export default function MonthlyUtilitiesModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modal}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Monthly Utilities</Text>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.closeButtonPressed,
-              ]}
-            >
-              <X size={24} color="#240046" />
-            </Pressable>
-          </View>
-
-          <View style={styles.monthBadge}>
-            <Text style={styles.monthBadgeText}>{monthLabel}</Text>
-          </View>
-
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.body}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Electricity</Text>
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.dollarSign}>$</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="0.00"
-                    placeholderTextColor="rgba(36, 0, 70, 0.4)"
-                    value={electricityValue}
-                    onChangeText={(text) => {
-                      const filtered = text.replace(/[^0-9.]/g, '');
-                      setElectricityValue(filtered);
-                    }}
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Water</Text>
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.dollarSign}>$</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="0.00"
-                    placeholderTextColor="rgba(36, 0, 70, 0.4)"
-                    value={waterValue}
-                    onChangeText={(text) => {
-                      const filtered = text.replace(/[^0-9.]/g, '');
-                      setWaterValue(filtered);
-                    }}
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.totalCard}>
-                <Text style={styles.totalLabel}>Total Utilities</Text>
-                <Text style={styles.totalAmount}>${total.toFixed(2)}</Text>
-              </View>
-
-              <View style={styles.actions}>
+      <KeyboardAvoidingView 
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modal}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Monthly Utilities</Text>
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.cancelButton,
-                    pressed && styles.cancelButtonPressed,
-                  ]}
                   onPress={onClose}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
-
-                <Pressable
                   style={({ pressed }) => [
-                    styles.saveButton,
-                    pressed && styles.saveButtonPressed,
+                    styles.closeButton,
+                    pressed && styles.closeButtonPressed,
                   ]}
-                  onPress={handleSave}
                 >
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <X size={24} color="#240046" />
                 </Pressable>
               </View>
+
+              <ScrollView 
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.monthBadge}>
+                  <Text style={styles.monthBadgeText}>{monthLabel}</Text>
+                </View>
+
+                <View style={styles.body}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Electricity</Text>
+                    <View style={styles.inputWrapper}>
+                      <Text style={styles.dollarSign}>$</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="0.00"
+                        placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                        value={electricityValue}
+                        onChangeText={(text) => {
+                          const filtered = text.replace(/[^0-9.]/g, '');
+                          setElectricityValue(filtered);
+                        }}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Water</Text>
+                    <View style={styles.inputWrapper}>
+                      <Text style={styles.dollarSign}>$</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="0.00"
+                        placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                        value={waterValue}
+                        onChangeText={(text) => {
+                          const filtered = text.replace(/[^0-9.]/g, '');
+                          setWaterValue(filtered);
+                        }}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.totalCard}>
+                    <Text style={styles.totalLabel}>Total Utilities</Text>
+                    <Text style={styles.totalAmount}>${total.toFixed(2)}</Text>
+                  </View>
+
+                  <View style={styles.actions}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.cancelButton,
+                        pressed && styles.cancelButtonPressed,
+                      ]}
+                      onPress={onClose}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.saveButton,
+                        pressed && styles.saveButtonPressed,
+                      ]}
+                      onPress={handleSave}
+                    >
+                      <Text style={styles.saveButtonText}>Save</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </ScrollView>
             </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -154,6 +166,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    maxHeight: '80%',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingBottom: 40,
   },
   header: {
@@ -182,6 +200,7 @@ const styles = StyleSheet.create({
   monthBadge: {
     marginHorizontal: 24,
     marginTop: 16,
+    marginBottom: 8,
     backgroundColor: 'rgba(157, 78, 221, 0.1)',
     borderRadius: 12,
     padding: 12,
