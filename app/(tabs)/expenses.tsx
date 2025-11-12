@@ -552,14 +552,10 @@ export default function ExpensesScreen() {
             </View>
             <ScrollView style={styles.summaryContent}>
               <View style={styles.summarySection}>
-                <Text style={styles.sectionTitle}>Current Month</Text>
-                <View style={styles.summaryTotalCard}>
-                  <Text style={styles.summaryTotalLabel}>
-                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </Text>
-                  <Text style={styles.summaryTotalAmount}>${monthlyExpenses.total.toFixed(2)}</Text>
-                  <Text style={styles.summaryCount}>{monthlyExpenses.expenses.length} expense{monthlyExpenses.expenses.length !== 1 ? 's' : ''}</Text>
-                </View>
+                <Text style={styles.sectionTitle}>Monthly Expense Breakdown</Text>
+                <Text style={styles.sectionSubtitle}>
+                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </Text>
                 
                 {Object.entries(monthlyExpenses.byCategory)
                   .filter(([_, amount]) => amount > 0)
@@ -580,55 +576,12 @@ export default function ExpensesScreen() {
                             ]}
                           />
                         </View>
-                        <Text style={styles.categoryRowAmount}>${amount.toFixed(2)}</Text>
                       </View>
                     );
                   })}
                 {Object.values(monthlyExpenses.byCategory).every(amount => amount === 0) && (
                   <View style={styles.emptySummary}>
                     <Text style={styles.emptySummaryText}>No expenses this month</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.summaryDivider} />
-
-              <View style={styles.summarySection}>
-                <Text style={styles.sectionTitle}>Year to Date</Text>
-                <View style={styles.summaryTotalCard}>
-                  <Text style={styles.summaryTotalLabel}>
-                    {new Date().getFullYear()} Total
-                  </Text>
-                  <Text style={styles.summaryTotalAmount}>${ytdExpenses.total.toFixed(2)}</Text>
-                  <Text style={styles.summaryCount}>{ytdExpenses.expenses.length} expense{ytdExpenses.expenses.length !== 1 ? 's' : ''}</Text>
-                </View>
-                
-                {Object.entries(ytdExpenses.byCategory)
-                  .filter(([_, amount]) => amount > 0)
-                  .sort(([_, a], [__, b]) => b - a)
-                  .map(([category, amount]) => {
-                    const percentage = ytdExpenses.total > 0 ? (amount / ytdExpenses.total) * 100 : 0;
-                    return (
-                      <View key={`ytd-${category}`} style={styles.categoryRow}>
-                        <View style={styles.categoryRowInfo}>
-                          <Text style={styles.categoryRowName}>{category}</Text>
-                          <Text style={styles.categoryRowPercentage}>{percentage.toFixed(1)}%</Text>
-                        </View>
-                        <View style={styles.categoryRowBar}>
-                          <View
-                            style={[
-                              styles.categoryRowBarFill,
-                              { width: `${percentage}%` },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.categoryRowAmount}>${amount.toFixed(2)}</Text>
-                      </View>
-                    );
-                  })}
-                {Object.values(ytdExpenses.byCategory).every(amount => amount === 0) && (
-                  <View style={styles.emptySummary}>
-                    <Text style={styles.emptySummaryText}>No expenses this year</Text>
                   </View>
                 )}
               </View>
@@ -1024,6 +977,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#9D4EDD',
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#7B2CBF',
+    marginBottom: 20,
+    textAlign: 'center' as const,
   },
   emptySummary: {
     paddingVertical: 40,
