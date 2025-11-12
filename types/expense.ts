@@ -15,12 +15,9 @@ export type ExpenseCategory =
   | 'Shoes'
   | 'Travel';
 
-export type MainCategory = 'Standard Expenses' | 'Vacation Expenses';
-
 export interface Expense {
   id: string;
   userId: string;
-  mainCategory: MainCategory;
   category: ExpenseCategory;
   amount: number;
   description: string;
@@ -41,6 +38,4 @@ export interface RecurringBill {
   createdAt: string;
   isActive: boolean;
   lastProcessedMonth?: string;
-  isAutomatic?: boolean;
-  variableAmount?: boolean;
 }
