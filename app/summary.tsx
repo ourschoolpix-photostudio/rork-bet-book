@@ -365,21 +365,58 @@ export default function SummaryScreen() {
 
                     {isExpanded && (
                       <View style={styles.monthExpensesList}>
-                        {monthGroup.expenses.map((expense) => (
-                          <View key={expense.id} style={styles.expenseRow}>
-                            <View style={styles.expenseRowLeft}>
-                              <Text style={styles.expenseRowCategory}>{expense.category}</Text>
-                              <Text style={styles.expenseRowDescription}>{expense.description}</Text>
-                              {expense.merchant && (
-                                <Text style={styles.expenseRowMerchant}>{expense.merchant}</Text>
-                              )}
-                              <Text style={styles.expenseRowDate}>
-                                {new Date(expense.date).toLocaleDateString()}
-                              </Text>
-                            </View>
-                            <Text style={styles.expenseRowAmount}>${expense.amount.toFixed(2)}</Text>
+                        <View style={styles.monthUtilitiesSection}>
+                          <View style={styles.monthUtilitiesHeader}>
+                            <Text style={styles.monthUtilitiesTitle}>Monthly Utilities</Text>
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.monthEditUtilitiesButton,
+                                pressed && styles.editUtilitiesButtonPressed,
+                              ]}
+                              onPress={() => {
+                                setSelectedMonthKey(monthGroup.monthKey);
+                                setSelectedMonthLabel(monthGroup.monthLabel);
+                                setShowUtilitiesModal(true);
+                              }}
+                            >
+                              <Edit size={14} color="#9D4EDD" />
+                              <Text style={styles.monthEditUtilitiesButtonText}>Edit</Text>
+                            </Pressable>
                           </View>
-                        ))}
+                          <View style={styles.monthUtilityItem}>
+                            <View style={styles.utilityRowLeft}>
+                              <Zap size={14} color="#5A189A" />
+                              <Text style={styles.monthUtilityName}>Electricity</Text>
+                            </View>
+                            <Text style={styles.monthUtilityValue}>${(getMonthlyUtility(currentUser?.id || '', monthGroup.monthKey)?.electricity || 0).toFixed(2)}</Text>
+                          </View>
+                          <View style={styles.monthUtilityItem}>
+                            <View style={styles.utilityRowLeft}>
+                              <Droplet size={14} color="#5A189A" />
+                              <Text style={styles.monthUtilityName}>Water</Text>
+                            </View>
+                            <Text style={styles.monthUtilityValue}>${(getMonthlyUtility(currentUser?.id || '', monthGroup.monthKey)?.water || 0).toFixed(2)}</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.monthExpensesSection}>
+                          <Text style={styles.monthExpensesSectionTitle}>Expenses</Text>
+                          {monthGroup.expenses.map((expense) => (
+                            <View key={expense.id} style={styles.expenseRow}>
+                              <View style={styles.expenseRowLeft}>
+                                <Text style={styles.expenseRowCategory}>{expense.category}</Text>
+                                <Text style={styles.expenseRowDescription}>{expense.description}</Text>
+                                {expense.merchant && (
+                                  <Text style={styles.expenseRowMerchant}>{expense.merchant}</Text>
+                                )}
+                                <Text style={styles.expenseRowDate}>
+                                  {new Date(expense.date).toLocaleDateString()}
+                                </Text>
+                              </View>
+                              <Text style={styles.expenseRowAmount}>${expense.amount.toFixed(2)}</Text>
+                            </View>
+                          ))}
+                        </View>
                       </View>
                     )}
                   </View>
@@ -762,5 +799,68 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700' as const,
     color: '#5A189A',
+  },
+  monthUtilitiesSection: {
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+    marginBottom: 12,
+  },
+  monthUtilitiesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  monthUtilitiesTitle: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#240046',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  monthEditUtilitiesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(157, 78, 221, 0.15)',
+    borderRadius: 6,
+  },
+  monthEditUtilitiesButtonText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  monthUtilityItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 8,
+    padding: 10,
+  },
+  monthUtilityName: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#240046',
+  },
+  monthUtilityValue: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#5A189A',
+  },
+  monthExpensesSection: {
+    gap: 8,
+  },
+  monthExpensesSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#240046',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
 });
