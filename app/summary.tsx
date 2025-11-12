@@ -256,19 +256,79 @@ export default function SummaryScreen() {
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryHeaderLeft}>
                   <Receipt size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Monthly Expenses</Text>
+                  <Text style={styles.categoryName}>Monthly Expenses by Category</Text>
                 </View>
-                <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
+                <Text style={styles.expenseValue}>${monthlyExpenses.total.toFixed(2)}</Text>
               </View>
-              <View style={styles.categoryStats}>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Total Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyExpenses.total.toFixed(2)}</Text>
+              <View style={styles.expenseCategoryBreakdown}>
+                {Object.entries(monthlyExpenses.byCategory)
+                  .filter(([_, amount]) => amount > 0)
+                  .sort(([_, a], [__, b]) => b - a)
+                  .map(([category, amount]) => {
+                    const percentage = monthlyExpenses.total > 0 ? (amount / monthlyExpenses.total) * 100 : 0;
+                    return (
+                      <View key={`monthly-${category}`} style={styles.expenseCategoryRow}>
+                        <View style={styles.expenseCategoryRowInfo}>
+                          <Text style={styles.expenseCategoryRowName}>{category}</Text>
+                          <Text style={styles.expenseCategoryRowPercentage}>{percentage.toFixed(1)}%</Text>
+                        </View>
+                        <View style={styles.expenseCategoryRowBar}>
+                          <View
+                            style={[
+                              styles.expenseCategoryRowBarFill,
+                              { width: `${percentage}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.expenseCategoryRowAmount}>${amount.toFixed(2)}</Text>
+                      </View>
+                    );
+                  })}
+                {Object.values(monthlyExpenses.byCategory).every(amount => amount === 0) && (
+                  <View style={styles.emptyExpenseCategory}>
+                    <Text style={styles.emptyExpenseCategoryText}>No expenses this month</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Receipt size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Year to Date Expenses by Category</Text>
                 </View>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
-                </View>
+                <Text style={styles.expenseValue}>${ytdExpenses.total.toFixed(2)}</Text>
+              </View>
+              <View style={styles.expenseCategoryBreakdown}>
+                {Object.entries(ytdExpenses.byCategory)
+                  .filter(([_, amount]) => amount > 0)
+                  .sort(([_, a], [__, b]) => b - a)
+                  .map(([category, amount]) => {
+                    const percentage = ytdExpenses.total > 0 ? (amount / ytdExpenses.total) * 100 : 0;
+                    return (
+                      <View key={`ytd-${category}`} style={styles.expenseCategoryRow}>
+                        <View style={styles.expenseCategoryRowInfo}>
+                          <Text style={styles.expenseCategoryRowName}>{category}</Text>
+                          <Text style={styles.expenseCategoryRowPercentage}>{percentage.toFixed(1)}%</Text>
+                        </View>
+                        <View style={styles.expenseCategoryRowBar}>
+                          <View
+                            style={[
+                              styles.expenseCategoryRowBarFill,
+                              { width: `${percentage}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.expenseCategoryRowAmount}>${amount.toFixed(2)}</Text>
+                      </View>
+                    );
+                  })}
+                {Object.values(ytdExpenses.byCategory).every(amount => amount === 0) && (
+                  <View style={styles.emptyExpenseCategory}>
+                    <Text style={styles.emptyExpenseCategoryText}>No expenses this year</Text>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -813,5 +873,53 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
     marginBottom: 4,
+  },
+  expenseCategoryBreakdown: {
+    gap: 12,
+  },
+  expenseCategoryRow: {
+    gap: 8,
+  },
+  expenseCategoryRowInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  expenseCategoryRowName: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#240046',
+  },
+  expenseCategoryRowPercentage: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#5A189A',
+  },
+  expenseCategoryRowBar: {
+    height: 8,
+    backgroundColor: 'rgba(157, 78, 221, 0.2)',
+    borderRadius: 4,
+    marginBottom: 4,
+    overflow: 'hidden' as const,
+  },
+  expenseCategoryRowBarFill: {
+    height: '100%',
+    backgroundColor: '#9D4EDD',
+    borderRadius: 4,
+  },
+  expenseCategoryRowAmount: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#5A189A',
+    textAlign: 'right' as const,
+  },
+  emptyExpenseCategory: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  emptyExpenseCategoryText: {
+    fontSize: 14,
+    color: 'rgba(36, 0, 70, 0.6)',
+    fontWeight: '600' as const,
   },
 });
