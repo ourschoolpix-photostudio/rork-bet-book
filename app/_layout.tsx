@@ -11,6 +11,7 @@ import { BetsProvider } from "@/contexts/BetsContext";
 import { SportsBetsProvider } from "@/contexts/SportsBetsContext";
 import { BackupProvider } from "@/contexts/BackupContext";
 import { ExpensesProvider } from "@/contexts/ExpensesContext";
+import { trpc, trpcClient } from "@/lib/trpc";
 
 LogBox.ignoreLogs([
   'Deep imports from the \'react-native\' package are deprecated',
@@ -48,25 +49,27 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <LoanProvider>
-          <BorrowProvider>
-            <BetsProvider>
-              <SportsBetsProvider>
-                <ExpensesProvider>
-                  <BackupProvider>
-                    <GestureHandlerRootView style={styles.container}>
-                      <RootLayoutNav />
-                    </GestureHandlerRootView>
-                  </BackupProvider>
-                </ExpensesProvider>
-              </SportsBetsProvider>
-            </BetsProvider>
-          </BorrowProvider>
-        </LoanProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <LoanProvider>
+            <BorrowProvider>
+              <BetsProvider>
+                <SportsBetsProvider>
+                  <ExpensesProvider>
+                    <BackupProvider>
+                      <GestureHandlerRootView style={styles.container}>
+                        <RootLayoutNav />
+                      </GestureHandlerRootView>
+                    </BackupProvider>
+                  </ExpensesProvider>
+                </SportsBetsProvider>
+              </BetsProvider>
+            </BorrowProvider>
+          </LoanProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
 
