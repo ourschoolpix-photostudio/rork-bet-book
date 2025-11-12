@@ -1,14 +1,16 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Expense, RecurringBill, ExpenseCategory, ExpenseType } from '@/types/expense';
+import { Expense, RecurringBill, ExpenseCategory, ExpenseType, MonthlyUtilities } from '@/types/expense';
 
 const EXPENSES_STORAGE_KEY = '@casino_tracker_expenses';
 const RECURRING_BILLS_STORAGE_KEY = '@casino_tracker_recurring_bills';
+const UTILITIES_STORAGE_KEY = '@casino_tracker_utilities';
 
 export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [recurringBills, setRecurringBills] = useState<RecurringBill[]>([]);
+  const [utilities, setUtilities] = useState<MonthlyUtilities[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const loadExpenses = useCallback(async () => {
@@ -45,15 +47,32 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     }
   }, []);
 
+  const loadUtilities = useCallback(async () => {
+    try {
+      const utilitiesJson = await AsyncStorage.getItem(UTILITIES_STORAGE_KEY);
+      if (utilitiesJson) {
+        try {
+          setUtilities(JSON.parse(utilitiesJson));
+        } catch (parseError) {
+          console.error('Error parsing utilities JSON, clearing corrupted data:', parseError);
+          await AsyncStorage.removeItem(UTILITIES_STORAGE_KEY);
+          setUtilities([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading utilities:', error);
+    }
+  }, []);
+
   const loadAllData = useCallback(async () => {
     try {
-      await Promise.all([loadExpenses(), loadRecurringBills()]);
+      await Promise.all([loadExpenses(), loadRecurringBills(), loadUtilities()]);
     } catch (error) {
       console.error('Error loading expenses data:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [loadExpenses, loadRecurringBills]);
+  }, [loadExpenses, loadRecurringBills, loadUtilities]);
 
   useEffect(() => {
     loadAllData();
@@ -169,6 +188,41 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     await AsyncStorage.setItem(RECURRING_BILLS_STORAGE_KEY, JSON.stringify(updatedBills));
   }, [recurringBills]);
 
+  const updateUtilities = useCallback(async (
+    userId: string,
+    monthKey: string,
+    electric: number,
+    naturalGas: number,
+    water: number
+  ) => {
+    const existingUtility = utilities.find(
+      u => u.userId === userId && u.monthKey === monthKey
+    );
+
+    let updatedUtilities: MonthlyUtilities[];
+    if (existingUtility) {
+      updatedUtilities = utilities.map(u =>
+        u.id === existingUtility.id
+          ? { ...u, electric, naturalGas, water }
+          : u
+      );
+    } else {
+      const newUtility: MonthlyUtilities = {
+        id: `utility-${Date.now()}`,
+        userId,
+        monthKey,
+        electric,
+        naturalGas,
+        water,
+        createdAt: new Date().toISOString(),
+      };
+      updatedUtilities = [...utilities, newUtility];
+    }
+
+    setUtilities(updatedUtilities);
+    await AsyncStorage.setItem(UTILITIES_STORAGE_KEY, JSON.stringify(updatedUtilities));
+  }, [utilities]);
+
   const reloadAllData = useCallback(async () => {
     await loadAllData();
   }, [loadAllData]);
@@ -176,6 +230,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   return useMemo(() => ({
     expenses,
     recurringBills,
+    utilities,
     isLoading,
     addExpense,
     updateExpense,
@@ -184,10 +239,12 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     updateRecurringBill,
     deleteRecurringBill,
     toggleRecurringBill,
+    updateUtilities,
     reloadAllData,
   }), [
     expenses,
     recurringBills,
+    utilities,
     isLoading,
     addExpense,
     updateExpense,
@@ -196,6 +253,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     updateRecurringBill,
     deleteRecurringBill,
     toggleRecurringBill,
+    updateUtilities,
     reloadAllData,
   ]);
 });
@@ -411,4 +469,29 @@ export function useExpensesByMonth(userId: string) {
     
     return monthlyGroups;
   }, [expenses, userId]);
+}
+
+export function useUtilitiesByMonth(userId: string, monthKey: string) {
+  const { utilities } = useExpenses();
+  
+  return useMemo(() => {
+    return utilities.find(u => u.userId === userId && u.monthKey === monthKey);
+  }, [utilities, userId, monthKey]);
+}
+
+export function useMonthlyUtilitiesTotal(userId: string) {
+  const { utilities } = useExpenses();
+  
+  return useMemo(() => {
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const currentUtility = utilities.find(
+      u => u.userId === userId && u.monthKey === currentMonthKey
+    );
+    
+    if (!currentUtility) return 0;
+    
+    return currentUtility.electric + currentUtility.naturalGas + currentUtility.water;
+  }, [utilities, userId]);
 }

@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBets } from '@/contexts/BetsContext';
 import { useSportsBets } from '@/contexts/SportsBetsContext';
-import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth } from '@/contexts/ExpensesContext';
+import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useMonthlyUtilitiesTotal } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight } from 'lucide-react-native';
@@ -21,13 +21,14 @@ export default function SummaryScreen() {
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
+  const monthlyUtilitiesTotal = useMonthlyUtilitiesTotal(currentUser?.id || '');
 
   const activeRecurringBills = recurringBills.filter(bill => bill.isActive);
   const monthlyRecurringTotal = activeRecurringBills.reduce((sum, bill) => sum + bill.amount, 0);
   
   const nonRecurringExpenses = monthlyExpenses.expenses.filter(e => !e.isRecurring);
   const additionalExpensesTotal = nonRecurringExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalMonthlyExpenses = monthlyRecurringTotal + additionalExpensesTotal;
+  const totalMonthlyExpenses = monthlyRecurringTotal + additionalExpensesTotal + monthlyUtilitiesTotal;
 
   const toggleMonth = (monthKey: string) => {
     setExpandedMonths(prev => {
@@ -242,6 +243,22 @@ export default function SummaryScreen() {
               </View>
             </View>
 
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <Receipt size={20} color="#240046" />
+                  <Text style={styles.categoryName}>Monthly Utilities</Text>
+                </View>
+                <Text style={styles.expenseValue}>${monthlyUtilitiesTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.categoryStats}>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Variable Costs</Text>
+                  <Text style={styles.categoryStatValue}>Electric, Gas, Water</Text>
+                </View>
+              </View>
+            </View>
+
             <View style={[styles.categoryCard, styles.grandTotalExpenseCard]}>
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryHeaderLeft}>
@@ -254,6 +271,10 @@ export default function SummaryScreen() {
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Recurring Bills</Text>
                   <Text style={styles.categoryStatValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Utilities</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyUtilitiesTotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Other Expenses</Text>

@@ -1,12 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses, useExpensesByMonth } from '@/contexts/ExpensesContext';
+import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses, useExpensesByMonth, useUtilitiesByMonth } from '@/contexts/ExpensesContext';
 import { ExpenseCategory, Expense } from '@/types/expense';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight } from 'lucide-react-native';
+import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
@@ -43,6 +43,98 @@ export default function ExpensesScreen() {
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
+function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
+  userId: string;
+  monthKey: string;
+  onUpdateUtilities: (userId: string, monthKey: string, electric: number, naturalGas: number, water: number) => Promise<void>;
+}) {
+  const existingUtilities = useUtilitiesByMonth(userId, monthKey);
+  const [electric, setElectric] = useState<string>(
+    existingUtilities?.electric.toString() || ''
+  );
+  const [naturalGas, setNaturalGas] = useState<string>(
+    existingUtilities?.naturalGas.toString() || ''
+  );
+  const [water, setWater] = useState<string>(
+    existingUtilities?.water.toString() || ''
+  );
+
+  useEffect(() => {
+    if (existingUtilities) {
+      setElectric(existingUtilities.electric.toString());
+      setNaturalGas(existingUtilities.naturalGas.toString());
+      setWater(existingUtilities.water.toString());
+    }
+  }, [existingUtilities]);
+
+  const handleSave = async () => {
+    const electricNum = parseFloat(electric) || 0;
+    const naturalGasNum = parseFloat(naturalGas) || 0;
+    const waterNum = parseFloat(water) || 0;
+
+    await onUpdateUtilities(userId, monthKey, electricNum, naturalGasNum, waterNum);
+  };
+
+  const utilitiesTotal = (parseFloat(electric) || 0) + (parseFloat(naturalGas) || 0) + (parseFloat(water) || 0);
+
+  return (
+    <View style={styles.utilitiesSection}>
+      <View style={styles.utilitiesSectionHeader}>
+        <Zap size={20} color="#FFFFFF" />
+        <Text style={styles.utilitiesSectionTitle}>Monthly Utilities</Text>
+        <Text style={styles.utilitiesTotal}>${utilitiesTotal.toFixed(2)}</Text>
+      </View>
+      <View style={styles.utilitiesGrid}>
+        <View style={styles.utilityInput}>
+          <Text style={styles.utilityLabel}>Electric</Text>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputPrefix}>$</Text>
+            <TextInput
+              style={styles.utilityTextInput}
+              placeholder="0.00"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              value={electric}
+              onChangeText={setElectric}
+              keyboardType="decimal-pad"
+              onBlur={handleSave}
+            />
+          </View>
+        </View>
+        <View style={styles.utilityInput}>
+          <Text style={styles.utilityLabel}>Natural Gas</Text>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputPrefix}>$</Text>
+            <TextInput
+              style={styles.utilityTextInput}
+              placeholder="0.00"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              value={naturalGas}
+              onChangeText={setNaturalGas}
+              keyboardType="decimal-pad"
+              onBlur={handleSave}
+            />
+          </View>
+        </View>
+        <View style={styles.utilityInput}>
+          <Text style={styles.utilityLabel}>Water</Text>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputPrefix}>$</Text>
+            <TextInput
+              style={styles.utilityTextInput}
+              placeholder="0.00"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              value={water}
+              onChangeText={setWater}
+              keyboardType="decimal-pad"
+              onBlur={handleSave}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
   useEffect(() => {
     if (!currentUser) {
       router.replace('/login');
@@ -54,7 +146,7 @@ export default function ExpensesScreen() {
   const monthlyExpenses = useMonthlyExpenses(currentUser?.id || '');
   const ytdExpenses = useYearToDateExpenses(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
-  const { deleteExpense, addExpense, updateExpense, addRecurringBill, deleteRecurringBill } = useExpenses();
+  const { deleteExpense, addExpense, updateExpense, addRecurringBill, deleteRecurringBill, updateUtilities } = useExpenses();
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
@@ -332,6 +424,11 @@ export default function ExpensesScreen() {
 
                                 {isExpanded && (
                                   <View style={styles.monthExpensesList}>
+                                    <UtilitiesSection
+                                      userId={currentUser?.id || ''}
+                                      monthKey={monthGroup.monthKey}
+                                      onUpdateUtilities={updateUtilities}
+                                    />
                                     {filteredExpenses.map((item) => (
                                       <Pressable
                                         key={item.id}
@@ -426,6 +523,11 @@ export default function ExpensesScreen() {
 
                       {isExpanded && (
                         <View style={styles.monthExpensesList}>
+                          <UtilitiesSection
+                            userId={currentUser?.id || ''}
+                            monthKey={monthGroup.monthKey}
+                            onUpdateUtilities={updateUtilities}
+                          />
                           {filteredExpenses.map((item) => (
                             <Pressable
                               key={item.id}
@@ -1163,5 +1265,67 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
     gap: 12,
+  },
+  utilitiesSection: {
+    backgroundColor: '#7B2CBF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  utilitiesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  utilitiesSectionTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  utilitiesTotal: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+  },
+  utilitiesGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  utilityInput: {
+    flex: 1,
+  },
+  utilityLabel: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 6,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  inputPrefix: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+    marginRight: 4,
+  },
+  utilityTextInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+    paddingVertical: 8,
   },
 });

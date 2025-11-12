@@ -42,3 +42,13 @@ export interface RecurringBill {
   isActive: boolean;
   lastProcessedMonth?: string;
 }
+
+export interface MonthlyUtilities {
+  id: string;
+  userId: string;
+  monthKey: string;
+  electric: number;
+  naturalGas: number;
+  water: number;
+  createdAt: string;
+}
