@@ -1230,7 +1230,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#3D1F66',
+    backgroundColor: 'rgba(157, 78, 221, 0.9)',
   },
   headerCenter: {
     flex: 1,
