@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ImageBackground, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
@@ -296,13 +296,18 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
           </View>
         </View>
 
-        <View style={styles.listContainer}>
+        <KeyboardAvoidingView 
+          style={styles.listContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <Text style={styles.listTitle}>
             {selectedCategory ? `${selectedCategory} - By Month` : 'Expenses By Month'}
           </Text>
           <ScrollView
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {expensesByMonth.length === 0 ? (
               <View style={styles.emptyContainer}>
@@ -574,7 +579,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
               });
             })()}
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </View>
 
       <Modal
