@@ -641,12 +641,12 @@ export default function ExpensesScreen() {
         visible={showAddExpenseModal}
         onClose={handleCloseModal}
         editingExpense={editingExpense}
-        onSubmit={async (category, amount, description, date, merchant, notes) => {
+        onSubmit={async (mainCategory, category, amount, description, date, merchant, notes) => {
           if (currentUser) {
             if (editingExpense) {
-              await updateExpense(editingExpense.id, category, amount, description, date, merchant, notes);
+              await updateExpense(editingExpense.id, mainCategory, category, amount, description, date, merchant, notes);
             } else {
-              await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes);
+              await addExpense(currentUser.id, mainCategory, category, amount, description, date, merchant, false, notes);
             }
           }
         }}
@@ -657,7 +657,7 @@ export default function ExpensesScreen() {
         onClose={() => setShowReceiptScanner(false)}
         onSubmit={async (category, amount, description, date, merchant, notes) => {
           if (currentUser) {
-            await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes);
+            await addExpense(currentUser.id, 'Standard Expenses', category, amount, description, date, merchant, false, notes);
           }
         }}
       />

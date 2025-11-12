@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Expense, RecurringBill, ExpenseCategory } from '@/types/expense';
+import { Expense, RecurringBill, ExpenseCategory, MainCategory } from '@/types/expense';
 
 const EXPENSES_STORAGE_KEY = '@casino_tracker_expenses';
 const RECURRING_BILLS_STORAGE_KEY = '@casino_tracker_recurring_bills';
@@ -31,15 +31,57 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   const loadRecurringBills = useCallback(async () => {
     try {
       const billsJson = await AsyncStorage.getItem(RECURRING_BILLS_STORAGE_KEY);
+      let bills: RecurringBill[] = [];
       if (billsJson) {
         try {
-          setRecurringBills(JSON.parse(billsJson));
+          bills = JSON.parse(billsJson);
         } catch (parseError) {
           console.error('Error parsing recurring bills JSON, clearing corrupted data:', parseError);
           await AsyncStorage.removeItem(RECURRING_BILLS_STORAGE_KEY);
-          setRecurringBills([]);
+          bills = [];
         }
       }
+
+      const hasElectricity = bills.some(b => b.name === 'Electricity' && b.isAutomatic);
+      const hasWater = bills.some(b => b.name === 'Water' && b.isAutomatic);
+
+      if (!hasElectricity) {
+        const electricityBill: RecurringBill = {
+          id: `recurring-electricity-${Date.now()}`,
+          userId: 'system',
+          name: 'Electricity',
+          amount: 120,
+          dueDay: 15,
+          category: 'Monthly Bill',
+          createdAt: new Date().toISOString(),
+          isActive: true,
+          isAutomatic: true,
+          variableAmount: true,
+        };
+        bills.push(electricityBill);
+      }
+
+      if (!hasWater) {
+        const waterBill: RecurringBill = {
+          id: `recurring-water-${Date.now()}`,
+          userId: 'system',
+          name: 'Water',
+          amount: 60,
+          dueDay: 20,
+          category: 'Monthly Bill',
+          createdAt: new Date().toISOString(),
+          isActive: true,
+          isAutomatic: true,
+          variableAmount: true,
+        };
+        bills.push(waterBill);
+      }
+
+      if (!hasElectricity || !hasWater) {
+        await AsyncStorage.setItem(RECURRING_BILLS_STORAGE_KEY, JSON.stringify(bills));
+      }
+
+      setRecurringBills(bills);
     } catch (error) {
       console.error('Error loading recurring bills:', error);
     }
@@ -61,6 +103,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
 
   const addExpense = useCallback(async (
     userId: string,
+    mainCategory: MainCategory,
     category: ExpenseCategory,
     amount: number,
     description: string,
@@ -72,6 +115,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     const newExpense: Expense = {
       id: `expense-${Date.now()}`,
       userId,
+      mainCategory,
       category,
       amount,
       description,
@@ -89,6 +133,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
 
   const updateExpense = useCallback(async (
     expenseId: string,
+    mainCategory: MainCategory,
     category: ExpenseCategory,
     amount: number,
     description: string,
@@ -98,7 +143,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   ) => {
     const updatedExpenses = expenses.map(e =>
       e.id === expenseId
-        ? { ...e, category, amount, description, date: date.toISOString(), merchant, notes }
+        ? { ...e, mainCategory, category, amount, description, date: date.toISOString(), merchant, notes }
         : e
     );
     setExpenses(updatedExpenses);
@@ -141,16 +186,32 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     dueDay: number,
     category: ExpenseCategory
   ) => {
-    const updatedBills = recurringBills.map(b =>
-      b.id === billId
-        ? { ...b, name, amount, dueDay, category }
-        : b
-    );
-    setRecurringBills(updatedBills);
-    await AsyncStorage.setItem(RECURRING_BILLS_STORAGE_KEY, JSON.stringify(updatedBills));
+    const billToUpdate = recurringBills.find(b => b.id === billId);
+    if (billToUpdate?.isAutomatic && billToUpdate?.variableAmount) {
+      const updatedBills = recurringBills.map(b =>
+        b.id === billId
+          ? { ...b, amount }
+          : b
+      );
+      setRecurringBills(updatedBills);
+      await AsyncStorage.setItem(RECURRING_BILLS_STORAGE_KEY, JSON.stringify(updatedBills));
+    } else if (!billToUpdate?.isAutomatic) {
+      const updatedBills = recurringBills.map(b =>
+        b.id === billId
+          ? { ...b, name, amount, dueDay, category }
+          : b
+      );
+      setRecurringBills(updatedBills);
+      await AsyncStorage.setItem(RECURRING_BILLS_STORAGE_KEY, JSON.stringify(updatedBills));
+    }
   }, [recurringBills]);
 
   const deleteRecurringBill = useCallback(async (billId: string) => {
+    const billToDelete = recurringBills.find(b => b.id === billId);
+    if (billToDelete?.isAutomatic) {
+      console.log('Cannot delete automatic recurring bill');
+      return;
+    }
     const updatedBills = recurringBills.filter(b => b.id !== billId);
     setRecurringBills(updatedBills);
     await AsyncStorage.setItem(RECURRING_BILLS_STORAGE_KEY, JSON.stringify(updatedBills));

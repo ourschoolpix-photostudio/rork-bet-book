@@ -1,4 +1,4 @@
-import { ExpenseCategory, Expense } from '@/types/expense';
+import { ExpenseCategory, Expense, MainCategory } from '@/types/expense';
 import { X } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
@@ -7,6 +7,7 @@ interface AddExpenseModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (
+    mainCategory: MainCategory,
     category: ExpenseCategory,
     amount: number,
     description: string,
@@ -36,6 +37,7 @@ const categories: ExpenseCategory[] = [
 ];
 
 export default function AddExpenseModal({ visible, onClose, onSubmit, editingExpense }: AddExpenseModalProps) {
+  const [selectedMainCategory, setSelectedMainCategory] = useState<MainCategory>('Standard Expenses');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory>('Grocery');
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -45,6 +47,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
 
   useEffect(() => {
     if (editingExpense) {
+      setSelectedMainCategory(editingExpense.mainCategory);
       setSelectedCategory(editingExpense.category);
       setAmount(editingExpense.amount.toString());
       setDescription(editingExpense.description);
@@ -52,6 +55,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
       setNotes(editingExpense.notes || '');
       setDate(new Date(editingExpense.date));
     } else {
+      setSelectedMainCategory('Standard Expenses');
       setSelectedCategory('Grocery');
       setAmount('');
       setDescription('');
@@ -72,6 +76,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     }
 
     await onSubmit(
+      selectedMainCategory,
       selectedCategory,
       parsedAmount,
       description.trim(),
@@ -85,6 +90,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     setMerchant('');
     setNotes('');
     setDate(new Date());
+    setSelectedMainCategory('Standard Expenses');
     setSelectedCategory('Grocery');
     onClose();
   };
@@ -116,7 +122,47 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
 
               <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Category</Text>
+                  <Text style={styles.inputLabel}>Main Category</Text>
+                  <View style={styles.mainCategoryContainer}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.mainCategoryButton,
+                        selectedMainCategory === 'Standard Expenses' && styles.mainCategoryButtonSelected,
+                        pressed && styles.mainCategoryButtonPressed,
+                      ]}
+                      onPress={() => setSelectedMainCategory('Standard Expenses')}
+                    >
+                      <Text
+                        style={[
+                          styles.mainCategoryButtonText,
+                          selectedMainCategory === 'Standard Expenses' && styles.mainCategoryButtonTextSelected,
+                        ]}
+                      >
+                        Standard Expenses
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.mainCategoryButton,
+                        selectedMainCategory === 'Vacation Expenses' && styles.mainCategoryButtonSelected,
+                        pressed && styles.mainCategoryButtonPressed,
+                      ]}
+                      onPress={() => setSelectedMainCategory('Vacation Expenses')}
+                    >
+                      <Text
+                        style={[
+                          styles.mainCategoryButtonText,
+                          selectedMainCategory === 'Vacation Expenses' && styles.mainCategoryButtonTextSelected,
+                        ]}
+                      >
+                        Vacation Expenses
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Sub Category</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -341,5 +387,34 @@ const styles = StyleSheet.create({
   notesInput: {
     minHeight: 100,
     paddingTop: 14,
+  },
+  mainCategoryContainer: {
+    flexDirection: 'row' as const,
+    gap: 12,
+  },
+  mainCategoryButton: {
+    flex: 1,
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    alignItems: 'center',
+  },
+  mainCategoryButtonSelected: {
+    backgroundColor: '#9D4EDD',
+    borderColor: '#9D4EDD',
+  },
+  mainCategoryButtonPressed: {
+    opacity: 0.6,
+  },
+  mainCategoryButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  mainCategoryButtonTextSelected: {
+    color: '#FFFFFF',
   },
 });

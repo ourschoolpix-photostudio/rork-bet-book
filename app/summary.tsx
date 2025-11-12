@@ -206,42 +206,6 @@ export default function SummaryScreen() {
           <View style={styles.categoriesContainer}>
             <Text style={styles.sectionTitle}>Expenses</Text>
 
-            <View style={styles.categoryCard}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryHeaderLeft}>
-                  <Calendar size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Monthly Recurring Bills</Text>
-                </View>
-                <Text style={styles.expenseValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.categoryStats}>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Active Bills</Text>
-                  <Text style={styles.categoryStatValue}>{activeRecurringBills.length}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.categoryCard}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryHeaderLeft}>
-                  <Receipt size={20} color="#240046" />
-                  <Text style={styles.categoryName}>Monthly Expenses</Text>
-                </View>
-                <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.categoryStats}>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>Total Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyExpenses.total.toFixed(2)}</Text>
-                </View>
-                <View style={styles.categoryStatItem}>
-                  <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
-                </View>
-              </View>
-            </View>
-
             <View style={[styles.categoryCard, styles.grandTotalExpenseCard]}>
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryHeaderLeft}>
@@ -260,6 +224,40 @@ export default function SummaryScreen() {
                   <Text style={styles.categoryStatValue}>${additionalExpensesTotal.toFixed(2)}</Text>
                 </View>
               </View>
+            </View>
+
+            <View style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <Text style={styles.categoryName}>Sub Category Breakdown</Text>
+              </View>
+              {Object.entries(monthlyExpenses.byCategory)
+                .filter(([_, amount]) => amount > 0)
+                .sort(([_, a], [__, b]) => b - a)
+                .map(([category, amount]) => {
+                  const percentage = monthlyExpenses.total > 0 ? (amount / monthlyExpenses.total) * 100 : 0;
+                  return (
+                    <View key={`summary-${category}`} style={styles.subcategoryRow}>
+                      <View style={styles.subcategoryRowInfo}>
+                        <Text style={styles.subcategoryRowName}>{category}</Text>
+                        <Text style={styles.subcategoryRowPercentage}>{percentage.toFixed(1)}%</Text>
+                      </View>
+                      <View style={styles.subcategoryRowBar}>
+                        <View
+                          style={[
+                            styles.subcategoryRowBarFill,
+                            { width: `${percentage}%` },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.subcategoryRowAmount}>${amount.toFixed(2)}</Text>
+                    </View>
+                  );
+                })}
+              {Object.values(monthlyExpenses.byCategory).every(amount => amount === 0) && (
+                <View style={styles.emptyCategoryBreakdown}>
+                  <Text style={styles.emptyCategoryText}>No expenses this month</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -633,5 +631,48 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700' as const,
     color: '#5A189A',
+  },
+  subcategoryRow: {
+    marginTop: 12,
+  },
+  subcategoryRowInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  subcategoryRowName: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#240046',
+  },
+  subcategoryRowPercentage: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#9D4EDD',
+  },
+  subcategoryRowBar: {
+    height: 6,
+    backgroundColor: 'rgba(157, 78, 221, 0.2)',
+    borderRadius: 3,
+    marginBottom: 6,
+    overflow: 'hidden' as const,
+  },
+  subcategoryRowBarFill: {
+    height: '100%',
+    backgroundColor: '#9D4EDD',
+    borderRadius: 3,
+  },
+  subcategoryRowAmount: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#7B2CBF',
+  },
+  emptyCategoryBreakdown: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  emptyCategoryText: {
+    fontSize: 14,
+    color: 'rgba(36, 0, 70, 0.6)',
   },
 });
