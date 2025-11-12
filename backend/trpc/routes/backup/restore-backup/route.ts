@@ -1,14 +1,12 @@
 import { publicProcedure } from "@/backend/trpc/create-context";
 import { z } from "zod";
 
-const backupDataSchema = z.object({
-  version: z.string(),
-  timestamp: z.string(),
-  data: z.record(z.string().nullable()),
-});
-
 export const restoreBackupProcedure = publicProcedure
-  .input(backupDataSchema)
+  .input(z.object({
+    version: z.string(),
+    timestamp: z.string(),
+    data: z.record(z.string(), z.string().nullable()),
+  }))
   .mutation(async ({ input }) => {
     console.log('Restoring backup on server from:', input.timestamp);
     
