@@ -1,4 +1,6 @@
-export type ExpenseCategory = 
+export type MainExpenseCategory = 'Standard Expense' | 'Vacation Expense';
+
+export type ExpenseSubCategory = 
   | 'Auto Repair'
   | 'Beauty & Health'
   | 'Clothing'
@@ -15,9 +17,13 @@ export type ExpenseCategory =
   | 'Shoes'
   | 'Travel';
 
+export type ExpenseCategory = ExpenseSubCategory;
+
 export interface Expense {
   id: string;
   userId: string;
+  mainCategory: MainExpenseCategory;
+  subCategory: ExpenseSubCategory;
   category: ExpenseCategory;
   amount: number;
   description: string;

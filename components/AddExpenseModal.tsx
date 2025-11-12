@@ -1,4 +1,4 @@
-import { ExpenseCategory, Expense } from '@/types/expense';
+import { MainExpenseCategory, ExpenseSubCategory, Expense } from '@/types/expense';
 import { X } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
@@ -7,7 +7,8 @@ interface AddExpenseModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (
-    category: ExpenseCategory,
+    mainCategory: MainExpenseCategory,
+    subCategory: ExpenseSubCategory,
     amount: number,
     description: string,
     date: Date,
@@ -17,7 +18,9 @@ interface AddExpenseModalProps {
   editingExpense?: Expense | null;
 }
 
-const categories: ExpenseCategory[] = [
+const mainCategories: MainExpenseCategory[] = ['Standard Expense', 'Vacation Expense'];
+
+const subCategories: ExpenseSubCategory[] = [
   'Auto Repair',
   'Beauty & Health',
   'Clothing',
@@ -36,7 +39,8 @@ const categories: ExpenseCategory[] = [
 ];
 
 export default function AddExpenseModal({ visible, onClose, onSubmit, editingExpense }: AddExpenseModalProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory>('Grocery');
+  const [selectedMainCategory, setSelectedMainCategory] = useState<MainExpenseCategory>('Standard Expense');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<ExpenseSubCategory>('Grocery');
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [merchant, setMerchant] = useState<string>('');
@@ -45,14 +49,16 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
 
   useEffect(() => {
     if (editingExpense) {
-      setSelectedCategory(editingExpense.category);
+      setSelectedMainCategory(editingExpense.mainCategory);
+      setSelectedSubCategory(editingExpense.subCategory);
       setAmount(editingExpense.amount.toString());
       setDescription(editingExpense.description);
       setMerchant(editingExpense.merchant || '');
       setNotes(editingExpense.notes || '');
       setDate(new Date(editingExpense.date));
     } else {
-      setSelectedCategory('Grocery');
+      setSelectedMainCategory('Standard Expense');
+      setSelectedSubCategory('Grocery');
       setAmount('');
       setDescription('');
       setMerchant('');
@@ -72,7 +78,8 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     }
 
     await onSubmit(
-      selectedCategory,
+      selectedMainCategory,
+      selectedSubCategory,
       parsedAmount,
       description.trim(),
       date,
@@ -85,7 +92,8 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     setMerchant('');
     setNotes('');
     setDate(new Date());
-    setSelectedCategory('Grocery');
+    setSelectedMainCategory('Standard Expense');
+    setSelectedSubCategory('Grocery');
     onClose();
   };
 
@@ -119,26 +127,52 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
 
               <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Category</Text>
+                  <Text style={styles.inputLabel}>Main Category</Text>
+                  <View style={styles.mainCategoriesContainer}>
+                    {mainCategories.map((category) => (
+                      <Pressable
+                        key={category}
+                        style={({ pressed }) => [
+                          styles.mainCategoryButton,
+                          selectedMainCategory === category && styles.mainCategoryButtonSelected,
+                          pressed && styles.mainCategoryButtonPressed,
+                        ]}
+                        onPress={() => setSelectedMainCategory(category)}
+                      >
+                        <Text
+                          style={[
+                            styles.mainCategoryText,
+                            selectedMainCategory === category && styles.mainCategoryTextSelected,
+                          ]}
+                        >
+                          {category}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Sub Category</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.categoriesContainer}
                   >
-                    {categories.map((category) => (
+                    {subCategories.map((category) => (
                       <Pressable
                         key={category}
                         style={({ pressed }) => [
                           styles.categoryChip,
-                          selectedCategory === category && styles.categoryChipSelected,
+                          selectedSubCategory === category && styles.categoryChipSelected,
                           pressed && styles.categoryChipPressed,
                         ]}
-                        onPress={() => setSelectedCategory(category)}
+                        onPress={() => setSelectedSubCategory(category)}
                       >
                         <Text
                           style={[
                             styles.categoryChipText,
-                            selectedCategory === category && styles.categoryChipTextSelected,
+                            selectedSubCategory === category && styles.categoryChipTextSelected,
                           ]}
                         >
                           {category}
@@ -292,6 +326,35 @@ const styles = StyleSheet.create({
     color: '#240046',
     borderWidth: 1,
     borderColor: 'rgba(157, 78, 221, 0.2)',
+  },
+  mainCategoriesContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  mainCategoryButton: {
+    flex: 1,
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    alignItems: 'center',
+  },
+  mainCategoryButtonSelected: {
+    backgroundColor: '#9D4EDD',
+    borderColor: '#9D4EDD',
+  },
+  mainCategoryButtonPressed: {
+    opacity: 0.6,
+  },
+  mainCategoryText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  mainCategoryTextSelected: {
+    color: '#FFFFFF',
   },
   categoriesContainer: {
     gap: 8,

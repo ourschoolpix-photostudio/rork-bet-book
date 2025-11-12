@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useExpenses, useFilteredExpenses, useExpensesByCategory, useMonthlyExpenses, useYearToDateExpenses, useExpensesByMonth } from '@/contexts/ExpensesContext';
-import { ExpenseCategory, Expense } from '@/types/expense';
+import { ExpenseCategory, Expense, MainExpenseCategory, ExpenseSubCategory } from '@/types/expense';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -709,12 +709,12 @@ export default function ExpensesScreen() {
         visible={showAddExpenseModal}
         onClose={handleCloseModal}
         editingExpense={editingExpense}
-        onSubmit={async (category, amount, description, date, merchant, notes) => {
+        onSubmit={async (mainCategory, subCategory, amount, description, date, merchant, notes) => {
           if (currentUser) {
             if (editingExpense) {
-              await updateExpense(editingExpense.id, category, amount, description, date, merchant, notes);
+              await updateExpense(editingExpense.id, mainCategory, subCategory, amount, description, date, merchant, notes);
             } else {
-              await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes);
+              await addExpense(currentUser.id, mainCategory, subCategory, amount, description, date, merchant, false, notes);
             }
           }
         }}
