@@ -44,15 +44,20 @@ export const trpcClient = createTRPCClient<AppRouter>({
     httpBatchLink({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
-      fetch: (url, options) => {
+      fetch: async (url, options) => {
         console.log('tRPC Client Request:', url, options?.method);
-        return fetch(url, options).then(res => {
-          console.log('tRPC Client Response:', res.status, res.statusText);
-          return res;
-        }).catch(err => {
-          console.error('tRPC Client Fetch Error:', err);
-          throw err;
-        });
+        const res = await fetch(url, options);
+        console.log('tRPC Client Response:', res.status, res.statusText);
+        
+        const clone = res.clone();
+        try {
+          const text = await clone.text();
+          console.log('tRPC Client Response Body (first 500 chars):', text.substring(0, 500));
+        } catch (e) {
+          console.error('Failed to read response body for logging:', e);
+        }
+        
+        return res;
       },
     }),
   ],
