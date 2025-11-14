@@ -43,7 +43,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const createBackup = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('Starting backup creation...');
+      console.log('🔵 Starting backup creation...');
       const backupData: BackupData = {
         version: '1.0.0',
         timestamp: new Date().toISOString(),
@@ -54,16 +54,16 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         try {
           const value = await AsyncStorage.getItem(key);
           backupData.data[key] = value;
-          console.log(`Backed up ${key}: ${value ? 'data found' : 'no data'}`);
+          console.log(`✅ Backed up ${key}: ${value ? 'data found' : 'no data'}`);
         } catch (error) {
-          console.error(`Error backing up ${key}:`, error);
+          console.error(`❌ Error backing up ${key}:`, error);
           backupData.data[key] = null;
         }
       }
 
-      console.log('Sending backup to server...');
+      console.log('📤 Sending backup to server...');
       const result = await trpcClient.backup.create.mutate(backupData);
-      console.log('Server backup result:', result);
+      console.log('✅ Server backup result:', result);
       
       Alert.alert(
         'Success', 
@@ -71,8 +71,21 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       );
       return true;
     } catch (error) {
-      console.error('Error creating backup:', error);
-      Alert.alert('Error', 'Failed to create backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('❌ Error creating backup:', error);
+      
+      let errorMessage = 'Failed to create backup.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Network request failed')) {
+          errorMessage += '\n\n⚠️ Network Error: Cannot connect to the backend server. The backend may not be running or there may be a connectivity issue.';
+        } else if (error.message.includes('JSON Parse error')) {
+          errorMessage += '\n\n⚠️ Server Error: The backend returned an invalid response. This usually means the backend is not responding correctly. Check the console logs for more details.';
+        } else {
+          errorMessage += '\n\n' + error.message;
+        }
+      }
+      
+      Alert.alert('Backup Error', errorMessage);
       return false;
     }
   }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
