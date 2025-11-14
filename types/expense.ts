@@ -6,15 +6,14 @@ export type ExpenseCategory =
   | 'Electronics'
   | 'Entertainment'
   | 'Fast Food'
-  | 'Fuel/Gas'
+  | 'Gas'
   | 'Grocery'
   | 'Household'
   | 'Lottery'
   | 'Monthly Bill'
   | 'Recreation'
   | 'Shoes'
-  | 'Travel'
-  | 'Utility';
+  | 'Travel';
 
 export type ExpenseType = 'standard' | 'vacation';
 
