@@ -2,6 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 import { useCallback, useMemo } from 'react';
 import { Platform, Alert } from 'react-native';
@@ -41,9 +42,9 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadSportsBets } = useSportsBets();
   const { reloadAllData: reloadExpenses } = useExpenses();
 
-  const createBackup = useCallback(async (): Promise<boolean> => {
+  const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('🔵 Starting backup creation...');
+      console.log('🔵 Starting cloud backup creation...');
       const backupData: BackupData = {
         version: '1.0.0',
         timestamp: new Date().toISOString(),
@@ -67,13 +68,13 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       
       Alert.alert(
         'Success', 
-        `Backup created successfully!\n\nBackup ID: ${result.backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
+        `Backup created successfully to cloud!\n\nBackup ID: ${result.backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
       );
       return true;
     } catch (error) {
-      console.error('❌ Error creating backup:', error);
+      console.error('❌ Error creating cloud backup:', error);
       
-      let errorMessage = 'Failed to create backup.';
+      let errorMessage = 'Failed to create cloud backup.';
       
       if (error instanceof Error) {
         if (error.message.includes('Network request failed')) {
@@ -88,7 +89,107 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Backup Error', errorMessage);
       return false;
     }
-  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+  }, []);
+
+  const createBackupToDevice = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('🔵 Starting device backup creation...');
+      const backupData: BackupData = {
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        data: {},
+      };
+
+      for (const key of STORAGE_KEYS) {
+        try {
+          const value = await AsyncStorage.getItem(key);
+          backupData.data[key] = value;
+          console.log(`✅ Backed up ${key}: ${value ? 'data found' : 'no data'}`);
+        } catch (error) {
+          console.error(`❌ Error backing up ${key}:`, error);
+          backupData.data[key] = null;
+        }
+      }
+
+      const fileName = `casino-tracker-backup-${Date.now()}.json`;
+      const fileContent = JSON.stringify(backupData, null, 2);
+
+      if (Platform.OS === 'web') {
+        const blob = new Blob([fileContent], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        Alert.alert(
+          'Success',
+          `Backup created successfully to device!\n\nFile: ${fileName}`
+        );
+      } else {
+        const fileUri = FileSystem.documentDirectory + fileName;
+        await FileSystem.writeAsStringAsync(fileUri, fileContent);
+        
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(fileUri);
+        } else {
+          Alert.alert(
+            'Success',
+            `Backup created successfully!\n\nSaved to: ${fileUri}`
+          );
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Error creating device backup:', error);
+      Alert.alert('Backup Error', 'Failed to create device backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      return false;
+    }
+  }, []);
+
+  const createBackup = useCallback(async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (Platform.OS === 'web') {
+        const choice = confirm('Choose backup location:\n\n1. Cloud (backend server)\n2. Device (download file)\n\nClick OK for Cloud, Cancel for Device');
+        if (choice) {
+          createBackupToCloud().then(resolve);
+        } else {
+          createBackupToDevice().then(resolve);
+        }
+      } else {
+        Alert.alert(
+          'Backup Location',
+          'Where would you like to save the backup?',
+          [
+            {
+              text: 'Cloud',
+              onPress: async () => {
+                const success = await createBackupToCloud();
+                resolve(success);
+              },
+            },
+            {
+              text: 'Device',
+              onPress: async () => {
+                const success = await createBackupToDevice();
+                resolve(success);
+              },
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel' as const,
+              onPress: () => resolve(false),
+            },
+          ]
+        );
+      }
+    });
+  }, [createBackupToCloud, createBackupToDevice]);
 
   const mergeData = (currentValue: string | null, backupValue: string | null): string | null => {
     if (!currentValue || currentValue === '[]' || currentValue === '{}' || currentValue === 'null') {
@@ -308,7 +409,9 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   return useMemo(() => ({
     createBackup,
+    createBackupToCloud,
+    createBackupToDevice,
     restoreFromCloud,
     restoreFromDevice,
-  }), [createBackup, restoreFromCloud, restoreFromDevice]);
+  }), [createBackup, createBackupToCloud, createBackupToDevice, restoreFromCloud, restoreFromDevice]);
 });
