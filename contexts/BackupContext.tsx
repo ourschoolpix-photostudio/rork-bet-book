@@ -13,7 +13,7 @@ import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
 import { trpcClient } from '@/lib/trpc';
-import { supabase, BackupRecord } from '@/lib/supabase';
+import { supabase, BackupRecord, isSupabaseConfigured } from '@/lib/supabase';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -45,6 +45,14 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
+      if (!isSupabaseConfigured() || !supabase) {
+        Alert.alert(
+          'Configuration Required',
+          'Supabase is not configured. Please set up your Supabase credentials to use cloud backups.\n\nRequired environment variables:\n- EXPO_PUBLIC_SUPABASE_URL\n- EXPO_PUBLIC_SUPABASE_ANON_KEY\n\nSee SUPABASE_SETUP.md for instructions.'
+        );
+        return false;
+      }
+
       console.log('🔵 Starting Supabase cloud backup creation...');
       const backupData: BackupData = {
         version: '1.0.0',
@@ -96,11 +104,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       let errorMessage = 'Failed to create cloud backup.';
       
       if (error instanceof Error) {
-        if (error.message.includes('Supabase credentials not configured')) {
-          errorMessage += '\n\n⚠️ Configuration Error: Supabase credentials are not set. Please configure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your environment.';
-        } else {
-          errorMessage += '\n\n' + error.message;
-        }
+        errorMessage += '\n\n' + error.message;
       }
       
       Alert.alert('Backup Error', errorMessage);
@@ -267,6 +271,14 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const restoreFromCloud = useCallback(async (backupId?: string): Promise<boolean> => {
     try {
+      if (!isSupabaseConfigured() || !supabase) {
+        Alert.alert(
+          'Configuration Required',
+          'Supabase is not configured. Please set up your Supabase credentials to use cloud backups.\n\nRequired environment variables:\n- EXPO_PUBLIC_SUPABASE_URL\n- EXPO_PUBLIC_SUPABASE_ANON_KEY\n\nSee SUPABASE_SETUP.md for instructions.'
+        );
+        return false;
+      }
+
       console.log('Starting Supabase backup restore...');
       
       let selectedBackupId = backupId;
