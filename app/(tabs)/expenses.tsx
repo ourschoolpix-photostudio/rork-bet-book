@@ -20,7 +20,7 @@ const categories: ExpenseCategory[] = [
   'Electronics',
   'Entertainment',
   'Fast Food',
-  'Gas',
+  'Fuel/Gas',
   'Grocery',
   'Household',
   'Lottery',
@@ -28,6 +28,7 @@ const categories: ExpenseCategory[] = [
   'Recreation',
   'Shoes',
   'Travel',
+  'Utility',
 ];
 
 export default function ExpensesScreen() {
