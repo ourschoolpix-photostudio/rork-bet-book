@@ -2,5 +2,5 @@
 # Get these values from your Supabase project dashboard:
 # Settings > API > Project URL and anon public key
 
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url_here
+EXPO_PUBLIC_SUPABASE_URL=https://hvzrkydjbvsepsfxtoox.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2enJreWRqYnZzZXBzZnh0b294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxNTYwMjcsImV4cCI6MjA3ODczMjAyN30.6eAz4ecVIDBcIlW7HwmZZkc94N1_m4W5gcNKxDIMkeM
