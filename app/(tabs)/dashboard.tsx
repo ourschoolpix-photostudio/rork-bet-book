@@ -1,16 +1,14 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useBackup } from '@/contexts/BackupContext';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { LogOut, Edit2, X, Download, Upload, DollarSign } from 'lucide-react-native';
+import { LogOut, Edit2, X, DollarSign, Settings } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
   const { currentUser, logout, isLoading, updateProfile } = useAuth();
-  const { createBackup, restoreFromCloud, restoreFromDevice } = useBackup();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showEditProfileModal, setShowEditProfileModal] = useState<boolean>(false);
@@ -57,64 +55,6 @@ export default function DashboardScreen() {
     }
   };
 
-  const handleCreateBackup = async () => {
-    const success = await createBackup();
-    if (success) {
-      Alert.alert('Success', 'Backup created successfully');
-    }
-  };
-
-  const handleRestoreBackup = async () => {
-    Alert.alert(
-      'Restore Backup',
-      'Choose where to restore from:',
-      [
-        { 
-          text: 'Cancel', 
-          style: 'cancel' 
-        },
-        {
-          text: 'From Cloud',
-          onPress: async () => {
-            Alert.alert(
-              'Confirm Restore',
-              'This will replace all current data with the cloud backup. Are you sure?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Restore',
-                  style: 'destructive',
-                  onPress: async () => {
-                    await restoreFromCloud();
-                  },
-                },
-              ]
-            );
-          },
-        },
-        {
-          text: 'From Device',
-          onPress: async () => {
-            Alert.alert(
-              'Confirm Restore',
-              'This will replace all current data with the device backup. Are you sure?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Restore',
-                  style: 'destructive',
-                  onPress: async () => {
-                    await restoreFromDevice();
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
-  };
-
 
 
   if (!currentUser) {
@@ -157,26 +97,6 @@ export default function DashboardScreen() {
               </Pressable>
             </View>
             <View style={styles.headerActions}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.backupButton,
-                  pressed && styles.backupButtonPressed,
-                ]}
-                onPress={handleRestoreBackup}
-                testID="restore-backup-button"
-              >
-                <Download size={22} color="#FFFFFF" />
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.backupButton,
-                  pressed && styles.backupButtonPressed,
-                ]}
-                onPress={handleCreateBackup}
-                testID="create-backup-button"
-              >
-                <Upload size={22} color="#FFFFFF" />
-              </Pressable>
               <Pressable
                 style={({ pressed }) => [
                   styles.logoutButton,
@@ -339,6 +259,19 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.settingsButtonContainer}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingsButton,
+              pressed && styles.settingsButtonPressed,
+            ]}
+            onPress={() => router.push('/settings')}
+            testID="settings-button"
+          >
+            <Settings size={24} color="#FFFFFF" />
+            <Text style={styles.settingsButtonText}>Settings</Text>
+          </Pressable>
+        </View>
       </View>
 
       <Modal
@@ -652,6 +585,32 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   expensesButtonText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  settingsButtonContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  settingsButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  settingsButtonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
+  },
+  settingsButtonText: {
     fontSize: 18,
     fontWeight: '700' as const,
     color: '#FFFFFF',
