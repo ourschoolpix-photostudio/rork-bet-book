@@ -13,6 +13,7 @@ import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
 import { trpcClient } from '@/lib/trpc';
+import { supabase, BackupRecord } from '@/lib/supabase';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -44,7 +45,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('🔵 Starting cloud backup creation...');
+      console.log('🔵 Starting Supabase cloud backup creation...');
       const backupData: BackupData = {
         version: '1.0.0',
         timestamp: new Date().toISOString(),
@@ -62,13 +63,31 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         }
       }
 
-      console.log('📤 Sending backup to server...');
-      const result = await trpcClient.backup.create.mutate(backupData);
-      console.log('✅ Server backup result:', result);
+      const backupId = `backup-${Date.now()}`;
+      const record: BackupRecord = {
+        id: backupId,
+        version: backupData.version,
+        timestamp: backupData.timestamp,
+        data: backupData.data,
+        created_at: new Date().toISOString(),
+      };
+
+      console.log('📤 Sending backup to Supabase...');
+      const { data, error } = await supabase
+        .from('backups')
+        .insert(record)
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+
+      console.log('✅ Supabase backup result:', data);
       
       Alert.alert(
         'Success', 
-        `Backup created successfully to cloud!\n\nBackup ID: ${result.backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
+        `Backup created successfully to Supabase!\n\nBackup ID: ${backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
       );
       return true;
     } catch (error) {
@@ -77,10 +96,8 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       let errorMessage = 'Failed to create cloud backup.';
       
       if (error instanceof Error) {
-        if (error.message.includes('Network request failed')) {
-          errorMessage += '\n\n⚠️ Network Error: Cannot connect to the backend server. The backend may not be running or there may be a connectivity issue.';
-        } else if (error.message.includes('JSON Parse error')) {
-          errorMessage += '\n\n⚠️ Server Error: The backend returned an invalid response. This usually means the backend is not responding correctly. Check the console logs for more details.';
+        if (error.message.includes('Supabase credentials not configured')) {
+          errorMessage += '\n\n⚠️ Configuration Error: Supabase credentials are not set. Please configure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your environment.';
         } else {
           errorMessage += '\n\n' + error.message;
         }
@@ -250,36 +267,43 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const restoreFromCloud = useCallback(async (backupId?: string): Promise<boolean> => {
     try {
-      console.log('Starting backup restore...');
+      console.log('Starting Supabase backup restore...');
       
       let selectedBackupId = backupId;
       
       if (!selectedBackupId) {
-        const backupsResult = await trpcClient.backup.list.query();
+        const { data: backups, error } = await supabase
+          .from('backups')
+          .select('*')
+          .order('created_at', { ascending: false });
         
-        if (backupsResult.backups.length === 0) {
-          Alert.alert('No Backups', 'No backups found on the server.');
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+        
+        if (!backups || backups.length === 0) {
+          Alert.alert('No Backups', 'No backups found in Supabase.');
           return false;
         }
         
         if (Platform.OS === 'web') {
-          const message = backupsResult.backups
+          const message = backups
             .map((b, i) => `${i + 1}. ${new Date(b.timestamp).toLocaleString()} (ID: ${b.id})`)
             .join('\n');
           
-          const choice = prompt(`Available backups:\n\n${message}\n\nEnter backup number (1-${backupsResult.backups.length}):`);
+          const choice = prompt(`Available backups:\n\n${message}\n\nEnter backup number (1-${backups.length}):`);
           if (!choice) return false;
           
           const index = parseInt(choice) - 1;
-          if (index < 0 || index >= backupsResult.backups.length) {
+          if (index < 0 || index >= backups.length) {
             Alert.alert('Error', 'Invalid backup selection');
             return false;
           }
           
-          selectedBackupId = backupsResult.backups[index].id;
+          selectedBackupId = backups[index].id;
         } else {
           return new Promise((resolve) => {
-            const buttons = backupsResult.backups.map((backup) => ({
+            const buttons = backups.map((backup) => ({
               text: new Date(backup.timestamp).toLocaleString(),
               onPress: async () => {
                 const success = await restoreFromCloud(backup.id);
@@ -298,19 +322,20 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         }
       }
       
-      console.log('Fetching backup from server:', selectedBackupId);
-      const serverResult = await trpcClient.backup.restore.mutate({ backupId: selectedBackupId });
+      console.log('Fetching backup from Supabase:', selectedBackupId);
+      const { data: backupRecord, error } = await supabase
+        .from('backups')
+        .select('*')
+        .eq('id', selectedBackupId)
+        .single();
       
-      if (!serverResult.success || !serverResult.data) {
-        Alert.alert('Error', 'Failed to fetch backup from server');
-        return false;
+      if (error || !backupRecord) {
+        throw new Error(`Failed to fetch backup: ${error?.message || 'Not found'}`);
       }
       
-      const backupData = serverResult.data as BackupData & { id: string; createdAt: string };
-      
-      console.log('Restoring backup from:', backupData.timestamp);
+      console.log('Restoring backup from:', backupRecord.timestamp);
 
-      for (const [key, value] of Object.entries(backupData.data)) {
+      for (const [key, value] of Object.entries(backupRecord.data)) {
         const currentValue = await AsyncStorage.getItem(key);
         const mergedValue = mergeData(currentValue, value);
         
@@ -335,7 +360,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       
       Alert.alert(
         'Success',
-        `Backup restored successfully!\n\nFrom: ${new Date(backupData.timestamp).toLocaleString()}`
+        `Backup restored successfully from Supabase!\n\nFrom: ${new Date(backupRecord.timestamp).toLocaleString()}`
       );
       return true;
     } catch (error) {
