@@ -59,22 +59,55 @@ export const trpcClient = createTRPCClient<AppRouter>({
           const res = await fetch(url, options);
           console.log('✅ tRPC Client Response:', res.status, res.statusText);
           
-          const clone = res.clone();
-          try {
+          if (!res.ok) {
+            const clone = res.clone();
             const text = await clone.text();
-            console.log('📄 Response Body Preview:', text.substring(0, 500));
+            console.error('❌ Non-OK Response Status:', res.status);
+            console.error('❌ Response Body:', text.substring(0, 1000));
+            
+            if (!text || text.trim() === '') {
+              throw new Error(`Empty response from server (Status: ${res.status})`);
+            }
             
             if (text.startsWith('<') || text.startsWith('<!')) {
-              console.error('❌ ERROR: Received HTML instead of JSON. Backend may not be running or URL is incorrect.');
-              console.error('❌ Expected URL:', `${getBaseUrl()}/api/trpc`);
+              throw new Error('Backend returned HTML instead of JSON. The backend may not be running or the URL is incorrect.');
             }
-          } catch (e) {
-            console.error('❌ Failed to read response body for logging:', e);
+            
+            try {
+              JSON.parse(text);
+            } catch (e) {
+              throw new Error(`Server returned invalid JSON (Status: ${res.status}): ${text.substring(0, 100)}`);
+            }
+          } else {
+            const clone = res.clone();
+            try {
+              const text = await clone.text();
+              console.log('📄 Response Body Preview:', text.substring(0, 500));
+              
+              if (!text || text.trim() === '') {
+                console.error('⚠️ WARNING: Empty response body with OK status');
+              } else if (text.startsWith('<') || text.startsWith('<!')) {
+                console.error('⚠️ WARNING: Received HTML instead of JSON');
+                throw new Error('Backend returned HTML instead of JSON. The backend may not be running correctly.');
+              } else {
+                try {
+                  JSON.parse(text);
+                } catch (e) {
+                  console.error('⚠️ WARNING: Response is not valid JSON:', text.substring(0, 100));
+                  throw new Error(`Server returned invalid JSON: ${text.substring(0, 100)}`);
+                }
+              }
+            } catch (e) {
+              if (e instanceof Error && e.message.includes('JSON')) {
+                throw e;
+              }
+              console.error('❌ Failed to read response body for logging:', e);
+            }
           }
           
           return res;
         } catch (err) {
-          console.error('❌ tRPC Fetch Network Error:', err);
+          console.error('❌ tRPC Fetch Error:', err);
           console.error('❌ Failed URL:', url);
           console.error('❌ Base URL:', getBaseUrl());
           throw err;
