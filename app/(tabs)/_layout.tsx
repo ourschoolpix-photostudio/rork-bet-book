@@ -1,5 +1,5 @@
 import { Tabs, usePathname } from 'expo-router';
-import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign, Target, Receipt } from 'lucide-react-native';
+import { Home, Clover, Trophy, Wallet, HandCoins, FileText, DollarSign, Target, Receipt, Settings } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
     },
     { name: 'summary', title: 'Summary', icon: FileText, route: '/summary' },
     { name: 'expenses', title: 'My Expenses', icon: Receipt, route: '/expenses' },
+    { name: 'settings', title: 'Settings', icon: Settings, route: '/settings' },
   ];
 
   const visibleTabs = tabs.filter(tab => tab.route !== pathname);
@@ -90,6 +91,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="borrows" options={{ href: null }} />
       <Tabs.Screen name="summary" />
       <Tabs.Screen name="expenses" />
+      <Tabs.Screen name="settings" />
     </Tabs>
   );
 }

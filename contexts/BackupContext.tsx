@@ -13,7 +13,8 @@ import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
 import { trpcClient } from '@/lib/trpc';
-import { supabase, BackupRecord, isSupabaseConfigured } from '@/lib/supabase';
+import { BackupRecord } from '@/lib/supabase';
+import { useSettings } from './SettingsContext';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -42,10 +43,11 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadBets } = useBets();
   const { reloadSportsBets } = useSportsBets();
   const { reloadAllData: reloadExpenses } = useExpenses();
+  const { supabaseClient, isSupabaseConfigured } = useSettings();
 
   const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
-      if (!isSupabaseConfigured() || !supabase) {
+      if (!isSupabaseConfigured || !supabaseClient) {
         Alert.alert(
           'Configuration Required',
           'Supabase is not configured. Please set up your Supabase credentials to use cloud backups.\n\nRequired environment variables:\n- EXPO_PUBLIC_SUPABASE_URL\n- EXPO_PUBLIC_SUPABASE_ANON_KEY\n\nSee SUPABASE_SETUP.md for instructions.'
@@ -81,7 +83,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       };
 
       console.log('📤 Sending backup to Supabase...');
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('backups')
         .insert(record)
         .select()
@@ -110,7 +112,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Backup Error', errorMessage);
       return false;
     }
-  }, []);
+  }, [supabaseClient, isSupabaseConfigured]);
 
   const createBackupToDevice = useCallback(async (): Promise<boolean> => {
     try {
@@ -271,7 +273,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const restoreFromCloud = useCallback(async (backupId?: string): Promise<boolean> => {
     try {
-      if (!isSupabaseConfigured() || !supabase) {
+      if (!isSupabaseConfigured || !supabaseClient) {
         Alert.alert(
           'Configuration Required',
           'Supabase is not configured. Please set up your Supabase credentials to use cloud backups.\n\nRequired environment variables:\n- EXPO_PUBLIC_SUPABASE_URL\n- EXPO_PUBLIC_SUPABASE_ANON_KEY\n\nSee SUPABASE_SETUP.md for instructions.'
@@ -284,7 +286,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       let selectedBackupId = backupId;
       
       if (!selectedBackupId) {
-        const { data: backups, error } = await supabase
+        const { data: backups, error } = await supabaseClient
           .from('backups')
           .select('*')
           .order('created_at', { ascending: false });
@@ -335,7 +337,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       }
       
       console.log('Fetching backup from Supabase:', selectedBackupId);
-      const { data: backupRecord, error } = await supabase
+      const { data: backupRecord, error } = await supabaseClient
         .from('backups')
         .select('*')
         .eq('id', selectedBackupId)
@@ -380,7 +382,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+  }, [supabaseClient, isSupabaseConfigured, reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
 
   const restoreFromDevice = useCallback(async (): Promise<boolean> => {
     try {

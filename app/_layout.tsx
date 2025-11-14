@@ -11,6 +11,7 @@ import { BetsProvider } from "@/contexts/BetsContext";
 import { SportsBetsProvider } from "@/contexts/SportsBetsContext";
 import { BackupProvider } from "@/contexts/BackupContext";
 import { ExpensesProvider } from "@/contexts/ExpensesContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 import { trpc, trpcReactClient } from "@/lib/trpc";
 
 LogBox.ignoreLogs([
@@ -51,23 +52,25 @@ export default function RootLayout() {
   return (
     <trpc.Provider client={trpcReactClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <LoanProvider>
-            <BorrowProvider>
-              <BetsProvider>
-                <SportsBetsProvider>
-                  <ExpensesProvider>
-                    <BackupProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <LoanProvider>
+              <BorrowProvider>
+                <BetsProvider>
+                  <SportsBetsProvider>
+                    <ExpensesProvider>
+                      <BackupProvider>
                       <GestureHandlerRootView style={styles.container}>
                         <RootLayoutNav />
                       </GestureHandlerRootView>
-                    </BackupProvider>
-                  </ExpensesProvider>
-                </SportsBetsProvider>
-              </BetsProvider>
-            </BorrowProvider>
-          </LoanProvider>
-        </AuthProvider>
+                      </BackupProvider>
+                    </ExpensesProvider>
+                  </SportsBetsProvider>
+                </BetsProvider>
+              </BorrowProvider>
+            </LoanProvider>
+          </AuthProvider>
+        </SettingsProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );
