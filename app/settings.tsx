@@ -8,17 +8,11 @@ export default function SettingsScreen() {
   const { createBackupToCloud, createBackupToDevice, restoreFromCloud, restoreFromDevice } = useBackup();
 
   const handleBackupToCloud = async () => {
-    const success = await createBackupToCloud();
-    if (success) {
-      Alert.alert('Success', 'Backup created successfully to cloud!');
-    }
+    await createBackupToCloud();
   };
 
   const handleBackupToDevice = async () => {
-    const success = await createBackupToDevice();
-    if (success) {
-      Alert.alert('Success', 'Backup created successfully to device!');
-    }
+    await createBackupToDevice();
   };
 
   const handleRestoreFromCloud = async () => {
