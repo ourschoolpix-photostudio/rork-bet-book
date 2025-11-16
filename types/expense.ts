@@ -12,6 +12,7 @@ export type ExpenseCategory =
   | 'Lottery'
   | 'Monthly Bill'
   | 'Recreation'
+  | 'Restaurant'
   | 'Shoes'
   | 'Travel';
 

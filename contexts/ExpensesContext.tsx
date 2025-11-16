@@ -299,6 +299,7 @@ export function useExpensesByCategory(userId: string) {
       'Lottery': 0,
       'Monthly Bill': 0,
       'Recreation': 0,
+      'Restaurant': 0,
       'Shoes': 0,
       'Travel': 0,
     };
@@ -351,6 +352,7 @@ export function useMonthlyExpenses(userId: string) {
       'Lottery': 0,
       'Monthly Bill': 0,
       'Recreation': 0,
+      'Restaurant': 0,
       'Shoes': 0,
       'Travel': 0,
     };
@@ -392,6 +394,7 @@ export function useYearToDateExpenses(userId: string) {
       'Lottery': 0,
       'Monthly Bill': 0,
       'Recreation': 0,
+      'Restaurant': 0,
       'Shoes': 0,
       'Travel': 0,
     };

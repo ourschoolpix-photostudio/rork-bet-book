@@ -31,6 +31,7 @@ const categories: ExpenseCategory[] = [
   'Lottery',
   'Monthly Bill',
   'Recreation',
+  'Restaurant',
   'Shoes',
   'Travel',
 ];
