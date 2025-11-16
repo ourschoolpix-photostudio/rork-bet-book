@@ -1,7 +1,7 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator, Clipboard } from 'react-native';
 import { Stack } from 'expo-router';
 import { useState } from 'react';
-import { Cloud, Trash2, Check } from 'lucide-react-native';
+import { Cloud, Trash2, Check, Copy, Database } from 'lucide-react-native';
 import { useSettings } from '@/contexts/SettingsContext';
 
 export default function SupabaseSettingsScreen() {
@@ -16,6 +16,65 @@ export default function SupabaseSettingsScreen() {
   const [url, setUrl] = useState<string>(savedUrl || '');
   const [key, setKey] = useState<string>(savedKey || '');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isTesting, setIsTesting] = useState<boolean>(false);
+  const [showSqlScript, setShowSqlScript] = useState<boolean>(false);
+
+  const sqlScript = `-- Create backups table for Casino Tracker
+CREATE TABLE IF NOT EXISTS backups (
+  id TEXT PRIMARY KEY,
+  version TEXT NOT NULL,
+  timestamp TEXT NOT NULL,
+  data JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Disable Row Level Security for now
+ALTER TABLE backups DISABLE ROW LEVEL SECURITY;
+
+-- Optional: Create index for faster queries
+CREATE INDEX IF NOT EXISTS idx_backups_created_at ON backups(created_at DESC);`;
+
+  const handleTestConnection = async () => {
+    if (!url.trim() || !key.trim()) {
+      Alert.alert('Error', 'Please enter both Supabase URL and Key');
+      return;
+    }
+
+    setIsTesting(true);
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const testClient = createClient(url.trim(), key.trim());
+      
+      const { error } = await testClient.from('backups').select('count').limit(0);
+      
+      if (error) {
+        if (error.code === '42P01') {
+          Alert.alert(
+            'Table Not Found',
+            'Connection successful, but the "backups" table does not exist. Please run the SQL script below to create the table.',
+            [{ text: 'OK', onPress: () => setShowSqlScript(true) }]
+          );
+        } else {
+          Alert.alert(
+            'Connection Error',
+            `Error: ${error.message}\n\nPlease check your credentials and make sure the backups table exists.`
+          );
+        }
+      } else {
+        Alert.alert(
+          'Connection Successful',
+          'Successfully connected to your Supabase database! The backups table is ready.'
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Connection Failed',
+        error instanceof Error ? error.message : 'Failed to connect to Supabase. Please check your credentials.'
+      );
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!url.trim() || !key.trim()) {
@@ -38,6 +97,11 @@ export default function SupabaseSettingsScreen() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopySql = () => {
+    Clipboard.setString(sqlScript);
+    Alert.alert('Copied', 'SQL script copied to clipboard!');
   };
 
   const handleClear = () => {
@@ -139,9 +203,24 @@ export default function SupabaseSettingsScreen() {
 
             <View style={styles.buttonGroup}>
               <TouchableOpacity 
-                style={[styles.button, styles.buttonPrimary, isSubmitting && styles.buttonDisabled]}
+                style={[styles.button, styles.buttonTest, (isSubmitting || isTesting) && styles.buttonDisabled]}
+                onPress={handleTestConnection}
+                disabled={isSubmitting || isTesting}
+              >
+                {isTesting ? (
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                ) : (
+                  <>
+                    <Database size={18} color="#3B82F6" />
+                    <Text style={styles.buttonTextTest}>Test Connection</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.button, styles.buttonPrimary, (isSubmitting || isTesting) && styles.buttonDisabled]}
                 onPress={handleSave}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isTesting}
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
@@ -157,7 +236,7 @@ export default function SupabaseSettingsScreen() {
                 <TouchableOpacity 
                   style={[styles.button, styles.buttonSecondary]}
                   onPress={handleClear}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isTesting}
                 >
                   <Trash2 size={18} color="#EF4444" />
                   <Text style={styles.buttonTextSecondary}>Clear Credentials</Text>
@@ -172,8 +251,39 @@ export default function SupabaseSettingsScreen() {
             <Text style={styles.infoText}>2. Create a new project</Text>
             <Text style={styles.infoText}>3. Go to Settings {'->'} API</Text>
             <Text style={styles.infoText}>4. Copy your Project URL and anon/public key</Text>
-            <Text style={styles.infoText}>5. Create a &apos;backups&apos; table using the SQL editor</Text>
-            <Text style={styles.infoText}>6. Paste your credentials here</Text>
+            <Text style={styles.infoText}>5. Paste credentials here and test connection</Text>
+            <Text style={styles.infoText}>6. Run SQL script below if table doesn&apos;t exist</Text>
+          </View>
+
+          <View style={styles.sqlSection}>
+            <TouchableOpacity 
+              style={styles.sqlHeader}
+              onPress={() => setShowSqlScript(!showSqlScript)}
+            >
+              <Text style={styles.sqlTitle}>SQL Setup Script</Text>
+              <Text style={styles.sqlToggle}>{showSqlScript ? '▼' : '▶'}</Text>
+            </TouchableOpacity>
+            
+            {showSqlScript && (
+              <>
+                <View style={styles.sqlCodeContainer}>
+                  <Text style={styles.sqlCode}>{sqlScript}</Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.sqlCopyButton}
+                  onPress={handleCopySql}
+                >
+                  <Copy size={16} color="#3B82F6" />
+                  <Text style={styles.sqlCopyButtonText}>Copy SQL Script</Text>
+                </TouchableOpacity>
+                <Text style={styles.sqlInstructions}>
+                  1. Go to your Supabase project{"\n"}
+                  2. Click on SQL Editor in the sidebar{"\n"}
+                  3. Paste and run this script{"\n"}
+                  4. Test connection above to verify
+                </Text>
+              </>
+            )}
           </View>
         </ScrollView>
       </View>
@@ -300,6 +410,11 @@ const styles = StyleSheet.create({
   buttonPrimary: {
     backgroundColor: '#9D4EDD',
   },
+  buttonTest: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
   buttonSecondary: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderWidth: 1,
@@ -310,6 +425,11 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonTextTest: {
+    color: '#3B82F6',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -333,5 +453,65 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     lineHeight: 22,
     marginBottom: 6,
+  },
+  sqlSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  sqlHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    marginBottom: 12,
+  },
+  sqlTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  sqlToggle: {
+    fontSize: 16,
+    color: '#9D4EDD',
+  },
+  sqlCodeContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    marginBottom: 12,
+  },
+  sqlCode: {
+    fontFamily: 'monospace' as const,
+    fontSize: 12,
+    color: '#E5E7EB',
+    lineHeight: 18,
+  },
+  sqlCopyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  sqlCopyButtonText: {
+    color: '#3B82F6',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  sqlInstructions: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.6)',
+    lineHeight: 20,
   },
 });

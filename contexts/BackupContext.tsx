@@ -47,15 +47,19 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
   const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
+      console.log('🔵 Starting cloud backup...');
+      console.log('🔵 Supabase configured:', isSupabaseConfigured);
+      console.log('🔵 Supabase client exists:', !!supabaseClient);
+      
       if (!isSupabaseConfigured || !supabaseClient) {
         Alert.alert(
           'Configuration Required',
-          'Supabase is not configured. Please set up your Supabase credentials to use cloud backups.\n\nRequired environment variables:\n- EXPO_PUBLIC_SUPABASE_URL\n- EXPO_PUBLIC_SUPABASE_ANON_KEY\n\nSee SUPABASE_SETUP.md for instructions.'
+          'Supabase is not configured. Please go to Settings > Supabase Settings to configure your cloud backup credentials.'
         );
         return false;
       }
 
-      console.log('🔵 Starting Supabase cloud backup creation...');
+      console.log('🔵 Collecting backup data...');
       const backupData: BackupData = {
         version: '1.0.0',
         timestamp: new Date().toISOString(),
@@ -82,7 +86,8 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         created_at: new Date().toISOString(),
       };
 
-      console.log('📤 Sending backup to Supabase...');
+      console.log('📤 Uploading to Supabase...', { backupId });
+      
       const { data, error } = await supabaseClient
         .from('backups')
         .insert(record)
@@ -90,14 +95,31 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         .single();
       
       if (error) {
-        throw new Error(`Supabase error: ${error.message}`);
+        console.error('❌ Supabase error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        
+        let errorMsg = `Supabase error: ${error.message}`;
+        
+        if (error.code === '42P01') {
+          errorMsg += '\n\nThe "backups" table does not exist in your Supabase database. Please run the SQL setup script from the Supabase Settings screen.';
+        } else if (error.code === '42501') {
+          errorMsg += '\n\nPermission denied. Please check your Supabase RLS (Row Level Security) policies.';
+        } else if (error.hint) {
+          errorMsg += `\n\nHint: ${error.hint}`;
+        }
+        
+        throw new Error(errorMsg);
       }
 
-      console.log('✅ Supabase backup result:', data);
+      console.log('✅ Backup uploaded successfully:', data);
       
       Alert.alert(
         'Success', 
-        `Backup created successfully to Supabase!\n\nBackup ID: ${backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
+        `Backup created successfully to cloud!\n\nBackup ID: ${backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
       );
       return true;
     } catch (error) {
@@ -107,6 +129,10 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       
       if (error instanceof Error) {
         errorMessage += '\n\n' + error.message;
+        
+        if (error.message.includes('fetch')) {
+          errorMessage += '\n\nPlease check your internet connection and Supabase URL.';
+        }
       }
       
       Alert.alert('Backup Error', errorMessage);
