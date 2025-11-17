@@ -246,7 +246,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                   />
                 </View>
 
-                <View style={styles.inputGroup}>
+                <View style={[styles.inputGroup, styles.lastInputGroup]}>
                   <Text style={styles.inputLabel}>Notes (optional)</Text>
                   <TextInput
                     style={[styles.textInput, styles.notesInput]}
@@ -328,10 +328,13 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     padding: 24,
-    paddingBottom: 120,
+    paddingBottom: 200,
   },
   inputGroup: {
     marginBottom: 20,
+  },
+  lastInputGroup: {
+    marginBottom: 40,
   },
   inputLabel: {
     fontSize: 14,
