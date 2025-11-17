@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     padding: 24,
-    paddingBottom: 80,
+    paddingBottom: 120,
   },
   inputGroup: {
     marginBottom: 20,
@@ -377,8 +377,10 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
     borderTopWidth: 1,
     borderTopColor: 'rgba(36, 0, 70, 0.1)',
+    backgroundColor: '#FFFFFF',
   },
   submitButton: {
     backgroundColor: '#9D4EDD',
