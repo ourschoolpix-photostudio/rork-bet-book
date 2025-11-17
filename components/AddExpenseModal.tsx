@@ -1,7 +1,7 @@
 import { ExpenseCategory, Expense, ExpenseType } from '@/types/expense';
 import { X } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
-import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
 interface AddExpenseModalProps {
   visible: boolean;
@@ -104,8 +104,11 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modal}>
+          <TouchableWithoutFeedback>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.modal}
+            >
               <View style={styles.header}>
                 <Text style={styles.title}>{editingExpense ? 'Edit Expense' : 'Add Expense'}</Text>
                 <Pressable
@@ -120,7 +123,12 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                 </Pressable>
               </View>
 
-              <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+              <ScrollView
+                style={styles.body}
+                contentContainerStyle={styles.bodyContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Expense Type</Text>
                   <View style={styles.expenseTypeContainer}>
@@ -269,7 +277,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                   <Text style={styles.submitButtonText}>{editingExpense ? 'Update Expense' : 'Add Expense'}</Text>
                 </Pressable>
               </View>
-            </View>
+            </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -316,7 +324,11 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   body: {
+    flex: 1,
+  },
+  bodyContent: {
     padding: 24,
+    paddingBottom: 80,
   },
   inputGroup: {
     marginBottom: 20,
