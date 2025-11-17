@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     padding: 24,
-    paddingBottom: 200,
+    paddingBottom: 300,
   },
   inputGroup: {
     marginBottom: 20,
