@@ -106,9 +106,9 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
             <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.modal}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+              keyboardVerticalOffset={0}
             >
               <View style={styles.header}>
                 <Text style={styles.title}>{editingExpense ? 'Edit Expense' : 'Add Expense'}</Text>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     padding: 24,
-    paddingBottom: Platform.OS === 'ios' ? 400 : 350,
+    paddingBottom: 500,
   },
   inputGroup: {
     marginBottom: 20,
