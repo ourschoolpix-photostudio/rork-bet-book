@@ -47,6 +47,8 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
   const [selectedCasino, setSelectedCasino] = useState<string>(initialData.casinoName);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showCasinoList, setShowCasinoList] = useState<boolean>(false);
+  const [customCasinoName, setCustomCasinoName] = useState<string>('');
+  const [cruiseShipName, setCruiseShipName] = useState<string>('');
   const [startAmount, setStartAmount] = useState<string>('');
   const [addOnAmount, setAddOnAmount] = useState<string>('');
   const [addOnCategory, setAddOnCategory] = useState<'ATM' | 'Borrow' | 'Cash Advance' | undefined>(undefined);
@@ -71,6 +73,8 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
       setBorrowFrom(initialData.borrowFrom || '');
       setSearchQuery('');
       setShowCasinoList(false);
+      setCustomCasinoName('');
+      setCruiseShipName('');
       
       const startDate = new Date(initialData.startDate);
       const startYear = startDate.getFullYear();
@@ -100,7 +104,7 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
         if (endHours12 === 0) endHours12 = 12;
         setEndTime(`${String(endHours12).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`);
         setEndAmPm(endIsAM ? 'AM' : 'PM');
-        setEndAmount((initialData.endAmount * 100).toString());
+        setEndAmount(initialData.endAmount ? (initialData.endAmount * 100).toString() : '');
       } else {
         setEndDateString('');
         setEndTime('');
@@ -130,7 +134,8 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
   const totalInvestment = calculateTotalInvestment();
 
   const handleSubmit = () => {
-    const isValidStart = selectedState && selectedCasino && startAmount && startDateString && startTime;
+    const finalCasinoName = customCasinoName || (selectedState === 'Cruise' && cruiseShipName ? cruiseShipName : selectedCasino);
+    const isValidStart = selectedState && finalCasinoName && startAmount && startDateString && startTime;
     const isValidEnd = !isCompleted || (endDateString && endTime);
     
     if (isValidStart && isValidEnd) {
@@ -155,7 +160,7 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
       }
       
       onSubmit({
-        casinoName: selectedCasino,
+        casinoName: finalCasinoName,
         state: selectedState,
         gameType,
         startAmount: start,
@@ -174,6 +179,8 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
     setSearchQuery('');
     setBorrowFrom('');
     setAddOnCategory(undefined);
+    setCustomCasinoName('');
+    setCruiseShipName('');
     onClose();
   };
 
@@ -264,13 +271,18 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
               </ScrollView>
             </View>
 
-            {selectedCasino && !showCasinoList && (
+            {((selectedCasino && !showCasinoList) || customCasinoName) && (
               <View style={styles.section}>
                 <Text style={styles.label}>Selected Casino</Text>
                 <View style={styles.selectedCasinoDisplay}>
-                  <Text style={styles.selectedCasinoText}>{selectedCasino}</Text>
+                  <Text style={styles.selectedCasinoText}>
+                    {customCasinoName || selectedCasino}
+                  </Text>
                   <Pressable
-                    onPress={() => setShowCasinoList(true)}
+                    onPress={() => {
+                      setShowCasinoList(true);
+                      setCustomCasinoName('');
+                    }}
                     style={({ pressed }) => [
                       styles.changeCasinoButton,
                       pressed && styles.changeCasinoButtonPressed,
@@ -333,10 +345,53 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
                     </Pressable>
                   ))}
                 </View>
+
+                <View style={styles.customCasinoSection}>
+                  <Text style={styles.customCasinoLabel}>Or enter a custom casino name:</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Custom casino name..."
+                    placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                    value={customCasinoName}
+                    onChangeText={(text) => {
+                      setCustomCasinoName(text);
+                      if (text) {
+                        setSelectedCasino('');
+                      }
+                    }}
+                    testID="edit-custom-casino-input"
+                  />
+                  {customCasinoName && (
+                    <Pressable
+                      onPress={() => setShowCasinoList(false)}
+                      style={({ pressed }) => [
+                        styles.useCustomButton,
+                        pressed && styles.useCustomButtonPressed,
+                      ]}
+                      testID="edit-use-custom-casino-button"
+                    >
+                      <Text style={styles.useCustomButtonText}>Use Custom Name</Text>
+                    </Pressable>
+                  )}
+                </View>
               </View>
             )}
 
-            {selectedCasino && (
+            {(selectedCasino || customCasinoName) && selectedState === 'Cruise' && (
+              <View style={styles.section}>
+                <Text style={styles.label}>Cruise Ship Name</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter cruise ship name..."
+                  placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                  value={cruiseShipName}
+                  onChangeText={setCruiseShipName}
+                  testID="edit-cruise-ship-name-input"
+                />
+              </View>
+            )}
+
+            {(selectedCasino || customCasinoName) && (
               <View style={styles.section}>
                 <Text style={styles.label}>Session Details</Text>
                 
@@ -722,10 +777,10 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
           <View style={styles.modalFooter}>
             <Pressable
               onPress={handleSubmit}
-              disabled={!selectedState || !selectedCasino || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime || !endAmount))}
+              disabled={!selectedState || (!selectedCasino && !customCasinoName) || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime || !endAmount)) || (selectedState === 'Cruise' && !cruiseShipName)}
               style={({ pressed }) => [
                 styles.submitButton,
-                (!selectedState || !selectedCasino || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime || !endAmount))) && styles.submitButtonDisabled,
+                (!selectedState || (!selectedCasino && !customCasinoName) || !startAmount || !startDateString || !startTime || (isCompleted && (!endDateString || !endTime || !endAmount)) || (selectedState === 'Cruise' && !cruiseShipName)) && styles.submitButtonDisabled,
                 pressed && styles.submitButtonPressed,
               ]}
               testID="submit-edit-session-button"
@@ -1109,6 +1164,32 @@ const styles = StyleSheet.create({
   },
   changeCasinoButtonText: {
     fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+  },
+  customCasinoSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(157, 78, 221, 0.2)',
+    gap: 12,
+  },
+  customCasinoLabel: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: 'rgba(36, 0, 70, 0.7)',
+  },
+  useCustomButton: {
+    backgroundColor: '#9D4EDD',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+  },
+  useCustomButtonPressed: {
+    opacity: 0.7,
+  },
+  useCustomButtonText: {
+    fontSize: 13,
     fontWeight: '600' as const,
     color: '#FFFFFF',
   },

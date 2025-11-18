@@ -31,6 +31,8 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
   const [addOnAmount, setAddOnAmount] = useState<string>('');
   const [addOnCategory, setAddOnCategory] = useState<'ATM' | 'Borrow' | 'Cash Advance' | undefined>(undefined);
   const [borrowFrom, setBorrowFrom] = useState<string>('');
+  const [customCasinoName, setCustomCasinoName] = useState<string>('');
+  const [cruiseShipName, setCruiseShipName] = useState<string>('');
 
   useEffect(() => {
     if (visible && lastCasino) {
@@ -62,10 +64,11 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
   const displayAddOn = parseFloat(addOnAmount) / 100 || 0;
 
   const handleSubmit = () => {
-    if (selectedState && selectedCasino && startAmount) {
+    const finalCasinoName = customCasinoName || (selectedState === 'Cruise' && cruiseShipName ? cruiseShipName : selectedCasino);
+    if (selectedState && finalCasinoName && startAmount) {
       const start = parseFloat(startAmount) / 100;
       const addOn = parseFloat(addOnAmount) / 100 || 0;
-      onSubmit(selectedCasino, selectedState, start, isFreeBet, gameType, addOn, addOnCategory, addOnCategory === 'Borrow' ? borrowFrom : undefined);
+      onSubmit(finalCasinoName, selectedState, start, isFreeBet, gameType, addOn, addOnCategory, addOnCategory === 'Borrow' ? borrowFrom : undefined);
       setSearchQuery('');
       setStartAmount('');
       setIsFreeBet(false);
@@ -73,6 +76,8 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
       setAddOnAmount('');
       setAddOnCategory(undefined);
       setBorrowFrom('');
+      setCustomCasinoName('');
+      setCruiseShipName('');
     }
   };
 
@@ -84,6 +89,8 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
     setAddOnAmount('');
     setAddOnCategory(undefined);
     setBorrowFrom('');
+    setCustomCasinoName('');
+    setCruiseShipName('');
     onClose();
   };
 
@@ -174,13 +181,18 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
               </ScrollView>
             </View>
 
-            {selectedCasino && !showCasinoList && (
+            {((selectedCasino && !showCasinoList) || customCasinoName) && (
               <View style={styles.section}>
                 <Text style={styles.label}>Selected Casino</Text>
                 <View style={styles.selectedCasinoCard}>
-                  <Text style={styles.selectedCasinoName}>{selectedCasino}</Text>
+                  <Text style={styles.selectedCasinoName}>
+                    {customCasinoName || selectedCasino}
+                  </Text>
                   <Pressable
-                    onPress={() => setShowCasinoList(true)}
+                    onPress={() => {
+                      setShowCasinoList(true);
+                      setCustomCasinoName('');
+                    }}
                     style={({ pressed }) => [
                       styles.changeCasinoButton,
                       pressed && styles.changeCasinoButtonPressed,
@@ -243,10 +255,53 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
                     </Pressable>
                   ))}
                 </View>
+
+                <View style={styles.customCasinoSection}>
+                  <Text style={styles.customCasinoLabel}>Or enter a custom casino name:</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Custom casino name..."
+                    placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                    value={customCasinoName}
+                    onChangeText={(text) => {
+                      setCustomCasinoName(text);
+                      if (text) {
+                        setSelectedCasino('');
+                      }
+                    }}
+                    testID="custom-casino-input"
+                  />
+                  {customCasinoName && (
+                    <Pressable
+                      onPress={() => setShowCasinoList(false)}
+                      style={({ pressed }) => [
+                        styles.useCustomButton,
+                        pressed && styles.useCustomButtonPressed,
+                      ]}
+                      testID="use-custom-casino-button"
+                    >
+                      <Text style={styles.useCustomButtonText}>Use Custom Name</Text>
+                    </Pressable>
+                  )}
+                </View>
               </View>
             )}
 
-            {selectedCasino && (
+            {(selectedCasino || customCasinoName) && selectedState === 'Cruise' && (
+              <View style={styles.section}>
+                <Text style={styles.label}>Cruise Ship Name</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter cruise ship name..."
+                  placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                  value={cruiseShipName}
+                  onChangeText={setCruiseShipName}
+                  testID="cruise-ship-name-input"
+                />
+              </View>
+            )}
+
+            {(selectedCasino || customCasinoName) && (
               <View style={styles.section}>
                 <Text style={styles.label}>Session Details</Text>
                 
@@ -418,10 +473,10 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
           <View style={styles.modalFooter}>
             <Pressable
               onPress={handleSubmit}
-              disabled={!selectedState || !selectedCasino || !startAmount}
+              disabled={!selectedState || (!selectedCasino && !customCasinoName) || !startAmount || (selectedState === 'Cruise' && !cruiseShipName)}
               style={({ pressed }) => [
                 styles.submitButton,
-                (!selectedState || !selectedCasino || !startAmount) && styles.submitButtonDisabled,
+                (!selectedState || (!selectedCasino && !customCasinoName) || !startAmount || (selectedState === 'Cruise' && !cruiseShipName)) && styles.submitButtonDisabled,
                 pressed && styles.submitButtonPressed,
               ]}
               testID="submit-session-button"
@@ -802,5 +857,31 @@ const styles = StyleSheet.create({
     color: '#240046',
     borderWidth: 1,
     borderColor: 'rgba(157, 78, 221, 0.2)',
+  },
+  customCasinoSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(157, 78, 221, 0.2)',
+    gap: 12,
+  },
+  customCasinoLabel: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: 'rgba(36, 0, 70, 0.7)',
+  },
+  useCustomButton: {
+    backgroundColor: '#9D4EDD',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+  },
+  useCustomButtonPressed: {
+    opacity: 0.7,
+  },
+  useCustomButtonText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
 });

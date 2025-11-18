@@ -286,6 +286,17 @@ export const CASINOS_BY_STATE: CasinosByState = {
     { name: 'Harrah\'s Cherokee Casino Resort', city: 'Cherokee' },
     { name: 'Harrah\'s Cherokee Valley River', city: 'Murphy' },
   ],
+  'Cruise': [
+    { name: 'Royal Caribbean', city: 'Cruise Ship' },
+    { name: 'Carnival Cruise Line', city: 'Cruise Ship' },
+    { name: 'Norwegian Cruise Line', city: 'Cruise Ship' },
+    { name: 'MSC Cruises', city: 'Cruise Ship' },
+    { name: 'Princess Cruises', city: 'Cruise Ship' },
+    { name: 'Celebrity Cruises', city: 'Cruise Ship' },
+    { name: 'Disney Cruise Line', city: 'Cruise Ship' },
+    { name: 'Holland America Line', city: 'Cruise Ship' },
+    { name: 'Viking Ocean Cruises', city: 'Cruise Ship' },
+  ],
 };
 
 export const US_STATES = Object.keys(CASINOS_BY_STATE).sort();
