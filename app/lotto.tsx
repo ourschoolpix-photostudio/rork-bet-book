@@ -1,8 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Sparkles, TrendingUp, Save, Trash2, Brain, Trophy } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -41,11 +41,92 @@ export default function LottoScreen() {
   const [currentPowerball, setCurrentPowerball] = useState<WinningNumbers | null>(null);
   const [currentMegaMillions, setCurrentMegaMillions] = useState<WinningNumbers | null>(null);
   const [loadingCurrent, setLoadingCurrent] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchCurrentWinningNumbers = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoadingCurrent(true);
+    }
+    console.log('Fetching lottery data...');
+    try {
+      const [powerballResponse, megaResponse] = await Promise.all([
+        fetch('https://data.ny.gov/resource/d6yy-54nr.json?$order=draw_date%20DESC&$limit=1'),
+        fetch('https://data.ny.gov/resource/5xaw-6ayf.json?$order=draw_date%20DESC&$limit=1'),
+      ]);
+      
+      const powerballData = await powerballResponse.json();
+      console.log('Powerball data received:', powerballData.length > 0 ? 'Success' : 'No data');
+      let powerballJackpot = await scrapePowerballJackpot();
+      console.log('Powerball jackpot scraped:', powerballJackpot);
+      
+      if (powerballData && powerballData.length > 0) {
+        const latest = powerballData[0];
+        const numbers = [
+          parseInt(latest.winning_numbers.split(' ')[0]),
+          parseInt(latest.winning_numbers.split(' ')[1]),
+          parseInt(latest.winning_numbers.split(' ')[2]),
+          parseInt(latest.winning_numbers.split(' ')[3]),
+          parseInt(latest.winning_numbers.split(' ')[4]),
+        ].sort((a, b) => a - b);
+        const powerball = parseInt(latest.winning_numbers.split(' ')[5]);
+        const lastDrawDate = new Date(latest.draw_date);
+        
+        setCurrentPowerball({
+          numbers,
+          specialBall: powerball,
+          drawDate: lastDrawDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }),
+          nextDrawDate: getNextDrawDate(lastDrawDate, [1, 3, 6]),
+          nextJackpot: powerballJackpot,
+        });
+      }
+
+      const megaData = await megaResponse.json();
+      console.log('Mega Millions data received:', megaData.length > 0 ? 'Success' : 'No data');
+      let megaJackpot = await scrapeMegaMillionsJackpot();
+      console.log('Mega Millions jackpot scraped:', megaJackpot);
+      
+      if (megaData && megaData.length > 0) {
+        const latest = megaData[0];
+        const numbers = [
+          parseInt(latest.winning_numbers.split(' ')[0]),
+          parseInt(latest.winning_numbers.split(' ')[1]),
+          parseInt(latest.winning_numbers.split(' ')[2]),
+          parseInt(latest.winning_numbers.split(' ')[3]),
+          parseInt(latest.winning_numbers.split(' ')[4]),
+        ].sort((a, b) => a - b);
+        const megaBall = parseInt(latest.mega_ball);
+        const lastDrawDate = new Date(latest.draw_date);
+        
+        setCurrentMegaMillions({
+          numbers,
+          specialBall: megaBall,
+          drawDate: lastDrawDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }),
+          nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
+          nextJackpot: megaJackpot,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching current winning numbers:', error);
+    } finally {
+      setLoadingCurrent(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadSavedNumbers();
     fetchCurrentWinningNumbers();
-  }, []);
+  }, [fetchCurrentWinningNumbers]);
 
   const getNextDrawDate = (lastDrawDate: Date, drawDays: number[]): string => {
     const today = new Date();
@@ -127,74 +208,10 @@ export default function LottoScreen() {
     }
   };
 
-  const fetchCurrentWinningNumbers = async () => {
-    setLoadingCurrent(true);
-    try {
-      const [powerballResponse, megaResponse] = await Promise.all([
-        fetch('https://data.ny.gov/resource/d6yy-54nr.json?$order=draw_date%20DESC&$limit=1'),
-        fetch('https://data.ny.gov/resource/5xaw-6ayf.json?$order=draw_date%20DESC&$limit=1'),
-      ]);
-      
-      const powerballData = await powerballResponse.json();
-      let powerballJackpot = await scrapePowerballJackpot();
-      
-      if (powerballData && powerballData.length > 0) {
-        const latest = powerballData[0];
-        const numbers = [
-          parseInt(latest.winning_numbers.split(' ')[0]),
-          parseInt(latest.winning_numbers.split(' ')[1]),
-          parseInt(latest.winning_numbers.split(' ')[2]),
-          parseInt(latest.winning_numbers.split(' ')[3]),
-          parseInt(latest.winning_numbers.split(' ')[4]),
-        ].sort((a, b) => a - b);
-        const powerball = parseInt(latest.winning_numbers.split(' ')[5]);
-        const lastDrawDate = new Date(latest.draw_date);
-        
-        setCurrentPowerball({
-          numbers,
-          specialBall: powerball,
-          drawDate: lastDrawDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-          }),
-          nextDrawDate: getNextDrawDate(lastDrawDate, [1, 3, 6]),
-          nextJackpot: powerballJackpot,
-        });
-      }
 
-      const megaData = await megaResponse.json();
-      let megaJackpot = await scrapeMegaMillionsJackpot();
-      
-      if (megaData && megaData.length > 0) {
-        const latest = megaData[0];
-        const numbers = [
-          parseInt(latest.winning_numbers.split(' ')[0]),
-          parseInt(latest.winning_numbers.split(' ')[1]),
-          parseInt(latest.winning_numbers.split(' ')[2]),
-          parseInt(latest.winning_numbers.split(' ')[3]),
-          parseInt(latest.winning_numbers.split(' ')[4]),
-        ].sort((a, b) => a - b);
-        const megaBall = parseInt(latest.mega_ball);
-        const lastDrawDate = new Date(latest.draw_date);
-        
-        setCurrentMegaMillions({
-          numbers,
-          specialBall: megaBall,
-          drawDate: lastDrawDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-          }),
-          nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
-          nextJackpot: megaJackpot,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching current winning numbers:', error);
-    } finally {
-      setLoadingCurrent(false);
-    }
+
+  const onRefresh = async () => {
+    await fetchCurrentWinningNumbers(true);
   };
 
   const loadSavedNumbers = async () => {
@@ -445,6 +462,14 @@ export default function LottoScreen() {
           style={styles.scrollContent}
           contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#FFFFFF"
+              colors={['#9D4EDD', '#7B2CBF', '#5A189A']}
+            />
+          }
         >
           <View style={styles.lottoCard}>
             <View style={styles.lottoHeader}>
