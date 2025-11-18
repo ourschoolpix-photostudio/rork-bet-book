@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Sparkles, TrendingUp, Save, Trash2, Brain, Trophy } from 'lucide-react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
@@ -125,8 +125,14 @@ export default function LottoScreen() {
 
   useEffect(() => {
     loadSavedNumbers();
-    fetchCurrentWinningNumbers();
-  }, [fetchCurrentWinningNumbers]);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Lotto screen focused - fetching fresh data...');
+      fetchCurrentWinningNumbers();
+    }, [fetchCurrentWinningNumbers])
+  );
 
   const getNextDrawDate = (lastDrawDate: Date, drawDays: number[]): string => {
     const today = new Date();
