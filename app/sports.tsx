@@ -569,6 +569,9 @@ export default function SportsScreen() {
                       </View>
                       <Text style={styles.betTeams}>{bet.teams}</Text>
                       <Text style={styles.betType}>{bet.betType}</Text>
+                      {bet.odds && (
+                        <Text style={styles.betOdds}>Odds: {bet.odds > 0 ? '+' : ''}{bet.odds}</Text>
+                      )}
                       <Text style={styles.betDate}>{formatDate(bet.betDate)}</Text>
                     </View>
                     <View style={styles.betHeaderActions}>
@@ -1387,6 +1390,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(36, 0, 70, 0.7)',
     fontWeight: '500' as const,
+  },
+  betOdds: {
+    fontSize: 12,
+    color: 'rgba(90, 24, 154, 0.9)',
+    fontWeight: '600' as const,
   },
   deleteButton: {
     padding: 8,
