@@ -10,6 +10,7 @@ import { Alert, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text,
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
 import RecurringBillsModal from '@/components/RecurringBillsModal';
+import { formatDateEST } from '@/lib/dateUtils';
 
 const categories: ExpenseCategory[] = [
   'Auto Repair',
@@ -273,7 +274,7 @@ export default function ExpensesScreen() {
                                   <Text style={styles.expenseMerchant}>{item.merchant}</Text>
                                 )}
                                 <Text style={styles.expenseDate}>
-                                  {new Date(item.date).toLocaleDateString()}
+                                  {formatDateEST(item.date)}
                                 </Text>
                               </View>
                               <View style={styles.expenseActions}>
@@ -382,7 +383,7 @@ export default function ExpensesScreen() {
                 <Text style={styles.sectionTitle}>Current Month</Text>
                 <View style={styles.summaryTotalCard}>
                   <Text style={styles.summaryTotalLabel}>
-                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    {formatDateEST(new Date().toISOString(), { month: 'long', year: 'numeric' })}
                   </Text>
                   <Text style={styles.summaryTotalAmount}>${monthlyExpenses.total.toFixed(2)}</Text>
                   <Text style={styles.summaryCount}>{monthlyExpenses.expenses.length} expense{monthlyExpenses.expenses.length !== 1 ? 's' : ''}</Text>
@@ -424,7 +425,7 @@ export default function ExpensesScreen() {
                 <Text style={styles.sectionTitle}>Year to Date</Text>
                 <View style={styles.summaryTotalCard}>
                   <Text style={styles.summaryTotalLabel}>
-                    {new Date().getFullYear()} Total
+                    {formatDateEST(new Date().toISOString(), { year: 'numeric' })} Total
                   </Text>
                   <Text style={styles.summaryTotalAmount}>${ytdExpenses.total.toFixed(2)}</Text>
                   <Text style={styles.summaryCount}>{ytdExpenses.expenses.length} expense{ytdExpenses.expenses.length !== 1 ? 's' : ''}</Text>

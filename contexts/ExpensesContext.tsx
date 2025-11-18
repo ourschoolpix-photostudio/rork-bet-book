@@ -2,6 +2,34 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Expense, RecurringBill, ExpenseCategory, ExpenseType, MonthlyUtilities } from '@/types/expense';
+import { getEasternStartOfDay } from '@/lib/dateUtils';
+
+const EST_TIMEZONE = 'America/New_York';
+
+function getEasternDate(date?: Date): { year: number; month: number; day: number } {
+  const d = date || new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: EST_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  
+  const parts = formatter.formatToParts(d);
+  const values: Record<string, string> = {};
+  
+  parts.forEach(part => {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value;
+    }
+  });
+  
+  return {
+    year: parseInt(values.year, 10),
+    month: parseInt(values.month, 10) - 1,
+    day: parseInt(values.day, 10),
+  };
+}
 
 const EXPENSES_STORAGE_KEY = '@casino_tracker_expenses';
 const RECURRING_BILLS_STORAGE_KEY = '@casino_tracker_recurring_bills';
@@ -327,8 +355,9 @@ export function useMonthlyExpenses(userId: string) {
   
   return useMemo(() => {
     const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const easternDate = getEasternDate(now);
+    const firstDayOfMonth = getEasternStartOfDay(new Date(easternDate.year, easternDate.month, 1));
+    const lastDayOfMonth = getEasternStartOfDay(new Date(easternDate.year, easternDate.month + 1, 1));
     
     const monthlyExpenses = expenses.filter(e => {
       if (e.userId !== userId) return false;
@@ -370,7 +399,8 @@ export function useYearToDateExpenses(userId: string) {
   
   return useMemo(() => {
     const now = new Date();
-    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+    const easternDate = getEasternDate(now);
+    const firstDayOfYear = getEasternStartOfDay(new Date(easternDate.year, 0, 1));
     
     const ytdExpenses = expenses.filter(e => {
       if (e.userId !== userId) return false;
@@ -425,8 +455,9 @@ export function useExpensesByMonth(userId: string) {
     
     const groupedByMonth = userExpenses.reduce((acc, expense) => {
       const expenseDate = new Date(expense.date);
-      const year = expenseDate.getFullYear();
-      const month = expenseDate.getMonth();
+      const easternDate = getEasternDate(expenseDate);
+      const year = easternDate.year;
+      const month = easternDate.month;
       const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
       
       if (!acc[monthKey]) {
@@ -437,7 +468,8 @@ export function useExpensesByMonth(userId: string) {
     }, {} as Record<string, Expense[]>);
     
     const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const easternNow = getEasternDate(now);
+    const currentMonthKey = `${easternNow.year}-${String(easternNow.month + 1).padStart(2, '0')}`;
     
     const monthlyGroups: MonthlyExpenseGroup[] = Object.entries(groupedByMonth)
       .map(([monthKey, monthExpenses]) => {
@@ -487,7 +519,8 @@ export function useMonthlyUtilitiesTotal(userId: string) {
   
   return useMemo(() => {
     const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const easternDate = getEasternDate(now);
+    const currentMonthKey = `${easternDate.year}-${String(easternDate.month + 1).padStart(2, '0')}`;
     
     const currentUtility = utilities.find(
       u => u.userId === userId && u.monthKey === currentMonthKey

@@ -113,71 +113,61 @@ export function getEasternStartOfDay(date?: Date): Date {
     }
   });
   
-  // Create midnight in Eastern time
-  return new Date(`${values.year}-${values.month}-${values.day}T00:00:00-05:00`);
+  // Find the UTC time that corresponds to midnight Eastern
+  const utcDate = new Date(`${values.year}-${values.month}-${values.day}T00:00:00Z`);
+  
+  // Adjust to find midnight in Eastern time
+  for (let offset = -14; offset <= 14; offset++) {
+    const candidate = new Date(utcDate.getTime() + offset * 60 * 60 * 1000);
+    const candidateFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: EST_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const candidateParts = candidateFormatter.formatToParts(candidate);
+    const candidateValues: Record<string, string> = {};
+    candidateParts.forEach(part => {
+      if (part.type !== 'literal') {
+        candidateValues[part.type] = part.value;
+      }
+    });
+    
+    if (candidateValues.year === values.year &&
+        candidateValues.month === values.month &&
+        candidateValues.day === values.day &&
+        candidateValues.hour === '00' &&
+        candidateValues.minute === '00') {
+      return candidate;
+    }
+  }
+  
+  return utcDate;
 }
 
 /**
  * Get the end of day in Eastern Time
  */
 export function getEasternEndOfDay(date?: Date): Date {
-  const d = date || new Date();
-  
-  // Get the date parts in Eastern time
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: EST_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  
-  const parts = formatter.formatToParts(d);
-  const values: Record<string, string> = {};
-  
-  parts.forEach(part => {
-    if (part.type !== 'literal') {
-      values[part.type] = part.value;
-    }
-  });
-  
-  // Create 23:59:59 in Eastern time
-  return new Date(`${values.year}-${values.month}-${values.day}T23:59:59-05:00`);
+  const startOfDay = getEasternStartOfDay(date);
+  // Add 24 hours minus 1 second to get end of day
+  return new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000) - 1000);
 }
 
 /**
  * Calculate days difference between two dates in Eastern Time
  */
 export function getDaysDifferenceEST(date1: Date, date2: Date): number {
-  const eastern1 = toEasternTime(date1);
-  const eastern2 = toEasternTime(date2);
+  // Get start of day for both dates in Eastern time
+  const start1 = getEasternStartOfDay(date1);
+  const start2 = getEasternStartOfDay(date2);
   
-  // Get date parts only (ignore time)
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: EST_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  
-  const getParts = (d: Date) => {
-    const parts = formatter.formatToParts(d);
-    const values: Record<string, string> = {};
-    parts.forEach(part => {
-      if (part.type !== 'literal') {
-        values[part.type] = part.value;
-      }
-    });
-    return values;
-  };
-  
-  const parts1 = getParts(eastern1);
-  const parts2 = getParts(eastern2);
-  
-  const day1 = new Date(`${parts1.year}-${parts1.month}-${parts1.day}`);
-  const day2 = new Date(`${parts2.year}-${parts2.month}-${parts2.day}`);
-  
-  const diffTime = day2.getTime() - day1.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  // Calculate difference in milliseconds and convert to days
+  const diffTime = start2.getTime() - start1.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
   
   return diffDays;
 }
@@ -190,6 +180,14 @@ export function formatGameTimeEST(dateString: string): string {
   const now = new Date();
   
   const diffDays = getDaysDifferenceEST(now, gameDate);
+  
+  console.log('formatGameTimeEST:', {
+    gameDate: gameDate.toISOString(),
+    now: now.toISOString(),
+    diffDays,
+    gameStartEastern: getEasternStartOfDay(gameDate).toISOString(),
+    nowStartEastern: getEasternStartOfDay(now).toISOString(),
+  });
   
   if (diffDays === 0) {
     return `Today ${formatTimeEST(dateString)}`;
