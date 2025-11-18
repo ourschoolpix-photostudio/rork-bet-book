@@ -8,6 +8,7 @@ import { Alert, ImageBackground, Keyboard, Modal, Pressable, ScrollView, StyleSh
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PlaceBetModal from '@/components/PlaceBetModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatDateEST, formatGameTimeEST, getEasternStartOfDay, getEasternEndOfDay } from '@/lib/dateUtils';
 
 interface NFLGame {
   id: string;
@@ -194,8 +195,8 @@ export default function SportsScreen() {
       
       if (Array.isArray(oddsData) && oddsData.length > 0) {
         const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        const todayStart = getEasternStartOfDay(now);
+        const todayEnd = getEasternEndOfDay(now);
         
         const transformedGames: NFLGame[] = oddsData.map((game: any) => {
           const scoreInfo = scoresMap.get(game.id) || {};
@@ -402,27 +403,11 @@ export default function SportsScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return formatDateEST(dateString);
   };
 
   const formatGameTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return `Today ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-    } else if (diffDays === 1) {
-      return `Tomorrow ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-    }
+    return formatGameTimeEST(dateString);
   };
 
   const getOddsDisplay = (game: NFLGame) => {
