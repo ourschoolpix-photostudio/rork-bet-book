@@ -42,6 +42,8 @@ export default function SportsScreen() {
   const [teams, setTeams] = useState<string>('');
   const [betType, setBetType] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
+  const [betOdds, setBetOdds] = useState<string>('');
+  const [betPayout, setBetPayout] = useState<string>('');
   const [betDate, setBetDate] = useState<string>('');
   const [won, setWon] = useState<boolean | null>(null);
   const [nflGames, setNflGames] = useState<NFLGame[]>([]);
@@ -340,6 +342,8 @@ export default function SportsScreen() {
     setTeams(bet.teams);
     setBetType(bet.betType);
     setBetAmount((bet.amount * 100).toString());
+    setBetOdds(bet.odds?.toString() || '');
+    setBetPayout((bet.payout ? bet.payout * 100 : 0).toString());
     setWon(bet.won);
     
     const date = new Date(bet.betDate);
@@ -367,12 +371,16 @@ export default function SportsScreen() {
       }
     }
     
-    const bet = sportsBets.find(b => b.id === showEditBetModal);
-    await updateSportsBet(showEditBetModal, sport.trim(), teams.trim(), betType.trim(), amount, won ?? false, dateToUse, bet?.odds, bet?.payout);
+    const odds = betOdds ? parseFloat(betOdds) : undefined;
+    const payout = betPayout ? parseFloat(betPayout) / 100 : undefined;
+    
+    await updateSportsBet(showEditBetModal, sport.trim(), teams.trim(), betType.trim(), amount, won ?? false, dateToUse, odds, payout);
     setSport('');
     setTeams('');
     setBetType('');
     setBetAmount('');
+    setBetOdds('');
+    setBetPayout('');
     setBetDate('');
     setWon(null);
     setShowEditBetModal(null);
@@ -1099,6 +1107,32 @@ export default function SportsScreen() {
                   </View>
 
                   <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Odds (Optional)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g., -110, +150"
+                      placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                      value={betOdds}
+                      onChangeText={setBetOdds}
+                      keyboardType="numeric"
+                      testID="edit-bet-odds-input"
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Total Payout (Optional)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="$0.00"
+                      placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                      value={displayCurrency(betPayout)}
+                      onChangeText={(text) => handleCurrencyChange(text, setBetPayout)}
+                      keyboardType="numeric"
+                      testID="edit-bet-payout-input"
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Date of Bet</Text>
                     <TextInput
                       style={styles.textInput}
@@ -1154,6 +1188,8 @@ export default function SportsScreen() {
                       setTeams('');
                       setBetType('');
                       setBetAmount('');
+                      setBetOdds('');
+                      setBetPayout('');
                       setBetDate('');
                       setWon(null);
                       setShowEditBetModal(null);
