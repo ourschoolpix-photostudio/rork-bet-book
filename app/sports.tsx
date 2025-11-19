@@ -58,6 +58,7 @@ export default function SportsScreen() {
   const [apiKey, setApiKey] = useState<string>('');
   const [newApiKeyInput, setNewApiKeyInput] = useState<string>('');
   const [showApiKeyExpired, setShowApiKeyExpired] = useState<boolean>(false);
+  const [expandedBets, setExpandedBets] = useState<Set<string>>(new Set());
 
   const userBets = sportsBets.filter(b => b.userId === currentUser?.id);
   const totalWon = userBets.filter(b => b.won === true).reduce((sum, bet) => {
@@ -542,10 +543,25 @@ export default function SportsScreen() {
             <View style={styles.betsList}>
               {userBets.map((bet) => {
                 const isDetermined = bet.won !== null;
+                const isExpanded = expandedBets.has(bet.id);
                 
-                if (isDetermined) {
+                if (isDetermined && !isExpanded) {
                   return (
-                    <View key={bet.id} style={styles.betCardCollapsed}>
+                    <Pressable
+                      key={bet.id}
+                      style={({ pressed }) => [
+                        styles.betCardCollapsed,
+                        pressed && styles.betCardCollapsedPressed,
+                      ]}
+                      onPress={() => {
+                        setExpandedBets(prev => {
+                          const next = new Set(prev);
+                          next.add(bet.id);
+                          return next;
+                        });
+                      }}
+                      testID={`collapsed-bet-${bet.id}`}
+                    >
                       <View style={styles.collapsedContent}>
                         <View style={styles.collapsedLeft}>
                           <Text style={styles.collapsedSport}>{bet.sport}</Text>
@@ -556,7 +572,10 @@ export default function SportsScreen() {
                         </View>
                         <View style={styles.collapsedActions}>
                           <Pressable
-                            onPress={() => handleEditBet(bet.id)}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleEditBet(bet.id);
+                            }}
                             style={({ pressed }) => [
                               styles.collapsedIconButton,
                               pressed && styles.editButtonPressed,
@@ -566,7 +585,10 @@ export default function SportsScreen() {
                             <Pencil size={16} color="#9D4EDD" />
                           </Pressable>
                           <Pressable
-                            onPress={() => handleDeleteBet(bet.id)}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleDeleteBet(bet.id);
+                            }}
                             style={({ pressed }) => [
                               styles.collapsedIconButton,
                               pressed && styles.deleteButtonPressed,
@@ -577,12 +599,29 @@ export default function SportsScreen() {
                           </Pressable>
                         </View>
                       </View>
-                    </View>
+                    </Pressable>
                   );
                 }
                 
                 return (
-                  <View key={bet.id} style={styles.betCard}>
+                  <Pressable
+                    key={bet.id}
+                    style={({ pressed }) => [
+                      styles.betCard,
+                      isDetermined && pressed && styles.betCardPressed,
+                    ]}
+                    onPress={() => {
+                      if (isDetermined) {
+                        setExpandedBets(prev => {
+                          const next = new Set(prev);
+                          next.delete(bet.id);
+                          return next;
+                        });
+                      }
+                    }}
+                    disabled={!isDetermined}
+                    testID={`expanded-bet-${bet.id}`}
+                  >
                     <View style={styles.betHeader}>
                       <View style={styles.betHeaderLeft}>
                         <View style={styles.betTitleRow}>
@@ -658,7 +697,7 @@ export default function SportsScreen() {
                         </Pressable>
                       </View>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
@@ -1995,6 +2034,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  betCardCollapsedPressed: {
+    opacity: 0.8,
+  },
+  betCardPressed: {
+    opacity: 0.8,
   },
   collapsedContent: {
     flexDirection: 'row',
