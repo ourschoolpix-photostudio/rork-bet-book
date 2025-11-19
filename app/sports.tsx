@@ -540,55 +540,88 @@ export default function SportsScreen() {
             </View>
           ) : (
             <View style={styles.betsList}>
-              {userBets.map((bet) => (
-                <View key={bet.id} style={styles.betCard}>
-                  <View style={styles.betHeader}>
-                    <View style={styles.betHeaderLeft}>
-                      <View style={styles.betTitleRow}>
-                        <Text style={styles.sportName}>{bet.sport}</Text>
-                        {bet.won !== null && (
-                          <View style={[styles.resultBadge, bet.won ? styles.wonBadge : styles.lostBadge]}>
-                            <Text style={styles.resultBadgeText}>{bet.won ? 'WON' : 'LOST'}</Text>
-                          </View>
-                        )}
-                        {bet.won === null && (
+              {userBets.map((bet) => {
+                const isDetermined = bet.won !== null;
+                
+                if (isDetermined) {
+                  return (
+                    <View key={bet.id} style={styles.betCardCollapsed}>
+                      <View style={styles.collapsedContent}>
+                        <View style={styles.collapsedLeft}>
+                          <Text style={styles.collapsedSport}>{bet.sport}</Text>
+                          <Text style={styles.collapsedTeams}>{bet.teams}</Text>
+                          <Text style={[styles.collapsedResult, bet.won ? styles.collapsedWon : styles.collapsedLost]}>
+                            {bet.won ? '+' : '-'}${bet.won ? ((bet.payout || 0) - bet.amount).toFixed(2) : bet.amount.toFixed(2)}
+                          </Text>
+                        </View>
+                        <View style={styles.collapsedActions}>
+                          <Pressable
+                            onPress={() => handleEditBet(bet.id)}
+                            style={({ pressed }) => [
+                              styles.collapsedIconButton,
+                              pressed && styles.editButtonPressed,
+                            ]}
+                            testID={`edit-sports-bet-${bet.id}`}
+                          >
+                            <Pencil size={16} color="#9D4EDD" />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleDeleteBet(bet.id)}
+                            style={({ pressed }) => [
+                              styles.collapsedIconButton,
+                              pressed && styles.deleteButtonPressed,
+                            ]}
+                            testID={`delete-sports-bet-${bet.id}`}
+                          >
+                            <Trash2 size={16} color="#000000" />
+                          </Pressable>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                }
+                
+                return (
+                  <View key={bet.id} style={styles.betCard}>
+                    <View style={styles.betHeader}>
+                      <View style={styles.betHeaderLeft}>
+                        <View style={styles.betTitleRow}>
+                          <Text style={styles.sportName}>{bet.sport}</Text>
                           <View style={[styles.resultBadge, styles.pendingBadge]}>
                             <Text style={styles.resultBadgeText}>PENDING</Text>
                           </View>
+                        </View>
+                        <Text style={styles.betTeams}>{bet.teams}</Text>
+                        <Text style={styles.betType}>{bet.betType}</Text>
+                        {bet.odds && (
+                          <Text style={styles.betOdds}>Odds: {bet.odds > 0 ? '+' : ''}{bet.odds}</Text>
                         )}
+                        <Text style={styles.betDate}>{formatDate(bet.betDate)}</Text>
                       </View>
-                      <Text style={styles.betTeams}>{bet.teams}</Text>
-                      <Text style={styles.betType}>{bet.betType}</Text>
-                      {bet.odds && (
-                        <Text style={styles.betOdds}>Odds: {bet.odds > 0 ? '+' : ''}{bet.odds}</Text>
-                      )}
-                      <Text style={styles.betDate}>{formatDate(bet.betDate)}</Text>
+                      <View style={styles.betHeaderActions}>
+                        <Pressable
+                          onPress={() => handleEditBet(bet.id)}
+                          style={({ pressed }) => [
+                            styles.editButton,
+                            pressed && styles.editButtonPressed,
+                          ]}
+                          testID={`edit-sports-bet-${bet.id}`}
+                        >
+                          <Pencil size={18} color="#9D4EDD" />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => handleDeleteBet(bet.id)}
+                          style={({ pressed }) => [
+                            styles.deleteButton,
+                            pressed && styles.deleteButtonPressed,
+                          ]}
+                          testID={`delete-sports-bet-${bet.id}`}
+                        >
+                          <Trash2 size={20} color="#000000" />
+                        </Pressable>
+                      </View>
                     </View>
-                    <View style={styles.betHeaderActions}>
-                      <Pressable
-                        onPress={() => handleEditBet(bet.id)}
-                        style={({ pressed }) => [
-                          styles.editButton,
-                          pressed && styles.editButtonPressed,
-                        ]}
-                        testID={`edit-sports-bet-${bet.id}`}
-                      >
-                        <Pencil size={18} color="#9D4EDD" />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleDeleteBet(bet.id)}
-                        style={({ pressed }) => [
-                          styles.deleteButton,
-                          pressed && styles.deleteButtonPressed,
-                        ]}
-                        testID={`delete-sports-bet-${bet.id}`}
-                      >
-                        <Trash2 size={20} color="#000000" />
-                      </Pressable>
-                    </View>
-                  </View>
 
-                  {bet.won === null ? (
                     <View style={styles.betResultActions}>
                       <View style={styles.betAmountRow}>
                         <Text style={styles.betAmountLabel}>Bet Amount:</Text>
@@ -625,22 +658,9 @@ export default function SportsScreen() {
                         </Pressable>
                       </View>
                     </View>
-                  ) : (
-                    <View style={styles.betAmountSection}>
-                      <View style={styles.betAmountRow}>
-                        <Text style={styles.betAmountLabel}>Bet Amount:</Text>
-                        <Text style={styles.betAmountValue}>${bet.amount.toFixed(2)}</Text>
-                      </View>
-                      <View style={styles.betAmountRow}>
-                        <Text style={styles.betAmountLabel}>{bet.won ? 'Profit:' : 'Loss:'}</Text>
-                        <Text style={[styles.betAmountValue, bet.won ? styles.wonAmount : styles.lostAmount]}>
-                          {bet.won ? '+' : '-'}${bet.won ? ((bet.payout || 0) - bet.amount).toFixed(2) : bet.amount.toFixed(2)}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              ))}
+                  </View>
+                );
+              })}
             </View>
           )}
 
@@ -1968,5 +1988,52 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700' as const,
     fontSize: 14,
+  },
+  betCardCollapsed: {
+    backgroundColor: 'rgba(220, 190, 255, 0.95)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  collapsedContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  collapsedLeft: {
+    flex: 1,
+    gap: 2,
+  },
+  collapsedSport: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#240046',
+  },
+  collapsedTeams: {
+    fontSize: 12,
+    color: 'rgba(36, 0, 70, 0.8)',
+    fontWeight: '500' as const,
+  },
+  collapsedResult: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    marginTop: 2,
+  },
+  collapsedWon: {
+    color: '#10B981',
+  },
+  collapsedLost: {
+    color: '#EF4444',
+  },
+  collapsedActions: {
+    flexDirection: 'row',
+    gap: 6,
+    marginLeft: 12,
+  },
+  collapsedIconButton: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
   },
 });
