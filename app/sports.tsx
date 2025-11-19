@@ -325,11 +325,16 @@ export default function SportsScreen() {
       }
     }
     
-    await addSportsBet(currentUser.id, sport.trim(), teams.trim(), betType.trim(), amount, won ?? false, dateToUse, undefined, undefined);
+    const odds = betOdds ? parseFloat(betOdds) : undefined;
+    const payout = betPayout ? parseFloat(betPayout) / 100 : undefined;
+    
+    await addSportsBet(currentUser.id, sport.trim(), teams.trim(), betType.trim(), amount, won ?? false, dateToUse, odds, payout);
     setSport('');
     setTeams('');
     setBetType('');
     setBetAmount('');
+    setBetOdds('');
+    setBetPayout('');
     setBetDate('');
     setWon(null);
     setShowAddBetModal(false);
@@ -950,6 +955,32 @@ export default function SportsScreen() {
                   </View>
 
                   <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Odds (Optional)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="e.g., -110, +150"
+                      placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                      value={betOdds}
+                      onChangeText={setBetOdds}
+                      keyboardType="numeric"
+                      testID="bet-odds-input"
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Total Payout (Optional)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="$0.00"
+                      placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                      value={displayCurrency(betPayout)}
+                      onChangeText={(text) => handleCurrencyChange(text, setBetPayout)}
+                      keyboardType="numeric"
+                      testID="bet-payout-input"
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Date of Bet (Optional)</Text>
                     <TextInput
                       style={styles.textInput}
@@ -1005,6 +1036,8 @@ export default function SportsScreen() {
                       setTeams('');
                       setBetType('');
                       setBetAmount('');
+                      setBetOdds('');
+                      setBetPayout('');
                       setBetDate('');
                       setWon(null);
                       setShowAddBetModal(false);
