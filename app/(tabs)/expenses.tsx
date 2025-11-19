@@ -4,7 +4,7 @@ import { ExpenseCategory, Expense } from '@/types/expense';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap } from 'lucide-react-native';
+import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap, Copy } from 'lucide-react-native';
 import { useEffect, useState, useRef } from 'react';
 import { Alert, ImageBackground, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -178,6 +178,15 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
+    setShowAddExpenseModal(true);
+  };
+
+  const handleDuplicateExpense = (expense: Expense) => {
+    const duplicatedExpense = {
+      ...expense,
+      id: `temp-duplicate-${Date.now()}`,
+    };
+    setEditingExpense(duplicatedExpense);
     setShowAddExpenseModal(true);
   };
 
@@ -467,6 +476,15 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
                                                 styles.iconButton,
                                                 pressed && styles.iconButtonPressed,
                                               ]}
+                                              onPress={() => handleDuplicateExpense(item)}
+                                            >
+                                              <Copy size={18} color="#FFFFFF" />
+                                            </Pressable>
+                                            <Pressable
+                                              style={({ pressed }) => [
+                                                styles.iconButton,
+                                                pressed && styles.iconButtonPressed,
+                                              ]}
                                               onPress={() => handleDeleteExpense(item.id)}
                                             >
                                               <Trash2 size={18} color="#FFFFFF" />
@@ -561,6 +579,15 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
                               <View style={styles.expenseActions}>
                                 <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
                                 <View style={styles.expenseButtons}>
+                                  <Pressable
+                                    style={({ pressed }) => [
+                                      styles.iconButton,
+                                      pressed && styles.iconButtonPressed,
+                                    ]}
+                                    onPress={() => handleDuplicateExpense(item)}
+                                  >
+                                    <Copy size={18} color="#FFFFFF" />
+                                  </Pressable>
                                   <Pressable
                                     style={({ pressed }) => [
                                       styles.iconButton,
@@ -753,7 +780,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
         editingExpense={editingExpense}
         onSubmit={async (category, amount, description, date, merchant, notes, expenseType) => {
           if (currentUser) {
-            if (editingExpense) {
+            if (editingExpense && !editingExpense.id.startsWith('temp-duplicate-')) {
               await updateExpense(editingExpense.id, category, amount, description, date, merchant, notes, expenseType);
             } else {
               await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes, expenseType);
