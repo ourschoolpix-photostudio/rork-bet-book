@@ -1,5 +1,5 @@
 import { ExpenseCategory, Expense, ExpenseType } from '@/types/expense';
-import { X } from 'lucide-react-native';
+import { X, Calendar } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
@@ -247,6 +247,62 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                   />
                 </View>
 
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Date (optional)</Text>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.dateButton,
+                      pressed && styles.dateButtonPressed,
+                    ]}
+                    onPress={() => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      setDate(today);
+                    }}
+                    testID="expense-date-button"
+                  >
+                    <Calendar size={20} color="#9D4EDD" style={styles.calendarIcon} />
+                    <Text style={styles.dateText}>
+                      {date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })}
+                    </Text>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        const prevDay = new Date(date);
+                        prevDay.setDate(prevDay.getDate() - 1);
+                        setDate(prevDay);
+                      }}
+                      style={({ pressed }) => [
+                        styles.dateControlButton,
+                        pressed && styles.dateControlButtonPressed,
+                      ]}
+                      testID="expense-date-prev"
+                    >
+                      <Text style={styles.dateControlText}>−</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        const nextDay = new Date(date);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        setDate(nextDay);
+                      }}
+                      style={({ pressed }) => [
+                        styles.dateControlButton,
+                        pressed && styles.dateControlButtonPressed,
+                      ]}
+                      testID="expense-date-next"
+                    >
+                      <Text style={styles.dateControlText}>+</Text>
+                    </Pressable>
+                  </Pressable>
+                  <Text style={styles.dateHint}>Tap calendar to reset to today. Use + and − to adjust.</Text>
+                </View>
+
                 <View style={[styles.inputGroup, styles.lastInputGroup]}>
                   <Text style={styles.inputLabel}>Notes (optional)</Text>
                   <TextInput
@@ -436,5 +492,51 @@ const styles = StyleSheet.create({
   },
   expenseTypeTextSelected: {
     color: '#FFFFFF',
+  },
+  dateButton: {
+    backgroundColor: 'rgba(157, 78, 221, 0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dateButtonPressed: {
+    opacity: 0.6,
+  },
+  calendarIcon: {
+    marginRight: 4,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#240046',
+    fontWeight: '600' as const,
+    flex: 1,
+  },
+  dateControlButton: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#9D4EDD',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  dateControlButtonPressed: {
+    opacity: 0.7,
+  },
+  dateControlText: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    fontWeight: '700' as const,
+  },
+  dateHint: {
+    fontSize: 12,
+    color: 'rgba(36, 0, 70, 0.5)',
+    marginTop: 6,
+    fontStyle: 'italic' as const,
   },
 });
