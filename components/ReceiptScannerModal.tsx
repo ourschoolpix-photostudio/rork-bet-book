@@ -1,4 +1,4 @@
-import { ExpenseCategory } from '@/types/expense';
+import { ExpenseCategory, ExpenseType } from '@/types/expense';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { X, Camera as CameraIcon } from 'lucide-react-native';
 import { useState } from 'react';
@@ -14,7 +14,8 @@ interface ReceiptScannerModalProps {
     description: string,
     date: Date,
     merchant?: string,
-    notes?: string
+    notes?: string,
+    expenseType?: ExpenseType
   ) => Promise<void>;
 }
 
@@ -51,6 +52,7 @@ export default function ReceiptScannerModal({
     merchant: string;
     date: Date;
     notes: string;
+    expenseType: ExpenseType;
   } | null>(null);
 
   const handleTakePicture = async () => {
@@ -138,6 +140,7 @@ export default function ReceiptScannerModal({
         merchant,
         date: receiptDate,
         notes,
+        expenseType: 'standard',
       });
     } catch (error) {
       console.error('Error processing receipt:', error);
@@ -167,7 +170,8 @@ export default function ReceiptScannerModal({
       scannedData.description.trim(),
       scannedData.date,
       scannedData.merchant.trim() || undefined,
-      scannedData.notes.trim() || undefined
+      scannedData.notes.trim() || undefined,
+      scannedData.expenseType
     );
 
     setScannedData(null);
@@ -237,6 +241,63 @@ export default function ReceiptScannerModal({
             </View>
 
             <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Expense Type</Text>
+                <View style={styles.expenseTypeContainer}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.expenseTypeButton,
+                      scannedData.expenseType === 'standard' && styles.expenseTypeButtonSelected,
+                      pressed && styles.expenseTypeButtonPressed,
+                    ]}
+                    onPress={() => setScannedData({ ...scannedData, expenseType: 'standard' })}
+                  >
+                    <Text
+                      style={[
+                        styles.expenseTypeText,
+                        scannedData.expenseType === 'standard' && styles.expenseTypeTextSelected,
+                      ]}
+                    >
+                      Standard
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.expenseTypeButton,
+                      scannedData.expenseType === 'business' && styles.expenseTypeButtonSelected,
+                      pressed && styles.expenseTypeButtonPressed,
+                    ]}
+                    onPress={() => setScannedData({ ...scannedData, expenseType: 'business' })}
+                  >
+                    <Text
+                      style={[
+                        styles.expenseTypeText,
+                        scannedData.expenseType === 'business' && styles.expenseTypeTextSelected,
+                      ]}
+                    >
+                      Business
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.expenseTypeButton,
+                      scannedData.expenseType === 'vacation' && styles.expenseTypeButtonSelected,
+                      pressed && styles.expenseTypeButtonPressed,
+                    ]}
+                    onPress={() => setScannedData({ ...scannedData, expenseType: 'vacation' })}
+                  >
+                    <Text
+                      style={[
+                        styles.expenseTypeText,
+                        scannedData.expenseType === 'vacation' && styles.expenseTypeTextSelected,
+                      ]}
+                    >
+                      Vacation
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Category</Text>
                 <ScrollView
@@ -473,7 +534,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   body: {
-    maxHeight: Platform.OS === 'web' ? '500px' : Dimensions.get('window').height * 0.5,
+    maxHeight: Dimensions.get('window').height * 0.5,
     padding: 24,
   },
   inputGroup: {
@@ -674,6 +735,35 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top' as const,
     paddingTop: 14,
+  },
+  expenseTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  expenseTypeButton: {
+    flex: 1,
+    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 78, 221, 0.2)',
+    alignItems: 'center',
+  },
+  expenseTypeButtonSelected: {
+    backgroundColor: '#9D4EDD',
+    borderColor: '#9D4EDD',
+  },
+  expenseTypeButtonPressed: {
+    opacity: 0.6,
+  },
+  expenseTypeText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#9D4EDD',
+  },
+  expenseTypeTextSelected: {
+    color: '#FFFFFF',
   },
   receiptFrame: {
     position: 'absolute' as const,

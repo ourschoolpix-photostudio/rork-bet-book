@@ -16,7 +16,7 @@ export type ExpenseCategory =
   | 'Shoes'
   | 'Travel';
 
-export type ExpenseType = 'standard' | 'vacation';
+export type ExpenseType = 'standard' | 'business' | 'vacation';
 
 export interface Expense {
   id: string;

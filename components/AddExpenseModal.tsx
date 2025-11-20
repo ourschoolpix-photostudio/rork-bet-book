@@ -148,7 +148,25 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                           expenseType === 'standard' && styles.expenseTypeTextSelected,
                         ]}
                       >
-                        Standard Expense
+                        Standard
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.expenseTypeButton,
+                        expenseType === 'business' && styles.expenseTypeButtonSelected,
+                        pressed && styles.expenseTypeButtonPressed,
+                      ]}
+                      onPress={() => setExpenseType('business')}
+                      testID="expense-type-business"
+                    >
+                      <Text
+                        style={[
+                          styles.expenseTypeText,
+                          expenseType === 'business' && styles.expenseTypeTextSelected,
+                        ]}
+                      >
+                        Business
                       </Text>
                     </Pressable>
                     <Pressable
@@ -166,7 +184,7 @@ export default function AddExpenseModal({ visible, onClose, onSubmit, editingExp
                           expenseType === 'vacation' && styles.expenseTypeTextSelected,
                         ]}
                       >
-                        Vacation Expense
+                        Vacation
                       </Text>
                     </Pressable>
                   </View>
