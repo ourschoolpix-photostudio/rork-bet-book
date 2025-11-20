@@ -626,9 +626,11 @@ export default function SportsScreen() {
                       <View style={styles.betHeaderLeft}>
                         <View style={styles.betTitleRow}>
                           <Text style={styles.sportName}>{bet.sport}</Text>
-                          <View style={[styles.resultBadge, styles.pendingBadge]}>
-                            <Text style={styles.resultBadgeText}>PENDING</Text>
-                          </View>
+                          {bet.won === null && (
+                            <View style={[styles.resultBadge, styles.pendingBadge]}>
+                              <Text style={styles.resultBadgeText}>PENDING</Text>
+                            </View>
+                          )}
                         </View>
                         <Text style={styles.betTeams}>{bet.teams}</Text>
                         <Text style={styles.betType}>{bet.betType}</Text>
