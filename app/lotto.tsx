@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Sparkles, TrendingUp, Save, Trash2, Brain, Trophy } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, TrendingUp, Save, Trash2, Brain, Trophy, RefreshCcw } from 'lucide-react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -218,6 +218,22 @@ export default function LottoScreen() {
 
   const onRefresh = async () => {
     await fetchCurrentWinningNumbers(true);
+  };
+
+  const clearPayoutCache = () => {
+    console.log('Clearing payout cache...');
+    setCurrentPowerball(prev => {
+      if (prev) {
+        return { ...prev, nextJackpot: 'TBD' };
+      }
+      return prev;
+    });
+    setCurrentMegaMillions(prev => {
+      if (prev) {
+        return { ...prev, nextJackpot: 'TBD' };
+      }
+      return prev;
+    });
   };
 
   const loadSavedNumbers = async () => {
@@ -461,7 +477,16 @@ export default function LottoScreen() {
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>LOTTO BETS</Text>
           </View>
-          <View style={styles.placeholder} />
+          <Pressable
+            style={({ pressed }) => [
+              styles.clearCacheButton,
+              pressed && styles.clearCacheButtonPressed,
+            ]}
+            onPress={clearPayoutCache}
+            testID="clear-cache-button"
+          >
+            <RefreshCcw size={20} color="#FFFFFF" />
+          </Pressable>
         </View>
 
         <ScrollView
@@ -807,6 +832,14 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  clearCacheButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  clearCacheButtonPressed: {
+    opacity: 0.6,
   },
   scrollContent: {
     flex: 1,
