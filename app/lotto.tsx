@@ -51,9 +51,8 @@ export default function LottoScreen() {
     }
     console.log('Fetching lottery data...');
     try {
-      const [powerballResponse, megaMillionsVAResponse] = await Promise.all([
+      const [powerballResponse] = await Promise.all([
         fetch('https://data.ny.gov/resource/d6yy-54nr.json?$order=draw_date%20DESC&$limit=1'),
-        fetch('https://www.valottery.com/data/draw-games/mega-millions'),
       ]);
       
       const powerballData = await powerballResponse.json();
@@ -86,22 +85,22 @@ export default function LottoScreen() {
         });
       }
 
-      const megaVAData = await megaMillionsVAResponse.json();
-      console.log('Mega Millions VA data received:', megaVAData ? 'Success' : 'No data');
+      const megaMillionsData = await scrapeMegaMillionsVA();
+      console.log('Mega Millions VA data received:', megaMillionsData ? 'Success' : 'No data');
       
-      if (megaVAData && megaVAData.numbers && megaVAData.megaBall) {
-        const lastDrawDate = new Date(megaVAData.drawDate || new Date());
+      if (megaMillionsData && megaMillionsData.numbers && megaMillionsData.megaBall) {
+        const lastDrawDate = new Date(megaMillionsData.drawDate || new Date());
         
         setCurrentMegaMillions({
-          numbers: megaVAData.numbers.sort((a: number, b: number) => a - b),
-          specialBall: megaVAData.megaBall,
+          numbers: megaMillionsData.numbers.sort((a: number, b: number) => a - b),
+          specialBall: megaMillionsData.megaBall,
           drawDate: lastDrawDate.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric', 
             year: 'numeric' 
           }),
           nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
-          nextJackpot: megaVAData.jackpot || 'TBD',
+          nextJackpot: megaMillionsData.jackpot || 'TBD',
         });
       }
     } catch (error) {
@@ -160,6 +159,46 @@ export default function LottoScreen() {
     } catch (error) {
       console.error('Error scraping Powerball jackpot:', error);
       return 'TBD';
+    }
+  };
+
+  const scrapeMegaMillionsVA = async (): Promise<{ numbers: number[], megaBall: number, drawDate: string, jackpot: string } | null> => {
+    try {
+      const response = await fetch('https://www.valottery.com/data/draw-games/mega-millions');
+      const html = await response.text();
+      console.log('Mega Millions HTML received, parsing...');
+      
+      const numbersMatch = html.match(/"winningNumbers"\s*:\s*\[(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\]/);
+      const megaBallMatch = html.match(/"megaBall"\s*:\s*(\d+)/);
+      const jackpotMatch = html.match(/"estimatedJackpot"\s*:\s*"\$([\d,]+(?:\.\d+)?)\s*(Million|Billion)?"/);
+      const drawDateMatch = html.match(/"drawDate"\s*:\s*"([^"]+)"/);
+      
+      if (numbersMatch && megaBallMatch) {
+        const numbers = [
+          parseInt(numbersMatch[1]),
+          parseInt(numbersMatch[2]),
+          parseInt(numbersMatch[3]),
+          parseInt(numbersMatch[4]),
+          parseInt(numbersMatch[5]),
+        ];
+        const megaBall = parseInt(megaBallMatch[1]);
+        
+        let jackpot = 'TBD';
+        if (jackpotMatch) {
+          jackpot = `${jackpotMatch[1]}${jackpotMatch[2] ? ' ' + jackpotMatch[2] : ' Million'}`;
+        }
+        
+        const drawDate = drawDateMatch ? drawDateMatch[1] : new Date().toISOString();
+        
+        console.log('Parsed Mega Millions:', { numbers, megaBall, drawDate, jackpot });
+        return { numbers, megaBall, drawDate, jackpot };
+      }
+      
+      console.log('Could not parse Mega Millions data from HTML');
+      return null;
+    } catch (error) {
+      console.error('Error scraping Mega Millions VA:', error);
+      return null;
     }
   };
 
