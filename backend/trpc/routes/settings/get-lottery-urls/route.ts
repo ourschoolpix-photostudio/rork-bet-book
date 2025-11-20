@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure } from "@/backend/trpc/create-context";
+import { createClient } from '@supabase/supabase-js';
 
 const getLotteryUrlsSchema = z.object({
   supabaseUrl: z.string().url(),
@@ -13,7 +14,6 @@ export const getLotteryUrlsProcedure = protectedProcedure
       const { supabaseUrl, supabaseKey } = input;
       const userId = 'default-user';
 
-      const { createClient } = await import('@supabase/supabase-js');
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       const { data, error } = await supabase
