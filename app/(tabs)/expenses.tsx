@@ -439,62 +439,179 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
                                   <Text style={styles.monthTotal}>${displayTotal.toFixed(2)}</Text>
                                 </Pressable>
 
-                                {isExpanded && (
-                                  <View style={styles.monthExpensesList}>
-                                    <UtilitiesSection
-                                      userId={currentUser?.id || ''}
-                                      monthKey={monthGroup.monthKey}
-                                      onUpdateUtilities={updateUtilities}
-                                    />
-                                    {filteredExpenses.map((item) => (
-                                      <Pressable
-                                        key={item.id}
-                                        style={({ pressed }) => [
-                                          styles.expenseItem,
-                                          pressed && styles.expenseItemPressed,
-                                        ]}
-                                        onPress={() => handleEditExpense(item)}
-                                      >
-                                        <View style={styles.expenseInfo}>
-                                          <Text style={styles.expenseCategory}>{item.category}</Text>
-                                          <Text style={styles.expenseDescription}>{item.description}</Text>
-                                          {item.merchant && (
-                                            <Text style={styles.expenseMerchant}>{item.merchant}</Text>
-                                          )}
-                                          {item.notes && (
-                                            <Text style={styles.expenseNotes}>{item.notes}</Text>
-                                          )}
-                                          <Text style={styles.expenseDate}>
-                                            {new Date(item.date).toLocaleDateString()}
-                                          </Text>
-                                        </View>
-                                        <View style={styles.expenseActions}>
-                                          <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
-                                          <View style={styles.expenseButtons}>
+                                {isExpanded && (() => {
+                                  const groupedByType = {
+                                    standard: filteredExpenses.filter(e => (e.expenseType || 'standard') === 'standard'),
+                                    business: filteredExpenses.filter(e => e.expenseType === 'business'),
+                                    vacation: filteredExpenses.filter(e => e.expenseType === 'vacation'),
+                                  };
+
+                                  return (
+                                    <View style={styles.monthExpensesList}>
+                                      <UtilitiesSection
+                                        userId={currentUser?.id || ''}
+                                        monthKey={monthGroup.monthKey}
+                                        onUpdateUtilities={updateUtilities}
+                                      />
+                                      {groupedByType.standard.length > 0 && (
+                                        <View style={styles.expenseTypeSection}>
+                                          <Text style={styles.expenseTypeLabel}>Standard</Text>
+                                          {groupedByType.standard.map((item) => (
                                             <Pressable
+                                              key={item.id}
                                               style={({ pressed }) => [
-                                                styles.iconButton,
-                                                pressed && styles.iconButtonPressed,
+                                                styles.expenseItem,
+                                                pressed && styles.expenseItemPressed,
                                               ]}
-                                              onPress={() => handleDuplicateExpense(item)}
+                                              onPress={() => handleEditExpense(item)}
                                             >
-                                              <Copy size={18} color="#FFFFFF" />
+                                              <View style={styles.expenseInfo}>
+                                                <Text style={styles.expenseCategory}>{item.category}</Text>
+                                                <Text style={styles.expenseDescription}>{item.description}</Text>
+                                                {item.merchant && (
+                                                  <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                                )}
+                                                {item.notes && (
+                                                  <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                                )}
+                                                <Text style={styles.expenseDate}>
+                                                  {new Date(item.date).toLocaleDateString()}
+                                                </Text>
+                                              </View>
+                                              <View style={styles.expenseActions}>
+                                                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                                <View style={styles.expenseButtons}>
+                                                  <Pressable
+                                                    style={({ pressed }) => [
+                                                      styles.iconButton,
+                                                      pressed && styles.iconButtonPressed,
+                                                    ]}
+                                                    onPress={() => handleDuplicateExpense(item)}
+                                                  >
+                                                    <Copy size={18} color="#FFFFFF" />
+                                                  </Pressable>
+                                                  <Pressable
+                                                    style={({ pressed }) => [
+                                                      styles.iconButton,
+                                                      pressed && styles.iconButtonPressed,
+                                                    ]}
+                                                    onPress={() => handleDeleteExpense(item.id)}
+                                                  >
+                                                    <Trash2 size={18} color="#FFFFFF" />
+                                                  </Pressable>
+                                                </View>
+                                              </View>
                                             </Pressable>
-                                            <Pressable
-                                              style={({ pressed }) => [
-                                                styles.iconButton,
-                                                pressed && styles.iconButtonPressed,
-                                              ]}
-                                              onPress={() => handleDeleteExpense(item.id)}
-                                            >
-                                              <Trash2 size={18} color="#FFFFFF" />
-                                            </Pressable>
-                                          </View>
+                                          ))}
                                         </View>
-                                      </Pressable>
-                                    ))}
-                                  </View>
-                                )}
+                                      )}
+                                      {groupedByType.business.length > 0 && (
+                                        <View style={styles.expenseTypeSection}>
+                                          <Text style={styles.expenseTypeLabel}>Business</Text>
+                                          {groupedByType.business.map((item) => (
+                                            <Pressable
+                                              key={item.id}
+                                              style={({ pressed }) => [
+                                                styles.expenseItem,
+                                                pressed && styles.expenseItemPressed,
+                                              ]}
+                                              onPress={() => handleEditExpense(item)}
+                                            >
+                                              <View style={styles.expenseInfo}>
+                                                <Text style={styles.expenseCategory}>{item.category}</Text>
+                                                <Text style={styles.expenseDescription}>{item.description}</Text>
+                                                {item.merchant && (
+                                                  <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                                )}
+                                                {item.notes && (
+                                                  <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                                )}
+                                                <Text style={styles.expenseDate}>
+                                                  {new Date(item.date).toLocaleDateString()}
+                                                </Text>
+                                              </View>
+                                              <View style={styles.expenseActions}>
+                                                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                                <View style={styles.expenseButtons}>
+                                                  <Pressable
+                                                    style={({ pressed }) => [
+                                                      styles.iconButton,
+                                                      pressed && styles.iconButtonPressed,
+                                                    ]}
+                                                    onPress={() => handleDuplicateExpense(item)}
+                                                  >
+                                                    <Copy size={18} color="#FFFFFF" />
+                                                  </Pressable>
+                                                  <Pressable
+                                                    style={({ pressed }) => [
+                                                      styles.iconButton,
+                                                      pressed && styles.iconButtonPressed,
+                                                    ]}
+                                                    onPress={() => handleDeleteExpense(item.id)}
+                                                  >
+                                                    <Trash2 size={18} color="#FFFFFF" />
+                                                  </Pressable>
+                                                </View>
+                                              </View>
+                                            </Pressable>
+                                          ))}
+                                        </View>
+                                      )}
+                                      {groupedByType.vacation.length > 0 && (
+                                        <View style={styles.expenseTypeSection}>
+                                          <Text style={styles.expenseTypeLabel}>Vacation</Text>
+                                          {groupedByType.vacation.map((item) => (
+                                            <Pressable
+                                              key={item.id}
+                                              style={({ pressed }) => [
+                                                styles.expenseItem,
+                                                pressed && styles.expenseItemPressed,
+                                              ]}
+                                              onPress={() => handleEditExpense(item)}
+                                            >
+                                              <View style={styles.expenseInfo}>
+                                                <Text style={styles.expenseCategory}>{item.category}</Text>
+                                                <Text style={styles.expenseDescription}>{item.description}</Text>
+                                                {item.merchant && (
+                                                  <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                                )}
+                                                {item.notes && (
+                                                  <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                                )}
+                                                <Text style={styles.expenseDate}>
+                                                  {new Date(item.date).toLocaleDateString()}
+                                                </Text>
+                                              </View>
+                                              <View style={styles.expenseActions}>
+                                                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                                <View style={styles.expenseButtons}>
+                                                  <Pressable
+                                                    style={({ pressed }) => [
+                                                      styles.iconButton,
+                                                      pressed && styles.iconButtonPressed,
+                                                    ]}
+                                                    onPress={() => handleDuplicateExpense(item)}
+                                                  >
+                                                    <Copy size={18} color="#FFFFFF" />
+                                                  </Pressable>
+                                                  <Pressable
+                                                    style={({ pressed }) => [
+                                                      styles.iconButton,
+                                                      pressed && styles.iconButtonPressed,
+                                                    ]}
+                                                    onPress={() => handleDeleteExpense(item.id)}
+                                                  >
+                                                    <Trash2 size={18} color="#FFFFFF" />
+                                                  </Pressable>
+                                                </View>
+                                              </View>
+                                            </Pressable>
+                                          ))}
+                                        </View>
+                                      )}
+                                    </View>
+                                  );
+                                })()}
                               </View>
                             );
                           })}
@@ -547,62 +664,179 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
                         <Text style={styles.monthTotal}>${displayTotal.toFixed(2)}</Text>
                       </Pressable>
 
-                      {isExpanded && (
-                        <View style={styles.monthExpensesList}>
-                          <UtilitiesSection
-                            userId={currentUser?.id || ''}
-                            monthKey={monthGroup.monthKey}
-                            onUpdateUtilities={updateUtilities}
-                          />
-                          {filteredExpenses.map((item) => (
-                            <Pressable
-                              key={item.id}
-                              style={({ pressed }) => [
-                                styles.expenseItem,
-                                pressed && styles.expenseItemPressed,
-                              ]}
-                              onPress={() => handleEditExpense(item)}
-                            >
-                              <View style={styles.expenseInfo}>
-                                <Text style={styles.expenseCategory}>{item.category}</Text>
-                                <Text style={styles.expenseDescription}>{item.description}</Text>
-                                {item.merchant && (
-                                  <Text style={styles.expenseMerchant}>{item.merchant}</Text>
-                                )}
-                                {item.notes && (
-                                  <Text style={styles.expenseNotes}>{item.notes}</Text>
-                                )}
-                                <Text style={styles.expenseDate}>
-                                  {new Date(item.date).toLocaleDateString()}
-                                </Text>
-                              </View>
-                              <View style={styles.expenseActions}>
-                                <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
-                                <View style={styles.expenseButtons}>
+                      {isExpanded && (() => {
+                        const groupedByType = {
+                          standard: filteredExpenses.filter(e => (e.expenseType || 'standard') === 'standard'),
+                          business: filteredExpenses.filter(e => e.expenseType === 'business'),
+                          vacation: filteredExpenses.filter(e => e.expenseType === 'vacation'),
+                        };
+
+                        return (
+                          <View style={styles.monthExpensesList}>
+                            <UtilitiesSection
+                              userId={currentUser?.id || ''}
+                              monthKey={monthGroup.monthKey}
+                              onUpdateUtilities={updateUtilities}
+                            />
+                            {groupedByType.standard.length > 0 && (
+                              <View style={styles.expenseTypeSection}>
+                                <Text style={styles.expenseTypeLabel}>Standard</Text>
+                                {groupedByType.standard.map((item) => (
                                   <Pressable
+                                    key={item.id}
                                     style={({ pressed }) => [
-                                      styles.iconButton,
-                                      pressed && styles.iconButtonPressed,
+                                      styles.expenseItem,
+                                      pressed && styles.expenseItemPressed,
                                     ]}
-                                    onPress={() => handleDuplicateExpense(item)}
+                                    onPress={() => handleEditExpense(item)}
                                   >
-                                    <Copy size={18} color="#FFFFFF" />
+                                    <View style={styles.expenseInfo}>
+                                      <Text style={styles.expenseCategory}>{item.category}</Text>
+                                      <Text style={styles.expenseDescription}>{item.description}</Text>
+                                      {item.merchant && (
+                                        <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                      )}
+                                      {item.notes && (
+                                        <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                      )}
+                                      <Text style={styles.expenseDate}>
+                                        {new Date(item.date).toLocaleDateString()}
+                                      </Text>
+                                    </View>
+                                    <View style={styles.expenseActions}>
+                                      <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                      <View style={styles.expenseButtons}>
+                                        <Pressable
+                                          style={({ pressed }) => [
+                                            styles.iconButton,
+                                            pressed && styles.iconButtonPressed,
+                                          ]}
+                                          onPress={() => handleDuplicateExpense(item)}
+                                        >
+                                          <Copy size={18} color="#FFFFFF" />
+                                        </Pressable>
+                                        <Pressable
+                                          style={({ pressed }) => [
+                                            styles.iconButton,
+                                            pressed && styles.iconButtonPressed,
+                                          ]}
+                                          onPress={() => handleDeleteExpense(item.id)}
+                                        >
+                                          <Trash2 size={18} color="#FFFFFF" />
+                                        </Pressable>
+                                      </View>
+                                    </View>
                                   </Pressable>
-                                  <Pressable
-                                    style={({ pressed }) => [
-                                      styles.iconButton,
-                                      pressed && styles.iconButtonPressed,
-                                    ]}
-                                    onPress={() => handleDeleteExpense(item.id)}
-                                  >
-                                    <Trash2 size={18} color="#FFFFFF" />
-                                  </Pressable>
-                                </View>
+                                ))}
                               </View>
-                            </Pressable>
-                          ))}
-                        </View>
-                      )}
+                            )}
+                            {groupedByType.business.length > 0 && (
+                              <View style={styles.expenseTypeSection}>
+                                <Text style={styles.expenseTypeLabel}>Business</Text>
+                                {groupedByType.business.map((item) => (
+                                  <Pressable
+                                    key={item.id}
+                                    style={({ pressed }) => [
+                                      styles.expenseItem,
+                                      pressed && styles.expenseItemPressed,
+                                    ]}
+                                    onPress={() => handleEditExpense(item)}
+                                  >
+                                    <View style={styles.expenseInfo}>
+                                      <Text style={styles.expenseCategory}>{item.category}</Text>
+                                      <Text style={styles.expenseDescription}>{item.description}</Text>
+                                      {item.merchant && (
+                                        <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                      )}
+                                      {item.notes && (
+                                        <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                      )}
+                                      <Text style={styles.expenseDate}>
+                                        {new Date(item.date).toLocaleDateString()}
+                                      </Text>
+                                    </View>
+                                    <View style={styles.expenseActions}>
+                                      <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                      <View style={styles.expenseButtons}>
+                                        <Pressable
+                                          style={({ pressed }) => [
+                                            styles.iconButton,
+                                            pressed && styles.iconButtonPressed,
+                                          ]}
+                                          onPress={() => handleDuplicateExpense(item)}
+                                        >
+                                          <Copy size={18} color="#FFFFFF" />
+                                        </Pressable>
+                                        <Pressable
+                                          style={({ pressed }) => [
+                                            styles.iconButton,
+                                            pressed && styles.iconButtonPressed,
+                                          ]}
+                                          onPress={() => handleDeleteExpense(item.id)}
+                                        >
+                                          <Trash2 size={18} color="#FFFFFF" />
+                                        </Pressable>
+                                      </View>
+                                    </View>
+                                  </Pressable>
+                                ))}
+                              </View>
+                            )}
+                            {groupedByType.vacation.length > 0 && (
+                              <View style={styles.expenseTypeSection}>
+                                <Text style={styles.expenseTypeLabel}>Vacation</Text>
+                                {groupedByType.vacation.map((item) => (
+                                  <Pressable
+                                    key={item.id}
+                                    style={({ pressed }) => [
+                                      styles.expenseItem,
+                                      pressed && styles.expenseItemPressed,
+                                    ]}
+                                    onPress={() => handleEditExpense(item)}
+                                  >
+                                    <View style={styles.expenseInfo}>
+                                      <Text style={styles.expenseCategory}>{item.category}</Text>
+                                      <Text style={styles.expenseDescription}>{item.description}</Text>
+                                      {item.merchant && (
+                                        <Text style={styles.expenseMerchant}>{item.merchant}</Text>
+                                      )}
+                                      {item.notes && (
+                                        <Text style={styles.expenseNotes}>{item.notes}</Text>
+                                      )}
+                                      <Text style={styles.expenseDate}>
+                                        {new Date(item.date).toLocaleDateString()}
+                                      </Text>
+                                    </View>
+                                    <View style={styles.expenseActions}>
+                                      <Text style={styles.expenseAmount}>${item.amount.toFixed(2)}</Text>
+                                      <View style={styles.expenseButtons}>
+                                        <Pressable
+                                          style={({ pressed }) => [
+                                            styles.iconButton,
+                                            pressed && styles.iconButtonPressed,
+                                          ]}
+                                          onPress={() => handleDuplicateExpense(item)}
+                                        >
+                                          <Copy size={18} color="#FFFFFF" />
+                                        </Pressable>
+                                        <Pressable
+                                          style={({ pressed }) => [
+                                            styles.iconButton,
+                                            pressed && styles.iconButtonPressed,
+                                          ]}
+                                          onPress={() => handleDeleteExpense(item.id)}
+                                        >
+                                          <Trash2 size={18} color="#FFFFFF" />
+                                        </Pressable>
+                                      </View>
+                                    </View>
+                                  </Pressable>
+                                ))}
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })()}
                     </View>
                   );
                 });
@@ -1362,5 +1596,18 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#FFFFFF',
     paddingVertical: 8,
+  },
+  expenseTypeSection: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  expenseTypeLabel: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginLeft: 4,
   },
 });
