@@ -5,15 +5,24 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL_KEY = '@casino_tracker_supabase_url';
 const SUPABASE_KEY_KEY = '@casino_tracker_supabase_key';
+const POWERBALL_URL_KEY = '@casino_tracker_powerball_url';
+const MEGA_MILLIONS_URL_KEY = '@casino_tracker_mega_millions_url';
 
 export interface SupabaseConfig {
   url: string;
   key: string;
 }
 
+export interface LotteryUrls {
+  powerballUrl: string;
+  megaMillionsUrl: string;
+}
+
 export const [SettingsProvider, useSettings] = createContextHook(() => {
   const [supabaseUrl, setSupabaseUrl] = useState<string>('');
   const [supabaseKey, setSupabaseKey] = useState<string>('');
+  const [powerballUrl, setPowerballUrl] = useState<string>('');
+  const [megaMillionsUrl, setMegaMillionsUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
 
@@ -38,13 +47,17 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
 
   const loadSettings = async () => {
     try {
-      const [url, key] = await Promise.all([
+      const [url, key, pUrl, mmUrl] = await Promise.all([
         AsyncStorage.getItem(SUPABASE_URL_KEY),
         AsyncStorage.getItem(SUPABASE_KEY_KEY),
+        AsyncStorage.getItem(POWERBALL_URL_KEY),
+        AsyncStorage.getItem(MEGA_MILLIONS_URL_KEY),
       ]);
 
       if (url) setSupabaseUrl(url);
       if (key) setSupabaseKey(key);
+      if (pUrl) setPowerballUrl(pUrl);
+      if (mmUrl) setMegaMillionsUrl(mmUrl);
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
@@ -99,6 +112,23 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     }
   }, []);
 
+  const saveLotteryUrls = useCallback(async (urls: LotteryUrls): Promise<void> => {
+    try {
+      await Promise.all([
+        AsyncStorage.setItem(POWERBALL_URL_KEY, urls.powerballUrl),
+        AsyncStorage.setItem(MEGA_MILLIONS_URL_KEY, urls.megaMillionsUrl),
+      ]);
+
+      setPowerballUrl(urls.powerballUrl);
+      setMegaMillionsUrl(urls.megaMillionsUrl);
+      
+      console.log('✅ Lottery URLs saved successfully');
+    } catch (error) {
+      console.error('❌ Error saving lottery URLs:', error);
+      throw error;
+    }
+  }, []);
+
   const isSupabaseConfigured = useMemo(() => {
     return supabaseClient !== null && !!supabaseUrl && !!supabaseKey;
   }, [supabaseClient, supabaseUrl, supabaseKey]);
@@ -108,8 +138,11 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     supabaseKey,
     supabaseClient,
     isSupabaseConfigured,
+    powerballUrl,
+    megaMillionsUrl,
     isLoading,
     saveSupabaseConfig,
     clearSupabaseConfig,
-  }), [supabaseUrl, supabaseKey, supabaseClient, isSupabaseConfigured, isLoading, saveSupabaseConfig, clearSupabaseConfig]);
+    saveLotteryUrls,
+  }), [supabaseUrl, supabaseKey, supabaseClient, isSupabaseConfigured, powerballUrl, megaMillionsUrl, isLoading, saveSupabaseConfig, clearSupabaseConfig, saveLotteryUrls]);
 });

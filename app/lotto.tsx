@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type GenerationMethod = 'R' | '6' | 'SP';
 
@@ -30,6 +31,7 @@ const SAVED_MEGA_MILLIONS_KEY = '@casino_tracker_saved_mega_millions';
 export default function LottoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { powerballUrl, megaMillionsUrl } = useSettings();
   const [powerballNumbers, setPowerballNumbers] = useState<number[]>([]);
   const [powerballPowerball, setPowerballPowerball] = useState<number | null>(null);
   const [powerballMethod, setPowerballMethod] = useState<GenerationMethod>('R');
@@ -141,7 +143,9 @@ export default function LottoScreen() {
 
   const scrapePowerballJackpot = async (): Promise<string> => {
     try {
-      const response = await fetch('https://www.powerball.com');
+      const url = powerballUrl || 'https://www.powerball.com';
+      console.log('Fetching Powerball jackpot from:', url);
+      const response = await fetch(url);
       const html = await response.text();
       
       const jackpotMatch = html.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/i);
@@ -164,7 +168,9 @@ export default function LottoScreen() {
 
   const scrapeMegaMillionsVA = async (): Promise<{ numbers: number[], megaBall: number, drawDate: string, jackpot: string } | null> => {
     try {
-      const response = await fetch('https://www.valottery.com/data/draw-games/mega-millions');
+      const url = megaMillionsUrl || 'https://www.valottery.com/data/draw-games/mega-millions';
+      console.log('Fetching Mega Millions from:', url);
+      const response = await fetch(url);
       const html = await response.text();
       console.log('Mega Millions HTML received, parsing...');
       
