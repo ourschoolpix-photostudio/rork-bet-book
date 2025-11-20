@@ -289,6 +289,28 @@ export default function SportsScreen() {
     setter(numbers);
   };
 
+  const handleOddsChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9+\-]/g, '');
+    setBetOdds(cleaned);
+    
+    if (cleaned && betAmount) {
+      const odds = parseFloat(cleaned);
+      const amount = parseFloat(betAmount) / 100;
+      
+      if (!isNaN(odds) && !isNaN(amount) && odds !== 0) {
+        let calculatedPayout: number;
+        
+        if (odds > 0) {
+          calculatedPayout = amount + (amount * (odds / 100));
+        } else {
+          calculatedPayout = amount + (amount * (100 / Math.abs(odds)));
+        }
+        
+        setBetPayout((calculatedPayout * 100).toString());
+      }
+    }
+  };
+
   const handleDateChange = (text: string) => {
     const numbers = text.replace(/[^0-9]/g, '');
     if (numbers.length <= 8) {
@@ -1022,8 +1044,8 @@ export default function SportsScreen() {
                       placeholder="e.g., -110, +150"
                       placeholderTextColor="rgba(36, 0, 70, 0.4)"
                       value={betOdds}
-                      onChangeText={setBetOdds}
-                      keyboardType="numeric"
+                      onChangeText={handleOddsChange}
+                      keyboardType="numbers-and-punctuation"
                       testID="bet-odds-input"
                     />
                   </View>
@@ -1195,8 +1217,8 @@ export default function SportsScreen() {
                       placeholder="e.g., -110, +150"
                       placeholderTextColor="rgba(36, 0, 70, 0.4)"
                       value={betOdds}
-                      onChangeText={setBetOdds}
-                      keyboardType="numeric"
+                      onChangeText={handleOddsChange}
+                      keyboardType="numbers-and-punctuation"
                       testID="edit-bet-odds-input"
                     />
                   </View>
