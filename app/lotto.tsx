@@ -51,9 +51,9 @@ export default function LottoScreen() {
     }
     console.log('Fetching lottery data...');
     try {
-      const [powerballResponse, megaResponse] = await Promise.all([
+      const [powerballResponse, megaMillionsVAResponse] = await Promise.all([
         fetch('https://data.ny.gov/resource/d6yy-54nr.json?$order=draw_date%20DESC&$limit=1'),
-        fetch('https://data.ny.gov/resource/5xaw-6ayf.json?$order=draw_date%20DESC&$limit=1'),
+        fetch('https://www.valottery.com/data/draw-games/mega-millions'),
       ]);
       
       const powerballData = await powerballResponse.json();
@@ -86,33 +86,22 @@ export default function LottoScreen() {
         });
       }
 
-      const megaData = await megaResponse.json();
-      console.log('Mega Millions data received:', megaData.length > 0 ? 'Success' : 'No data');
-      let megaJackpot = await scrapeMegaMillionsJackpot();
-      console.log('Mega Millions jackpot scraped:', megaJackpot);
+      const megaVAData = await megaMillionsVAResponse.json();
+      console.log('Mega Millions VA data received:', megaVAData ? 'Success' : 'No data');
       
-      if (megaData && megaData.length > 0) {
-        const latest = megaData[0];
-        const numbers = [
-          parseInt(latest.winning_numbers.split(' ')[0]),
-          parseInt(latest.winning_numbers.split(' ')[1]),
-          parseInt(latest.winning_numbers.split(' ')[2]),
-          parseInt(latest.winning_numbers.split(' ')[3]),
-          parseInt(latest.winning_numbers.split(' ')[4]),
-        ].sort((a, b) => a - b);
-        const megaBall = parseInt(latest.mega_ball);
-        const lastDrawDate = new Date(latest.draw_date);
+      if (megaVAData && megaVAData.numbers && megaVAData.megaBall) {
+        const lastDrawDate = new Date(megaVAData.drawDate || new Date());
         
         setCurrentMegaMillions({
-          numbers,
-          specialBall: megaBall,
+          numbers: megaVAData.numbers.sort((a: number, b: number) => a - b),
+          specialBall: megaVAData.megaBall,
           drawDate: lastDrawDate.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric', 
             year: 'numeric' 
           }),
           nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
-          nextJackpot: megaJackpot,
+          nextJackpot: megaVAData.jackpot || 'TBD',
         });
       }
     } catch (error) {
@@ -173,47 +162,6 @@ export default function LottoScreen() {
       return 'TBD';
     }
   };
-
-  const scrapeMegaMillionsJackpot = async (): Promise<string> => {
-    try {
-      const response = await fetch('https://www.megamillions.com');
-      const html = await response.text();
-      
-      console.log('Mega Millions HTML length:', html.length);
-      
-      const patterns = [
-        /\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
-        /jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
-        /estimated jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
-        /\$(\d{3,})\s*(Million|Billion)/gi,
-        />(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)</gi,
-      ];
-      
-      for (const pattern of patterns) {
-        const matches = Array.from(html.matchAll(pattern));
-        console.log(`Pattern ${pattern} found ${matches.length} matches`);
-        
-        for (const match of matches) {
-          const amount = match[1];
-          const unit = match[2];
-          const numericValue = parseFloat(amount.replace(/,/g, ''));
-          
-          console.log(`Found: ${amount} ${unit} (${numericValue})`);
-          
-          if (numericValue >= 20 && numericValue <= 2000) {
-            const normalizedUnit = unit.toLowerCase().startsWith('b') ? 'Billion' : 'Million';
-            return `${amount} ${normalizedUnit}`;
-          }
-        }
-      }
-      
-      return 'TBD';
-    } catch (error) {
-      console.error('Error scraping Mega Millions jackpot:', error);
-      return 'TBD';
-    }
-  };
-
 
 
   const onRefresh = async () => {
