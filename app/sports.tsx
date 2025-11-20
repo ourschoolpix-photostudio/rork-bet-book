@@ -381,7 +381,7 @@ export default function SportsScreen() {
     const odds = betOdds ? parseFloat(betOdds) : undefined;
     const payout = betPayout ? parseFloat(betPayout) / 100 : undefined;
     
-    await updateSportsBet(showEditBetModal, sport.trim(), teams.trim(), betType.trim(), amount, won ?? false, dateToUse, odds, payout);
+    await updateSportsBet(showEditBetModal, sport.trim(), teams.trim(), betType.trim(), amount, won, dateToUse, odds, payout);
     setSport('');
     setTeams('');
     setBetType('');
