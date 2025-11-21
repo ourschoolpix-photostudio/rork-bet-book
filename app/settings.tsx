@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Settings, Cloud, Download, Upload, ChevronRight, Dices } from 'lucide-react-native';
+import { Settings, Cloud, Download, Upload, ChevronRight } from 'lucide-react-native';
 import { useBackup } from '@/contexts/BackupContext';
 
 export default function SettingsScreen() {
@@ -74,7 +74,7 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Configuration</Text>
+            <Text style={styles.sectionTitle}>Cloud Configuration</Text>
             <TouchableOpacity 
               style={styles.settingItem}
               onPress={() => router.push('/supabase-settings')}
@@ -82,17 +82,6 @@ export default function SettingsScreen() {
               <View style={styles.settingItemLeft}>
                 <Cloud size={20} color="#9D4EDD" />
                 <Text style={styles.settingItemText}>Supabase Settings</Text>
-              </View>
-              <ChevronRight size={20} color="rgba(255, 255, 255, 0.4)" />
-            </TouchableOpacity>
-            <View style={styles.itemSpacer} />
-            <TouchableOpacity 
-              style={styles.settingItem}
-              onPress={() => router.push('/lottery-settings')}
-            >
-              <View style={styles.settingItemLeft}>
-                <Dices size={20} color="#9D4EDD" />
-                <Text style={styles.settingItemText}>Lottery Scraping</Text>
               </View>
               <ChevronRight size={20} color="rgba(255, 255, 255, 0.4)" />
             </TouchableOpacity>
@@ -258,8 +247,5 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     lineHeight: 20,
     fontStyle: 'italic',
-  },
-  itemSpacer: {
-    height: 12,
   },
 });

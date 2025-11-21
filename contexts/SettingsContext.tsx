@@ -2,28 +2,18 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { trpcClient } from '@/lib/trpc';
 
 const SUPABASE_URL_KEY = '@casino_tracker_supabase_url';
 const SUPABASE_KEY_KEY = '@casino_tracker_supabase_key';
-const POWERBALL_URL_KEY = '@casino_tracker_powerball_url';
-const MEGA_MILLIONS_URL_KEY = '@casino_tracker_mega_millions_url';
 
 export interface SupabaseConfig {
   url: string;
   key: string;
 }
 
-export interface LotteryUrls {
-  powerballUrl: string;
-  megaMillionsUrl: string;
-}
-
 export const [SettingsProvider, useSettings] = createContextHook(() => {
   const [supabaseUrl, setSupabaseUrl] = useState<string>('');
   const [supabaseKey, setSupabaseKey] = useState<string>('');
-  const [powerballUrl, setPowerballUrl] = useState<string>('');
-  const [megaMillionsUrl, setMegaMillionsUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
 
@@ -48,17 +38,13 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
 
   const loadSettings = async () => {
     try {
-      const [url, key, pUrl, mmUrl] = await Promise.all([
+      const [url, key] = await Promise.all([
         AsyncStorage.getItem(SUPABASE_URL_KEY),
         AsyncStorage.getItem(SUPABASE_KEY_KEY),
-        AsyncStorage.getItem(POWERBALL_URL_KEY),
-        AsyncStorage.getItem(MEGA_MILLIONS_URL_KEY),
       ]);
 
       if (url) setSupabaseUrl(url);
       if (key) setSupabaseKey(key);
-      if (pUrl) setPowerballUrl(pUrl);
-      if (mmUrl) setMegaMillionsUrl(mmUrl);
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
@@ -113,69 +99,6 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     }
   }, []);
 
-  const loadLotteryUrlsFromBackend = useCallback(async () => {
-    if (!supabaseUrl || !supabaseKey) return;
-
-    try {
-      console.log('📡 Loading lottery URLs from backend...');
-      const response = await trpcClient.settings.getLotteryUrls.query({
-        supabaseUrl,
-        supabaseKey,
-      });
-
-      if (response.success && response.settings) {
-        console.log('✅ Lottery URLs loaded from backend');
-        setPowerballUrl(response.settings.powerballUrl);
-        setMegaMillionsUrl(response.settings.megaMillionsUrl);
-        
-        await Promise.all([
-          AsyncStorage.setItem(POWERBALL_URL_KEY, response.settings.powerballUrl),
-          AsyncStorage.setItem(MEGA_MILLIONS_URL_KEY, response.settings.megaMillionsUrl),
-        ]);
-      }
-    } catch (error) {
-      console.error('❌ Error loading lottery URLs from backend:', error);
-    }
-  }, [supabaseUrl, supabaseKey]);
-
-  useEffect(() => {
-    if (supabaseUrl && supabaseKey) {
-      loadLotteryUrlsFromBackend();
-    }
-  }, [supabaseUrl, supabaseKey, loadLotteryUrlsFromBackend]);
-
-  const saveLotteryUrls = useCallback(async (urls: LotteryUrls): Promise<void> => {
-    try {
-      await Promise.all([
-        AsyncStorage.setItem(POWERBALL_URL_KEY, urls.powerballUrl),
-        AsyncStorage.setItem(MEGA_MILLIONS_URL_KEY, urls.megaMillionsUrl),
-      ]);
-
-      setPowerballUrl(urls.powerballUrl);
-      setMegaMillionsUrl(urls.megaMillionsUrl);
-      
-      console.log('✅ Lottery URLs saved to local storage');
-
-      if (supabaseUrl && supabaseKey) {
-        try {
-          console.log('📡 Saving lottery URLs to backend...');
-          await trpcClient.settings.saveLotteryUrls.mutate({
-            powerballUrl: urls.powerballUrl,
-            megaMillionsUrl: urls.megaMillionsUrl,
-            supabaseUrl,
-            supabaseKey,
-          });
-          console.log('✅ Lottery URLs saved to backend');
-        } catch (backendError) {
-          console.error('❌ Error saving to backend:', backendError);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error saving lottery URLs:', error);
-      throw error;
-    }
-  }, [supabaseUrl, supabaseKey]);
-
   const isSupabaseConfigured = useMemo(() => {
     return supabaseClient !== null && !!supabaseUrl && !!supabaseKey;
   }, [supabaseClient, supabaseUrl, supabaseKey]);
@@ -185,11 +108,8 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     supabaseKey,
     supabaseClient,
     isSupabaseConfigured,
-    powerballUrl,
-    megaMillionsUrl,
     isLoading,
     saveSupabaseConfig,
     clearSupabaseConfig,
-    saveLotteryUrls,
-  }), [supabaseUrl, supabaseKey, supabaseClient, isSupabaseConfigured, powerballUrl, megaMillionsUrl, isLoading, saveSupabaseConfig, clearSupabaseConfig, saveLotteryUrls]);
+  }), [supabaseUrl, supabaseKey, supabaseClient, isSupabaseConfigured, isLoading, saveSupabaseConfig, clearSupabaseConfig]);
 });
