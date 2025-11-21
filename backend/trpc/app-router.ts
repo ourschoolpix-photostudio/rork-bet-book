@@ -6,6 +6,7 @@ import { listBackupsProcedure } from "@/backend/trpc/routes/backup/list-backups/
 import { saveLotteryUrlsProcedure } from "@/backend/trpc/routes/settings/save-lottery-urls/route";
 import { getLotteryUrlsProcedure } from "@/backend/trpc/routes/settings/get-lottery-urls/route";
 import { getMegaMillionsProcedure } from "@/backend/trpc/routes/lottery/get-mega-millions/route";
+import { getPowerballProcedure } from "@/backend/trpc/routes/lottery/get-powerball/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
   }),
   lottery: createTRPCRouter({
     getMegaMillions: getMegaMillionsProcedure,
+    getPowerball: getPowerballProcedure,
   }),
 });
 

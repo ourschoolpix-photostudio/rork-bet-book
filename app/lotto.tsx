@@ -32,7 +32,7 @@ const SAVED_MEGA_MILLIONS_KEY = '@casino_tracker_saved_mega_millions';
 export default function LottoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { powerballUrl } = useSettings();
+  const { powerballUrl, megaMillionsUrl } = useSettings();
   const [powerballNumbers, setPowerballNumbers] = useState<number[]>([]);
   const [powerballPowerball, setPowerballPowerball] = useState<number | null>(null);
   const [powerballMethod, setPowerballMethod] = useState<GenerationMethod>('R');
@@ -46,10 +46,19 @@ export default function LottoScreen() {
   const [loadingCurrent, setLoadingCurrent] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const scrapePowerballJackpot = useCallback(async (): Promise<string> => {
+  const powerballQuery = trpc.lottery.getPowerball.useQuery(undefined, {
+    enabled: false,
+    retry: 2,
+  });
+
+  const megaMillionsQuery = trpc.lottery.getMegaMillions.useQuery(undefined, {
+    enabled: false,
+    retry: 2,
+  });
+
+  const scrapeLotteryJackpot = useCallback(async (url: string, lotteryName: string): Promise<string> => {
     try {
-      const url = powerballUrl || 'https://www.powerball.com';
-      console.log('Fetching Powerball jackpot from:', url);
+      console.log(`Fetching ${lotteryName} jackpot from:`, url);
       const response = await fetch(url);
       const html = await response.text();
       
@@ -66,15 +75,10 @@ export default function LottoScreen() {
       
       return 'TBD';
     } catch (error) {
-      console.error('Error scraping Powerball jackpot:', error);
+      console.error(`Error scraping ${lotteryName} jackpot:`, error);
       return 'TBD';
     }
-  }, [powerballUrl]);
-
-  const megaMillionsQuery = trpc.lottery.getMegaMillions.useQuery(undefined, {
-    enabled: false,
-    retry: 2,
-  });
+  }, []);
 
   const fetchCurrentWinningNumbers = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -82,32 +86,30 @@ export default function LottoScreen() {
     } else {
       setLoadingCurrent(true);
     }
-    console.log('Fetching lottery data...');
+    console.log('Fetching lottery data from backend APIs...');
     try {
-      const [powerballResponse] = await Promise.all([
-        fetch('https://data.ny.gov/resource/d6yy-54nr.json?$order=draw_date%20DESC&$limit=1'),
+      const [powerballResult, megaMillionsResult, powerballJackpot, megaMillionsJackpot] = await Promise.all([
+        powerballQuery.refetch().catch(err => {
+          console.error('Error fetching Powerball:', err);
+          return { data: null };
+        }),
+        megaMillionsQuery.refetch().catch(err => {
+          console.error('Error fetching Mega Millions:', err);
+          return { data: null };
+        }),
+        scrapeLotteryJackpot(powerballUrl || 'https://www.powerball.com', 'Powerball'),
+        scrapeLotteryJackpot(megaMillionsUrl || 'https://www.megamillions.com/', 'Mega Millions'),
       ]);
       
-      const powerballData = await powerballResponse.json();
-      console.log('Powerball data received:', powerballData.length > 0 ? 'Success' : 'No data');
-      let powerballJackpot = await scrapePowerballJackpot();
-      console.log('Powerball jackpot scraped:', powerballJackpot);
+      console.log('Powerball result:', powerballResult.data ? 'Success' : 'Failed');
+      console.log('Mega Millions result:', megaMillionsResult.data ? 'Success' : 'Failed');
       
-      if (powerballData && powerballData.length > 0) {
-        const latest = powerballData[0];
-        const numbers = [
-          parseInt(latest.winning_numbers.split(' ')[0]),
-          parseInt(latest.winning_numbers.split(' ')[1]),
-          parseInt(latest.winning_numbers.split(' ')[2]),
-          parseInt(latest.winning_numbers.split(' ')[3]),
-          parseInt(latest.winning_numbers.split(' ')[4]),
-        ].sort((a, b) => a - b);
-        const powerball = parseInt(latest.winning_numbers.split(' ')[5]);
-        const lastDrawDate = new Date(latest.draw_date);
+      if (powerballResult.data) {
+        const lastDrawDate = new Date(powerballResult.data.drawDate);
         
         setCurrentPowerball({
-          numbers,
-          specialBall: powerball,
+          numbers: powerballResult.data.numbers.sort((a: number, b: number) => a - b),
+          specialBall: powerballResult.data.powerball,
           drawDate: lastDrawDate.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric', 
@@ -118,27 +120,20 @@ export default function LottoScreen() {
         });
       }
 
-      try {
-        const megaMillionsData = await megaMillionsQuery.refetch();
-        console.log('Mega Millions data received:', megaMillionsData.data ? 'Success' : 'No data');
+      if (megaMillionsResult.data) {
+        const lastDrawDate = new Date(megaMillionsResult.data.drawDate);
         
-        if (megaMillionsData.data) {
-          const lastDrawDate = new Date(megaMillionsData.data.drawDate);
-          
-          setCurrentMegaMillions({
-            numbers: megaMillionsData.data.numbers.sort((a: number, b: number) => a - b),
-            specialBall: megaMillionsData.data.megaBall,
-            drawDate: lastDrawDate.toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric', 
-              year: 'numeric' 
-            }),
-            nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
-            nextJackpot: megaMillionsData.data.jackpot || 'TBD',
-          });
-        }
-      } catch (megaError) {
-        console.error('Error fetching Mega Millions from API:', megaError);
+        setCurrentMegaMillions({
+          numbers: megaMillionsResult.data.numbers.sort((a: number, b: number) => a - b),
+          specialBall: megaMillionsResult.data.megaBall,
+          drawDate: lastDrawDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }),
+          nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
+          nextJackpot: megaMillionsJackpot,
+        });
       }
     } catch (error) {
       console.error('Error fetching current winning numbers:', error);
@@ -146,7 +141,7 @@ export default function LottoScreen() {
       setLoadingCurrent(false);
       setRefreshing(false);
     }
-  }, [scrapePowerballJackpot, megaMillionsQuery]);
+  }, [powerballQuery, megaMillionsQuery, powerballUrl, megaMillionsUrl, scrapeLotteryJackpot]);
 
   useEffect(() => {
     loadSavedNumbers();
