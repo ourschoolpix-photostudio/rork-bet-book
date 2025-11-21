@@ -45,6 +45,89 @@ export default function LottoScreen() {
   const [loadingCurrent, setLoadingCurrent] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const scrapePowerballJackpot = useCallback(async (): Promise<string> => {
+    try {
+      const url = powerballUrl || 'https://www.powerball.com';
+      console.log('Fetching Powerball jackpot from:', url);
+      const response = await fetch(url);
+      const html = await response.text();
+      
+      const jackpotMatch = html.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/i);
+      if (jackpotMatch) {
+        return `${jackpotMatch[1]} ${jackpotMatch[2]}`;
+      }
+      
+      const altMatch = html.match(/jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/i);
+      if (altMatch) {
+        const unit = altMatch[2].toLowerCase().startsWith('b') ? 'Billion' : 'Million';
+        return `${altMatch[1]} ${unit}`;
+      }
+      
+      return 'TBD';
+    } catch (error) {
+      console.error('Error scraping Powerball jackpot:', error);
+      return 'TBD';
+    }
+  }, [powerballUrl]);
+
+  const scrapeMegaMillionsVA = useCallback(async (): Promise<{ numbers: number[], megaBall: number, drawDate: string, jackpot: string } | null> => {
+    try {
+      const url = megaMillionsUrl || 'https://www.megamillions.com/';
+      console.log('Fetching Mega Millions from:', url);
+      const response = await fetch(url);
+      const html = await response.text();
+      console.log('Mega Millions HTML received, parsing...');
+      
+      const jackpotMatch = html.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/i);
+      const numbersMatch = html.match(/(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+MB:\s*(\d+)/);
+      
+      let jackpot = 'TBD';
+      if (jackpotMatch) {
+        jackpot = `${jackpotMatch[1]} ${jackpotMatch[2]}`;
+      }
+      
+      if (numbersMatch) {
+        const numbers = [
+          parseInt(numbersMatch[1]),
+          parseInt(numbersMatch[2]),
+          parseInt(numbersMatch[3]),
+          parseInt(numbersMatch[4]),
+          parseInt(numbersMatch[5]),
+        ];
+        const megaBall = parseInt(numbersMatch[6]);
+        
+        const drawDate = new Date().toISOString();
+        
+        console.log('Parsed Mega Millions:', { numbers, megaBall, drawDate, jackpot });
+        return { numbers, megaBall, drawDate, jackpot };
+      }
+      
+      const altMatch = html.match(/class="winning-numbers-ball"[^>]*>(\d+)<\/li>/g);
+      if (altMatch && altMatch.length >= 6) {
+        const allNumbers = altMatch.map(match => {
+          const numMatch = match.match(/(\d+)/);
+          return numMatch ? parseInt(numMatch[1]) : 0;
+        });
+        
+        if (allNumbers.length >= 6) {
+          const numbers = allNumbers.slice(0, 5);
+          const megaBall = allNumbers[5];
+          
+          const drawDate = new Date().toISOString();
+          
+          console.log('Parsed Mega Millions (alt):', { numbers, megaBall, drawDate, jackpot });
+          return { numbers, megaBall, drawDate, jackpot };
+        }
+      }
+      
+      console.log('Could not parse Mega Millions data from HTML');
+      return null;
+    } catch (error) {
+      console.error('Error scraping Mega Millions VA:', error);
+      return null;
+    }
+  }, [megaMillionsUrl]);
+
   const fetchCurrentWinningNumbers = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true);
@@ -88,7 +171,7 @@ export default function LottoScreen() {
       }
 
       const megaMillionsData = await scrapeMegaMillionsVA();
-      console.log('Mega Millions VA data received:', megaMillionsData ? 'Success' : 'No data');
+      console.log('Mega Millions data received:', megaMillionsData ? 'Success' : 'No data');
       
       if (megaMillionsData && megaMillionsData.numbers && megaMillionsData.megaBall) {
         const lastDrawDate = new Date(megaMillionsData.drawDate || new Date());
@@ -111,7 +194,7 @@ export default function LottoScreen() {
       setLoadingCurrent(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [scrapePowerballJackpot, scrapeMegaMillionsVA]);
 
   useEffect(() => {
     loadSavedNumbers();
@@ -141,72 +224,7 @@ export default function LottoScreen() {
     return 'TBD';
   };
 
-  const scrapePowerballJackpot = async (): Promise<string> => {
-    try {
-      const url = powerballUrl || 'https://www.powerball.com';
-      console.log('Fetching Powerball jackpot from:', url);
-      const response = await fetch(url);
-      const html = await response.text();
-      
-      const jackpotMatch = html.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/i);
-      if (jackpotMatch) {
-        return `${jackpotMatch[1]} ${jackpotMatch[2]}`;
-      }
-      
-      const altMatch = html.match(/jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/i);
-      if (altMatch) {
-        const unit = altMatch[2].toLowerCase().startsWith('b') ? 'Billion' : 'Million';
-        return `${altMatch[1]} ${unit}`;
-      }
-      
-      return 'TBD';
-    } catch (error) {
-      console.error('Error scraping Powerball jackpot:', error);
-      return 'TBD';
-    }
-  };
 
-  const scrapeMegaMillionsVA = async (): Promise<{ numbers: number[], megaBall: number, drawDate: string, jackpot: string } | null> => {
-    try {
-      const url = megaMillionsUrl || 'https://www.valottery.com/data/draw-games/mega-millions';
-      console.log('Fetching Mega Millions from:', url);
-      const response = await fetch(url);
-      const html = await response.text();
-      console.log('Mega Millions HTML received, parsing...');
-      
-      const numbersMatch = html.match(/"winningNumbers"\s*:\s*\[(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\]/);
-      const megaBallMatch = html.match(/"megaBall"\s*:\s*(\d+)/);
-      const jackpotMatch = html.match(/"estimatedJackpot"\s*:\s*"\$([\d,]+(?:\.\d+)?)\s*(Million|Billion)?"/);
-      const drawDateMatch = html.match(/"drawDate"\s*:\s*"([^"]+)"/);
-      
-      if (numbersMatch && megaBallMatch) {
-        const numbers = [
-          parseInt(numbersMatch[1]),
-          parseInt(numbersMatch[2]),
-          parseInt(numbersMatch[3]),
-          parseInt(numbersMatch[4]),
-          parseInt(numbersMatch[5]),
-        ];
-        const megaBall = parseInt(megaBallMatch[1]);
-        
-        let jackpot = 'TBD';
-        if (jackpotMatch) {
-          jackpot = `${jackpotMatch[1]}${jackpotMatch[2] ? ' ' + jackpotMatch[2] : ' Million'}`;
-        }
-        
-        const drawDate = drawDateMatch ? drawDateMatch[1] : new Date().toISOString();
-        
-        console.log('Parsed Mega Millions:', { numbers, megaBall, drawDate, jackpot });
-        return { numbers, megaBall, drawDate, jackpot };
-      }
-      
-      console.log('Could not parse Mega Millions data from HTML');
-      return null;
-    } catch (error) {
-      console.error('Error scraping Mega Millions VA:', error);
-      return null;
-    }
-  };
 
 
   const onRefresh = async () => {

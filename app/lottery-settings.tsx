@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 
 const DEFAULT_POWERBALL_URL = 'https://www.powerball.com';
-const DEFAULT_MEGA_MILLIONS_URL = 'https://www.valottery.com/data/draw-games/mega-millions';
+const DEFAULT_MEGA_MILLIONS_URL = 'https://www.megamillions.com/';
 
 export default function LotterySettingsScreen() {
   const router = useRouter();
