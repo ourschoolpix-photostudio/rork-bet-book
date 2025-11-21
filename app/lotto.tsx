@@ -6,6 +6,7 @@ import { ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Tex
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from '@/contexts/SettingsContext';
+import { trpc } from '@/lib/trpc';
 
 type GenerationMethod = 'R' | '6' | 'SP';
 
@@ -31,7 +32,7 @@ const SAVED_MEGA_MILLIONS_KEY = '@casino_tracker_saved_mega_millions';
 export default function LottoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { powerballUrl, megaMillionsUrl } = useSettings();
+  const { powerballUrl } = useSettings();
   const [powerballNumbers, setPowerballNumbers] = useState<number[]>([]);
   const [powerballPowerball, setPowerballPowerball] = useState<number | null>(null);
   const [powerballMethod, setPowerballMethod] = useState<GenerationMethod>('R');
@@ -70,63 +71,10 @@ export default function LottoScreen() {
     }
   }, [powerballUrl]);
 
-  const scrapeMegaMillionsVA = useCallback(async (): Promise<{ numbers: number[], megaBall: number, drawDate: string, jackpot: string } | null> => {
-    try {
-      const url = megaMillionsUrl || 'https://www.megamillions.com/';
-      console.log('Fetching Mega Millions from:', url);
-      const response = await fetch(url);
-      const html = await response.text();
-      console.log('Mega Millions HTML received, parsing...');
-      
-      const jackpotMatch = html.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/i);
-      const numbersMatch = html.match(/(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+MB:\s*(\d+)/);
-      
-      let jackpot = 'TBD';
-      if (jackpotMatch) {
-        jackpot = `${jackpotMatch[1]} ${jackpotMatch[2]}`;
-      }
-      
-      if (numbersMatch) {
-        const numbers = [
-          parseInt(numbersMatch[1]),
-          parseInt(numbersMatch[2]),
-          parseInt(numbersMatch[3]),
-          parseInt(numbersMatch[4]),
-          parseInt(numbersMatch[5]),
-        ];
-        const megaBall = parseInt(numbersMatch[6]);
-        
-        const drawDate = new Date().toISOString();
-        
-        console.log('Parsed Mega Millions:', { numbers, megaBall, drawDate, jackpot });
-        return { numbers, megaBall, drawDate, jackpot };
-      }
-      
-      const altMatch = html.match(/class="winning-numbers-ball"[^>]*>(\d+)<\/li>/g);
-      if (altMatch && altMatch.length >= 6) {
-        const allNumbers = altMatch.map(match => {
-          const numMatch = match.match(/(\d+)/);
-          return numMatch ? parseInt(numMatch[1]) : 0;
-        });
-        
-        if (allNumbers.length >= 6) {
-          const numbers = allNumbers.slice(0, 5);
-          const megaBall = allNumbers[5];
-          
-          const drawDate = new Date().toISOString();
-          
-          console.log('Parsed Mega Millions (alt):', { numbers, megaBall, drawDate, jackpot });
-          return { numbers, megaBall, drawDate, jackpot };
-        }
-      }
-      
-      console.log('Could not parse Mega Millions data from HTML');
-      return null;
-    } catch (error) {
-      console.error('Error scraping Mega Millions VA:', error);
-      return null;
-    }
-  }, [megaMillionsUrl]);
+  const megaMillionsQuery = trpc.lottery.getMegaMillions.useQuery(undefined, {
+    enabled: false,
+    retry: 2,
+  });
 
   const fetchCurrentWinningNumbers = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -170,23 +118,27 @@ export default function LottoScreen() {
         });
       }
 
-      const megaMillionsData = await scrapeMegaMillionsVA();
-      console.log('Mega Millions data received:', megaMillionsData ? 'Success' : 'No data');
-      
-      if (megaMillionsData && megaMillionsData.numbers && megaMillionsData.megaBall) {
-        const lastDrawDate = new Date(megaMillionsData.drawDate || new Date());
+      try {
+        const megaMillionsData = await megaMillionsQuery.refetch();
+        console.log('Mega Millions data received:', megaMillionsData.data ? 'Success' : 'No data');
         
-        setCurrentMegaMillions({
-          numbers: megaMillionsData.numbers.sort((a: number, b: number) => a - b),
-          specialBall: megaMillionsData.megaBall,
-          drawDate: lastDrawDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-          }),
-          nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
-          nextJackpot: megaMillionsData.jackpot || 'TBD',
-        });
+        if (megaMillionsData.data) {
+          const lastDrawDate = new Date(megaMillionsData.data.drawDate);
+          
+          setCurrentMegaMillions({
+            numbers: megaMillionsData.data.numbers.sort((a: number, b: number) => a - b),
+            specialBall: megaMillionsData.data.megaBall,
+            drawDate: lastDrawDate.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric' 
+            }),
+            nextDrawDate: getNextDrawDate(lastDrawDate, [2, 5]),
+            nextJackpot: megaMillionsData.data.jackpot || 'TBD',
+          });
+        }
+      } catch (megaError) {
+        console.error('Error fetching Mega Millions from API:', megaError);
       }
     } catch (error) {
       console.error('Error fetching current winning numbers:', error);
@@ -194,7 +146,7 @@ export default function LottoScreen() {
       setLoadingCurrent(false);
       setRefreshing(false);
     }
-  }, [scrapePowerballJackpot, scrapeMegaMillionsVA]);
+  }, [scrapePowerballJackpot, megaMillionsQuery]);
 
   useEffect(() => {
     loadSavedNumbers();
