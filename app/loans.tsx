@@ -26,7 +26,9 @@ export default function LoansScreen() {
   const [addToLoanAmount, setAddToLoanAmount] = useState<string>('');
   const [addToLoanDate, setAddToLoanDate] = useState<string>('');
 
-  const userLoans = loans.filter(l => l.userId === currentUser?.id);
+  const userLoans = loans
+    .filter(l => l.userId === currentUser?.id)
+    .sort((a, b) => new Date(a.loanDate).getTime() - new Date(b.loanDate).getTime());
   const totalLoansRemaining = userLoans.reduce((sum, loan) => sum + (loan.amount - loan.amountPaid), 0);
 
   const handleCurrencyChange = (text: string, setter: (value: string) => void) => {
