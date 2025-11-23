@@ -44,7 +44,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadBets } = useBets();
   const { reloadSportsBets } = useSportsBets();
   const { reloadAllData: reloadExpenses } = useExpenses();
-  const { supabaseClient, isSupabaseConfigured } = useSettings();
+  const { supabaseClient, isSupabaseConfigured, reloadSettings } = useSettings();
 
   const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
@@ -411,8 +411,9 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         reloadBets(),
         reloadSportsBets(),
         reloadExpenses(),
+        reloadSettings(),
       ]);
-      console.log('All contexts reloaded successfully');
+      console.log('All contexts reloaded successfully (including settings)');
       
       Alert.alert(
         'Success',
@@ -424,7 +425,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [supabaseClient, isSupabaseConfigured, reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+  }, [supabaseClient, isSupabaseConfigured, reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses, reloadSettings]);
 
   const restoreFromDevice = useCallback(async (): Promise<boolean> => {
     try {
@@ -473,8 +474,9 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         reloadBets(),
         reloadSportsBets(),
         reloadExpenses(),
+        reloadSettings(),
       ]);
-      console.log('All contexts reloaded successfully');
+      console.log('All contexts reloaded successfully (including settings)');
       
       Alert.alert(
         'Success',
@@ -486,7 +488,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Error', 'Failed to restore backup from device: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses]);
+  }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses, reloadSettings]);
 
   return useMemo(() => ({
     createBackup,
