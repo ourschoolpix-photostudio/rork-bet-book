@@ -108,7 +108,10 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
 
   const addLoanAddition = useCallback(async (loanId: string, additionAmount: number, additionDate?: string) => {
     const loan = loans.find(l => l.id === loanId);
-    if (!loan) return;
+    if (!loan) {
+      console.error('Loan not found for addition:', loanId);
+      return;
+    }
 
     const newAddition: LoanAddition = {
       id: `addition-${Date.now()}`,
@@ -119,12 +122,20 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     const updatedLoan: Loan = {
       ...loan,
       amount: loan.amount + additionAmount,
-      loanAdditions: [...loan.loanAdditions, newAddition],
+      loanAdditions: [...(loan.loanAdditions || []), newAddition],
     };
 
     const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
+    console.log('Adding loan addition:', newAddition);
     setLoans(updatedLoans);
-    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+    try {
+      const jsonString = JSON.stringify(updatedLoans);
+      await AsyncStorage.setItem(LOANS_STORAGE_KEY, jsonString);
+      console.log('Loan addition saved successfully');
+    } catch (error) {
+      console.error('Error saving loan addition:', error);
+      throw error;
+    }
   }, [loans]);
 
   const deleteLoanAddition = useCallback(async (loanId: string, additionId: string) => {
