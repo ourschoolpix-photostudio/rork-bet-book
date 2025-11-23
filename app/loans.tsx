@@ -139,18 +139,23 @@ const handleAddToLoan = async (loanId: string) => {
     if (!showEditLoanModal || !borrowerName.trim() || !loanAmount) return;
 
     const amount = parseFloat(loanAmount) / 100;
-    let dateToUse = new Date().toISOString();
+    
+    const loan = loans.find(l => l.id === showEditLoanModal);
+    let dateToUse = loan?.loanDate || new Date().toISOString();
     
     if (loanDate) {
       const numbers = loanDate.replace(/[^0-9]/g, '');
+      console.log('Edit loan - date numbers:', numbers);
       if (numbers.length === 8) {
         const month = numbers.slice(0, 2);
         const day = numbers.slice(2, 4);
         const year = numbers.slice(4, 8);
         dateToUse = new Date(`${year}-${month}-${day}`).toISOString();
+        console.log('Edit loan - converted date:', dateToUse);
       }
     }
     
+    console.log('Updating loan with date:', dateToUse);
     await updateLoan(showEditLoanModal, borrowerName.trim(), amount, dateToUse);
     setBorrowerName('');
     setLoanAmount('');
