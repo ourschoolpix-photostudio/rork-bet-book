@@ -44,6 +44,7 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
       userId,
       borrowerName,
       amount,
+      originalAmount: amount,
       amountPaid: 0,
       loanDate: loanDate || now,
       createdAt: now,
@@ -163,10 +164,13 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
       return;
     }
 
+    const totalAdditions = (loan.loanAdditions || []).reduce((sum, add) => sum + add.amount, 0);
+    
     const updatedLoan: Loan = {
       ...loan,
       borrowerName,
-      amount,
+      originalAmount: amount,
+      amount: amount + totalAdditions,
       loanDate,
     };
 

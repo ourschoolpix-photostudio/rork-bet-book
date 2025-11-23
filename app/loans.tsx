@@ -121,7 +121,8 @@ const handleAddToLoan = async (loanId: string) => {
     if (!loan) return;
 
     setBorrowerName(loan.borrowerName);
-    setLoanAmount((loan.amount * 100).toString());
+    const originalAmount = loan.originalAmount || loan.amount;
+    setLoanAmount((originalAmount * 100).toString());
     
     const date = new Date(loan.loanDate);
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -317,7 +318,7 @@ const handleAddToLoan = async (loanId: string) => {
                       <Text style={styles.paymentsSectionTitle}>Loan History</Text>
                       <View style={styles.paymentRow}>
                         <View style={styles.paymentInfo}>
-                          <Text style={styles.paymentAmount}>${loan.amount.toFixed(2)}</Text>
+                          <Text style={styles.paymentAmount}>${(loan.originalAmount || loan.amount).toFixed(2)}</Text>
                           <Text style={styles.paymentDate}>{formatDate(loan.loanDate)}</Text>
                         </View>
                         <View style={styles.originalLoanBadge}>

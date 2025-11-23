@@ -31,6 +31,7 @@ export interface Loan {
   userId: string;
   borrowerName: string;
   amount: number;
+  originalAmount?: number;
   amountPaid: number;
   loanDate: string;
   createdAt: string;
