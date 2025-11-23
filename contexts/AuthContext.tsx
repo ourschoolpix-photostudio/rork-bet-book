@@ -22,19 +22,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [lastCasino, setLastCasino] = useState<{ state: string; casinoName: string } | null>(null);
   const [sessions, setSessions] = useState<GamblingSession[]>([]);
 
-  useEffect(() => {
-    const initializeData = async () => {
-      await Promise.all([
-        loadData(),
-        loadLastCasino(),
-        loadSessions(),
-      ]);
-    };
-    
-    initializeData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const usersJson = await AsyncStorage.getItem(USERS_STORAGE_KEY);
       const currentUserJson = await AsyncStorage.getItem(CURRENT_USER_KEY);
@@ -75,9 +63,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadLastCasino = async () => {
+  const loadLastCasino = useCallback(async () => {
     try {
       const lastCasinoJson = await AsyncStorage.getItem(LAST_CASINO_KEY);
       if (lastCasinoJson) {
@@ -91,9 +79,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     } catch (error) {
       console.error('Error loading last casino:', error);
     }
-  };
+  }, []);
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
       const sessionsJson = await AsyncStorage.getItem(SESSIONS_STORAGE_KEY);
       if (sessionsJson) {
@@ -108,7 +96,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     } catch (error) {
       console.error('Error loading sessions:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const initializeData = async () => {
+      await Promise.all([
+        loadData(),
+        loadLastCasino(),
+        loadSessions(),
+      ]);
+    };
+    
+    initializeData();
+  }, [loadData, loadLastCasino, loadSessions]);
+
+
 
   const saveLastCasino = useCallback(async (state: string, casinoName: string) => {
     try {
@@ -345,7 +347,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       loadLastCasino(),
       loadSessions(),
     ]);
-  }, []);
+  }, [loadData, loadLastCasino, loadSessions]);
 
   return useMemo(() => ({
     currentUser,

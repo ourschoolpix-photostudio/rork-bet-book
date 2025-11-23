@@ -9,11 +9,7 @@ export const [BetsProvider, useBets] = createContextHook(() => {
   const [bets, setBets] = useState<Bet[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    loadBets();
-  }, []);
-
-  const loadBets = async () => {
+  const loadBets = useCallback(async () => {
     try {
       const betsJson = await AsyncStorage.getItem(BETS_STORAGE_KEY);
       if (betsJson) {
@@ -30,7 +26,13 @@ export const [BetsProvider, useBets] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadBets();
+  }, [loadBets]);
+
+
 
   const addBet = useCallback(async (userId: string, opponent: string, description: string, amount: number, won: boolean, betDate?: string) => {
     const now = new Date().toISOString();
@@ -76,7 +78,7 @@ export const [BetsProvider, useBets] = createContextHook(() => {
 
   const reloadBets = useCallback(async () => {
     await loadBets();
-  }, []);
+  }, [loadBets]);
 
   return useMemo(() => ({
     bets,

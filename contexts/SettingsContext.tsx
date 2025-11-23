@@ -18,26 +18,7 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  useEffect(() => {
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const client = createClient(supabaseUrl, supabaseKey);
-        setSupabaseClient(client);
-        console.log('✅ Supabase client created with user credentials');
-      } catch (error) {
-        console.error('❌ Failed to create Supabase client:', error);
-        setSupabaseClient(null);
-      }
-    } else {
-      setSupabaseClient(null);
-    }
-  }, [supabaseUrl, supabaseKey]);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       let url: string | null = null;
       let key: string | null = null;
@@ -61,7 +42,28 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  useEffect(() => {
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const client = createClient(supabaseUrl, supabaseKey);
+        setSupabaseClient(client);
+        console.log('✅ Supabase client created with user credentials');
+      } catch (error) {
+        console.error('❌ Failed to create Supabase client:', error);
+        setSupabaseClient(null);
+      }
+    } else {
+      setSupabaseClient(null);
+    }
+  }, [supabaseUrl, supabaseKey]);
+
+
 
   const saveSupabaseConfig = useCallback(async (config: SupabaseConfig): Promise<boolean> => {
     try {

@@ -9,11 +9,7 @@ export const [BorrowProvider, useBorrows] = createContextHook(() => {
   const [borrows, setBorrows] = useState<Borrow[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    loadBorrows();
-  }, []);
-
-  const loadBorrows = async () => {
+  const loadBorrows = useCallback(async () => {
     try {
       const borrowsJson = await AsyncStorage.getItem(BORROWS_STORAGE_KEY);
       if (borrowsJson) {
@@ -30,7 +26,13 @@ export const [BorrowProvider, useBorrows] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadBorrows();
+  }, [loadBorrows]);
+
+
 
   const addBorrow = useCallback(async (userId: string, lenderName: string, amount: number, borrowDate?: string, sessionId?: string, description?: string) => {
     const now = new Date().toISOString();
@@ -116,7 +118,7 @@ export const [BorrowProvider, useBorrows] = createContextHook(() => {
 
   const reloadBorrows = useCallback(async () => {
     await loadBorrows();
-  }, []);
+  }, [loadBorrows]);
 
   return useMemo(() => ({
     borrows,
