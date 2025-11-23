@@ -313,10 +313,19 @@ const handleAddToLoan = async (loanId: string) => {
                       </View>
                     </View>
 
-                    {loan.loanAdditions && loan.loanAdditions.length > 0 && (
-                      <View style={styles.paymentsSection}>
-                        <Text style={styles.paymentsSectionTitle}>Loan History</Text>
-                        {[...loan.loanAdditions]
+                    <View style={styles.paymentsSection}>
+                      <Text style={styles.paymentsSectionTitle}>Loan History</Text>
+                      <View style={styles.paymentRow}>
+                        <View style={styles.paymentInfo}>
+                          <Text style={styles.paymentAmount}>${loan.amount.toFixed(2)}</Text>
+                          <Text style={styles.paymentDate}>{formatDate(loan.loanDate)}</Text>
+                        </View>
+                        <View style={styles.originalLoanBadge}>
+                          <Text style={styles.originalLoanBadgeText}>Original</Text>
+                        </View>
+                      </View>
+                      {loan.loanAdditions && loan.loanAdditions.length > 0 && (
+                        [...loan.loanAdditions]
                           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                           .map((addition) => (
                           <View key={addition.id} style={styles.paymentRow}>
@@ -335,9 +344,9 @@ const handleAddToLoan = async (loanId: string) => {
                               <Trash2 size={16} color="rgba(36, 0, 70, 0.6)" />
                             </Pressable>
                           </View>
-                        ))}
-                      </View>
-                    )}
+                        ))
+                      )}
+                    </View>
 
                     {loan.payments.length > 0 && (
                       <View style={styles.paymentsSection}>
@@ -914,6 +923,20 @@ const styles = StyleSheet.create({
   },
   deletePaymentButtonPressed: {
     opacity: 0.6,
+  },
+  originalLoanBadge: {
+    backgroundColor: 'rgba(157, 78, 221, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  originalLoanBadgeText: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#9D4EDD',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
   },
   actionsRow: {
     flexDirection: 'row',
