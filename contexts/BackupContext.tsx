@@ -12,7 +12,6 @@ import { useBorrows } from './BorrowContext';
 import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
-import { trpcClient } from '@/lib/trpc';
 import { BackupRecord } from '@/lib/supabase';
 import { useSettings } from './SettingsContext';
 
@@ -253,18 +252,34 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     try {
       let current: any;
       let backup: any;
+      let currentIsJson = false;
+      let backupIsJson = false;
       
       try {
         current = JSON.parse(currentValue);
-      } catch (e) {
-        console.error('Failed to parse current value:', currentValue, e);
-        return backupValue;
+        currentIsJson = true;
+      } catch {
+        current = currentValue;
+        currentIsJson = false;
       }
       
       try {
         backup = JSON.parse(backupValue);
-      } catch (e) {
-        console.error('Failed to parse backup value:', backupValue, e);
+        backupIsJson = true;
+      } catch {
+        backup = backupValue;
+        backupIsJson = false;
+      }
+
+      if (!currentIsJson && !backupIsJson) {
+        return backupValue;
+      }
+
+      if (!currentIsJson) {
+        return backupValue;
+      }
+
+      if (!backupIsJson) {
         return currentValue;
       }
 
@@ -355,8 +370,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
             
             buttons.push({
               text: 'Cancel',
-              style: 'cancel' as const,
-              onPress: () => resolve(false),
+              onPress: async () => resolve(false),
             });
             
             Alert.alert('Select Cloud Backup', 'Choose a backup to restore:', buttons);
@@ -379,7 +393,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
       for (const [key, value] of Object.entries(backupRecord.data)) {
         const currentValue = await AsyncStorage.getItem(key);
-        const mergedValue = mergeData(currentValue, value);
+        const mergedValue = mergeData(currentValue, value as string | null);
         
         if (mergedValue !== null) {
           await AsyncStorage.setItem(key, mergedValue);

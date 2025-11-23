@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useBets } from '@/contexts/BetsContext';
 import { useSportsBets } from '@/contexts/SportsBetsContext';
-import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useMonthlyUtilitiesTotal, useUtilitiesByMonth } from '@/contexts/ExpensesContext';
+import { useMonthlyExpenses, useYearToDateExpenses, useRecurringBillsByUser, useExpensesByMonth, useMonthlyUtilitiesTotal, useUtilitiesByMonth, useMonthlyBusinessExpenses, useYearToDateBusinessExpenses } from '@/contexts/ExpensesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, ChevronRight } from 'lucide-react-native';
@@ -22,6 +22,8 @@ export default function SummaryScreen() {
   const recurringBills = useRecurringBillsByUser(currentUser?.id || '');
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
   const monthlyUtilitiesTotal = useMonthlyUtilitiesTotal(currentUser?.id || '');
+  const monthlyBusinessExpenses = useMonthlyBusinessExpenses(currentUser?.id || '');
+  const ytdBusinessExpenses = useYearToDateBusinessExpenses(currentUser?.id || '');
   
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -309,6 +311,25 @@ export default function SummaryScreen() {
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
                   <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.categoryCard, styles.taxExpenseCard]}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryHeaderLeft}>
+                  <DollarSign size={20} color="#1E3A8A" />
+                  <Text style={styles.categoryName}>Business Expenses (Tax)</Text>
+                </View>
+              </View>
+              <View style={styles.categoryStats}>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>Monthly Business</Text>
+                  <Text style={styles.categoryStatValue}>${monthlyBusinessExpenses.total.toFixed(2)}</Text>
+                </View>
+                <View style={styles.categoryStatItem}>
+                  <Text style={styles.categoryStatLabel}>YTD Business</Text>
+                  <Text style={styles.categoryStatValue}>${ytdBusinessExpenses.total.toFixed(2)}</Text>
                 </View>
               </View>
             </View>
@@ -707,5 +728,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700' as const,
     color: '#5A189A',
+  },
+  taxExpenseCard: {
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(219, 234, 254, 0.95)',
   },
 });

@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loan, LoanPayment } from '@/types/user';
+import { Loan, LoanPayment, LoanAddition } from '@/types/user';
 
 const LOANS_STORAGE_KEY = '@casino_tracker_loans';
 
@@ -46,6 +46,7 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
       loanDate: loanDate || now,
       createdAt: now,
       payments: [],
+      loanAdditions: [],
     };
 
     const updatedLoans = [...loans, newLoan];
@@ -103,6 +104,45 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
   }, [loans]);
 
+  const addLoanAddition = useCallback(async (loanId: string, additionAmount: number, additionDate?: string) => {
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    const newAddition: LoanAddition = {
+      id: `addition-${Date.now()}`,
+      amount: additionAmount,
+      date: additionDate || new Date().toISOString(),
+    };
+
+    const updatedLoan: Loan = {
+      ...loan,
+      amount: loan.amount + additionAmount,
+      loanAdditions: [...loan.loanAdditions, newAddition],
+    };
+
+    const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
+    setLoans(updatedLoans);
+    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+  }, [loans]);
+
+  const deleteLoanAddition = useCallback(async (loanId: string, additionId: string) => {
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    const addition = loan.loanAdditions.find(a => a.id === additionId);
+    if (!addition) return;
+
+    const updatedLoan: Loan = {
+      ...loan,
+      amount: loan.amount - addition.amount,
+      loanAdditions: loan.loanAdditions.filter(a => a.id !== additionId),
+    };
+
+    const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
+    setLoans(updatedLoans);
+    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+  }, [loans]);
+
   const updateLoan = useCallback(async (loanId: string, borrowerName: string, amount: number, loanDate: string) => {
     const loan = loans.find(l => l.id === loanId);
     if (!loan) {
@@ -143,5 +183,7 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     deletePayment,
     updateLoan,
     reloadLoans,
-  }), [loans, isLoading, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, reloadLoans]);
+    addLoanAddition,
+    deleteLoanAddition,
+  }), [loans, isLoading, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, reloadLoans, addLoanAddition, deleteLoanAddition]);
 });

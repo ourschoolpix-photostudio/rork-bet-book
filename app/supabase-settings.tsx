@@ -169,7 +169,7 @@ CREATE INDEX IF NOT EXISTS idx_backups_created_at ON backups(created_at DESC);`;
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Credentials</Text>
             <Text style={styles.sectionDescription}>
-              Enter your Supabase project URL and anon key to enable cloud backups. Your data will be stored in your own Supabase instance.
+              Enter your Supabase project URL and anon key to enable cloud backups. Your credentials are securely stored and will persist even if you reinstall the app.
             </Text>
 
             <View style={styles.inputGroup}>

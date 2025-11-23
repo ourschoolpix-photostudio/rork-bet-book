@@ -1,10 +1,11 @@
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL_KEY = '@casino_tracker_supabase_url';
-const SUPABASE_KEY_KEY = '@casino_tracker_supabase_key';
+const SUPABASE_URL_KEY = 'casino_tracker_supabase_url';
+const SUPABASE_KEY_KEY = 'casino_tracker_supabase_key';
 
 export interface SupabaseConfig {
   url: string;
@@ -38,15 +39,25 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
 
   const loadSettings = async () => {
     try {
-      const [url, key] = await Promise.all([
-        AsyncStorage.getItem(SUPABASE_URL_KEY),
-        AsyncStorage.getItem(SUPABASE_KEY_KEY),
-      ]);
+      let url: string | null = null;
+      let key: string | null = null;
+
+      if (Platform.OS === 'web') {
+        url = localStorage.getItem(SUPABASE_URL_KEY);
+        key = localStorage.getItem(SUPABASE_KEY_KEY);
+      } else {
+        [url, key] = await Promise.all([
+          SecureStore.getItemAsync(SUPABASE_URL_KEY),
+          SecureStore.getItemAsync(SUPABASE_KEY_KEY),
+        ]);
+      }
 
       if (url) setSupabaseUrl(url);
       if (key) setSupabaseKey(key);
+      
+      console.log('✅ Loaded Supabase credentials from secure storage');
     } catch (error) {
-      console.error('Error loading settings:', error);
+      console.error('❌ Error loading settings:', error);
     } finally {
       setIsLoading(false);
     }
@@ -65,10 +76,15 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
         throw new Error(`Connection test failed: ${error.message}`);
       }
 
-      await Promise.all([
-        AsyncStorage.setItem(SUPABASE_URL_KEY, config.url),
-        AsyncStorage.setItem(SUPABASE_KEY_KEY, config.key),
-      ]);
+      if (Platform.OS === 'web') {
+        localStorage.setItem(SUPABASE_URL_KEY, config.url);
+        localStorage.setItem(SUPABASE_KEY_KEY, config.key);
+      } else {
+        await Promise.all([
+          SecureStore.setItemAsync(SUPABASE_URL_KEY, config.url),
+          SecureStore.setItemAsync(SUPABASE_KEY_KEY, config.key),
+        ]);
+      }
 
       setSupabaseUrl(config.url);
       setSupabaseKey(config.key);
@@ -83,16 +99,21 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
 
   const clearSupabaseConfig = useCallback(async (): Promise<void> => {
     try {
-      await Promise.all([
-        AsyncStorage.removeItem(SUPABASE_URL_KEY),
-        AsyncStorage.removeItem(SUPABASE_KEY_KEY),
-      ]);
+      if (Platform.OS === 'web') {
+        localStorage.removeItem(SUPABASE_URL_KEY);
+        localStorage.removeItem(SUPABASE_KEY_KEY);
+      } else {
+        await Promise.all([
+          SecureStore.deleteItemAsync(SUPABASE_URL_KEY),
+          SecureStore.deleteItemAsync(SUPABASE_KEY_KEY),
+        ]);
+      }
 
       setSupabaseUrl('');
       setSupabaseKey('');
       setSupabaseClient(null);
       
-      console.log('✅ Supabase credentials cleared');
+      console.log('✅ Supabase credentials cleared from secure storage');
     } catch (error) {
       console.error('❌ Error clearing Supabase config:', error);
       throw error;

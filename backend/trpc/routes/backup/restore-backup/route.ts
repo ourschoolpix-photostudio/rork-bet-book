@@ -1,6 +1,6 @@
 import { publicProcedure } from "@/backend/trpc/create-context";
 import { z } from "zod";
-import { backupsStore } from './create-backup/route';
+import { backupsStore } from '../create-backup/route';
 
 export const restoreBackupProcedure = publicProcedure
   .input(z.object({

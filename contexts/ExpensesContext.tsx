@@ -437,6 +437,49 @@ export function useYearToDateExpenses(userId: string) {
   }, [expenses, userId]);
 }
 
+export function useMonthlyBusinessExpenses(userId: string) {
+  const { expenses } = useExpenses();
+  
+  return useMemo(() => {
+    const now = new Date();
+    const easternDate = getEasternDate(now);
+    const firstDayOfMonth = getEasternStartOfDay(new Date(easternDate.year, easternDate.month, 1));
+    const lastDayOfMonth = getEasternStartOfDay(new Date(easternDate.year, easternDate.month + 1, 1));
+    
+    const businessExpenses = expenses.filter(e => {
+      if (e.userId !== userId) return false;
+      if (e.expenseType !== 'business') return false;
+      const expenseDate = new Date(e.date);
+      return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth;
+    });
+    
+    const total = businessExpenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    return { total, expenses: businessExpenses };
+  }, [expenses, userId]);
+}
+
+export function useYearToDateBusinessExpenses(userId: string) {
+  const { expenses } = useExpenses();
+  
+  return useMemo(() => {
+    const now = new Date();
+    const easternDate = getEasternDate(now);
+    const firstDayOfYear = getEasternStartOfDay(new Date(easternDate.year, 0, 1));
+    
+    const businessExpenses = expenses.filter(e => {
+      if (e.userId !== userId) return false;
+      if (e.expenseType !== 'business') return false;
+      const expenseDate = new Date(e.date);
+      return expenseDate >= firstDayOfYear;
+    });
+    
+    const total = businessExpenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    return { total, expenses: businessExpenses };
+  }, [expenses, userId]);
+}
+
 export interface MonthlyExpenseGroup {
   monthKey: string;
   monthLabel: string;

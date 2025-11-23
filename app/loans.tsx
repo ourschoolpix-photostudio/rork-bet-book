@@ -10,18 +10,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoansScreen() {
   const { currentUser } = useAuth();
-  const { loans, addLoan, addPayment, deleteLoan, deletePayment, updateLoan } = useLoans();
+  const { loans, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, addLoanAddition, deleteLoanAddition } = useLoans();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showAddLoanModal, setShowAddLoanModal] = useState<boolean>(false);
   const [showEditLoanModal, setShowEditLoanModal] = useState<string | null>(null);
   const [showAddPaymentModal, setShowAddPaymentModal] = useState<string | null>(null);
-  const [showAddOnModal, setShowAddOnModal] = useState<string | null>(null);
+
+  const [showAddToLoanModal, setShowAddToLoanModal] = useState<string | null>(null);
   const [borrowerName, setBorrowerName] = useState<string>('');
   const [loanAmount, setLoanAmount] = useState<string>('');
   const [loanDate, setLoanDate] = useState<string>('');
   const [paymentAmount, setPaymentAmount] = useState<string>('');
-  const [addOnAmount, setAddOnAmount] = useState<string>('');
+
+  const [addToLoanAmount, setAddToLoanAmount] = useState<string>('');
+  const [addToLoanDate, setAddToLoanDate] = useState<string>('');
 
   const userLoans = loans.filter(l => l.userId === currentUser?.id);
   const totalLoansRemaining = userLoans.reduce((sum, loan) => sum + (loan.amount - loan.amountPaid), 0);
@@ -31,10 +34,17 @@ export default function LoansScreen() {
     setter(numbers);
   };
 
-  const handleDateChange = (text: string) => {
+  const handleLoanDateChange = (text: string) => {
     const numbers = text.replace(/[^0-9]/g, '');
     if (numbers.length <= 8) {
       setLoanDate(numbers);
+    }
+  };
+
+  const handleAddToLoanDateChange = (text: string) => {
+    const numbers = text.replace(/[^0-9]/g, '');
+    if (numbers.length <= 8) {
+      setAddToLoanDate(numbers);
     }
   };
 
@@ -84,17 +94,26 @@ export default function LoansScreen() {
     setShowAddPaymentModal(null);
   };
 
-  const handleAddOn = async (loanId: string) => {
-    if (!addOnAmount) return;
+const handleAddToLoan = async (loanId: string) => {
+    if (!addToLoanAmount) return;
 
-    const loan = loans.find(l => l.id === loanId);
-    if (!loan) return;
-
-    const amount = parseFloat(addOnAmount) / 100;
-    const newTotalAmount = loan.amount + amount;
-    await updateLoan(loanId, loan.borrowerName, newTotalAmount, loan.loanDate);
-    setAddOnAmount('');
-    setShowAddOnModal(null);
+    const amount = parseFloat(addToLoanAmount) / 100;
+    let dateToUse: string | undefined = undefined;
+    
+    if (addToLoanDate) {
+      const numbers = addToLoanDate.replace(/[^0-9]/g, '');
+      if (numbers.length === 8) {
+        const month = numbers.slice(0, 2);
+        const day = numbers.slice(2, 4);
+        const year = numbers.slice(4, 8);
+        dateToUse = new Date(`${year}-${month}-${day}`).toISOString();
+      }
+    }
+    
+    await addLoanAddition(loanId, amount, dateToUse);
+    setAddToLoanAmount('');
+    setAddToLoanDate('');
+    setShowAddToLoanModal(null);
   };
 
   const handleEditLoan = (loanId: string) => {
@@ -161,6 +180,21 @@ export default function LoansScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => deletePayment(loanId, paymentId),
+        },
+      ]
+    );
+  };
+
+  const handleDeleteLoanAddition = (loanId: string, additionId: string) => {
+    Alert.alert(
+      'Delete Loan Addition',
+      'Are you sure you want to delete this loan addition?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteLoanAddition(loanId, additionId),
         },
       ]
     );
@@ -279,6 +313,32 @@ export default function LoansScreen() {
                       </View>
                     </View>
 
+                    {loan.loanAdditions && loan.loanAdditions.length > 0 && (
+                      <View style={styles.paymentsSection}>
+                        <Text style={styles.paymentsSectionTitle}>Loan History</Text>
+                        {[...loan.loanAdditions]
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .map((addition) => (
+                          <View key={addition.id} style={styles.paymentRow}>
+                            <View style={styles.paymentInfo}>
+                              <Text style={styles.paymentAmount}>${addition.amount.toFixed(2)}</Text>
+                              <Text style={styles.paymentDate}>{formatDate(addition.date)}</Text>
+                            </View>
+                            <Pressable
+                              onPress={() => handleDeleteLoanAddition(loan.id, addition.id)}
+                              style={({ pressed }) => [
+                                styles.deletePaymentButton,
+                                pressed && styles.deletePaymentButtonPressed,
+                              ]}
+                              testID={`delete-addition-${addition.id}`}
+                            >
+                              <Trash2 size={16} color="rgba(36, 0, 70, 0.6)" />
+                            </Pressable>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
                     {loan.payments.length > 0 && (
                       <View style={styles.paymentsSection}>
                         <Text style={styles.paymentsSectionTitle}>Payment History</Text>
@@ -319,14 +379,14 @@ export default function LoansScreen() {
                         <Pressable
                           style={({ pressed }) => [
                             styles.actionButton,
-                            styles.addOnButton,
+                            styles.addToLoanButton,
                             pressed && styles.actionButtonPressed,
                           ]}
-                          onPress={() => setShowAddOnModal(loan.id)}
-                          testID={`add-on-${loan.id}`}
+                          onPress={() => setShowAddToLoanModal(loan.id)}
+                          testID={`add-to-loan-${loan.id}`}
                         >
                           <PlusCircle size={18} color="#10B981" />
-                          <Text style={[styles.actionButtonText, styles.addOnButtonText]}>Add On</Text>
+                          <Text style={[styles.actionButtonText, styles.addToLoanButtonText]}>Add to Loan</Text>
                         </Pressable>
                       </View>
                     )}
@@ -383,7 +443,7 @@ export default function LoansScreen() {
                       placeholder="MM/DD/YYYY"
                       placeholderTextColor="rgba(36, 0, 70, 0.4)"
                       value={displayDate(loanDate)}
-                      onChangeText={handleDateChange}
+                      onChangeText={handleLoanDateChange}
                       keyboardType="numeric"
                       testID="loan-date-input"
                     />
@@ -532,7 +592,7 @@ export default function LoansScreen() {
                       placeholder="MM/DD/YYYY"
                       placeholderTextColor="rgba(36, 0, 70, 0.4)"
                       value={displayDate(loanDate)}
-                      onChangeText={handleDateChange}
+                      onChangeText={handleLoanDateChange}
                       keyboardType="numeric"
                       testID="edit-loan-date-input"
                     />
@@ -576,20 +636,20 @@ export default function LoansScreen() {
       </Modal>
 
       <Modal
-        visible={!!showAddOnModal}
+        visible={!!showAddToLoanModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowAddOnModal(null)}
+        onRequestClose={() => setShowAddToLoanModal(null)}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={styles.modal}>
-                <Text style={styles.modalTitle}>Add On Loan</Text>
+                <Text style={styles.modalTitle}>Add to Loan</Text>
                 
                 <View style={styles.modalBody}>
                   <Text style={styles.modalDescription}>
-                    Add an additional amount to this loan
+                    Add an additional amount to this existing loan
                   </Text>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Additional Amount</Text>
@@ -597,10 +657,22 @@ export default function LoansScreen() {
                       style={styles.textInput}
                       placeholder="$0.00"
                       placeholderTextColor="rgba(36, 0, 70, 0.4)"
-                      value={displayCurrency(addOnAmount)}
-                      onChangeText={(text) => handleCurrencyChange(text, setAddOnAmount)}
+                      value={displayCurrency(addToLoanAmount)}
+                      onChangeText={(text) => handleCurrencyChange(text, setAddToLoanAmount)}
                       keyboardType="numeric"
-                      testID="add-on-amount-input"
+                      testID="add-to-loan-amount-input"
+                    />
+                  </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Date of Addition (Optional)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="MM/DD/YYYY"
+                      placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                      value={displayDate(addToLoanDate)}
+                      onChangeText={handleAddToLoanDateChange}
+                      keyboardType="numeric"
+                      testID="add-to-loan-date-input"
                     />
                   </View>
                 </View>
@@ -613,8 +685,9 @@ export default function LoansScreen() {
                       pressed && styles.modalButtonPressed,
                     ]}
                     onPress={() => {
-                      setAddOnAmount('');
-                      setShowAddOnModal(null);
+                      setAddToLoanAmount('');
+                      setAddToLoanDate('');
+                      setShowAddToLoanModal(null);
                     }}
                   >
                     <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -623,14 +696,14 @@ export default function LoansScreen() {
                     style={({ pressed }) => [
                       styles.modalButton,
                       styles.confirmButton,
-                      !addOnAmount && styles.confirmButtonDisabled,
+                      !addToLoanAmount && styles.confirmButtonDisabled,
                       pressed && styles.modalButtonPressed,
                     ]}
-                    onPress={() => showAddOnModal && handleAddOn(showAddOnModal)}
-                    disabled={!addOnAmount}
-                    testID="confirm-add-on"
+                    onPress={() => showAddToLoanModal && handleAddToLoan(showAddToLoanModal)}
+                    disabled={!addToLoanAmount}
+                    testID="confirm-add-to-loan"
                   >
-                    <Text style={styles.confirmButtonText}>Add On</Text>
+                    <Text style={styles.confirmButtonText}>Add to Loan</Text>
                   </Pressable>
                 </View>
               </View>
@@ -858,7 +931,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#9D4EDD',
   },
-  addOnButton: {
+  addToLoanButton: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderColor: '#10B981',
   },
@@ -870,7 +943,7 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#9D4EDD',
   },
-  addOnButtonText: {
+  addToLoanButtonText: {
     color: '#10B981',
   },
   modalOverlay: {

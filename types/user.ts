@@ -35,9 +35,16 @@ export interface Loan {
   loanDate: string;
   createdAt: string;
   payments: LoanPayment[];
+  loanAdditions: LoanAddition[];
 }
 
 export interface LoanPayment {
+  id: string;
+  amount: number;
+  date: string;
+}
+
+export interface LoanAddition {
   id: string;
   amount: number;
   date: string;

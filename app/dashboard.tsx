@@ -4,12 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { LogOut, Edit2, X, Download, Upload } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, ImageBackground, Keyboard, Modal, Platform, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
   const { currentUser, logout, isLoading, updateProfile } = useAuth();
-  const { createBackup, restoreBackup } = useBackup();
+  const { createBackup, restoreFromCloud, restoreFromDevice } = useBackup();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showEditProfileModal, setShowEditProfileModal] = useState<boolean>(false);
@@ -64,20 +64,34 @@ export default function DashboardScreen() {
   };
 
   const handleRestoreBackup = async () => {
-    Alert.alert(
-      'Restore Backup',
-      'This will replace all current data with the backup. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Restore',
-          style: 'destructive',
-          onPress: async () => {
-            await restoreBackup();
+    if (Platform.OS === 'web') {
+      const choice = confirm('Choose restore source:\n\n1. Cloud (Supabase)\n2. Device (select file)\n\nClick OK for Cloud, Cancel for Device');
+      if (choice) {
+        await restoreFromCloud();
+      } else {
+        await restoreFromDevice();
+      }
+    } else {
+      Alert.alert(
+        'Restore Backup',
+        'Choose where to restore from:',
+        [
+          {
+            text: 'Cloud',
+            onPress: async () => {
+              await restoreFromCloud();
+            },
           },
-        },
-      ]
-    );
+          {
+            text: 'Device',
+            onPress: async () => {
+              await restoreFromDevice();
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    }
   };
 
 
