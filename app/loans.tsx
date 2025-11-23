@@ -958,8 +958,8 @@ const styles = StyleSheet.create({
     borderColor: '#9D4EDD',
   },
   addToLoanButton: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderColor: '#10B981',
+    backgroundColor: '#9D4EDD',
+    borderColor: '#9D4EDD',
   },
   actionButtonPressed: {
     opacity: 0.7,
@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
     color: '#9D4EDD',
   },
   addToLoanButtonText: {
-    color: '#10B981',
+    color: '#FFD700',
   },
   modalOverlay: {
     flex: 1,
