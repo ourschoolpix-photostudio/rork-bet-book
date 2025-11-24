@@ -336,7 +336,7 @@ const handleAddToLoan = async (loanId: string) => {
                           ]}
                           testID={`copy-loan-${loan.id}`}
                         >
-                          <Copy size={18} color="#10B981" />
+                          <Copy size={18} color="#FFD700" />
                         </Pressable>
                         <Pressable
                           onPress={() => handleEditLoan(loan.id)}
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
   copyButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
   },
   copyButtonPressed: {
     opacity: 0.7,
