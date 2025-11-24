@@ -32,7 +32,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (currentUser && !isLoading) {
-      router.replace('/dashboard');
+      router.replace('/(tabs)/dashboard');
     }
   }, [currentUser, isLoading, router]);
 
@@ -65,7 +65,7 @@ export default function LoginScreen() {
       }
 
       if (success) {
-        router.replace('/dashboard');
+        router.replace('/(tabs)/dashboard');
       }
     } catch (error) {
       console.error('Auth error:', error);

@@ -20,6 +20,8 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (!currentUser && !isLoading) {
       router.replace('/login');
+    } else if (currentUser && !isLoading) {
+      router.replace('/(tabs)/dashboard');
     }
   }, [currentUser, isLoading, router]);
 
