@@ -3,9 +3,10 @@ import { useLoans } from '@/contexts/LoanContext';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle } from 'lucide-react-native';
+import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle, Copy } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoansScreen() {
@@ -213,6 +214,52 @@ const handleAddToLoan = async (loanId: string) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const handleCopyLoanInfo = async (loan: any) => {
+    const remaining = loan.amount - loan.amountPaid;
+    const originalAmount = loan.originalAmount || loan.amount;
+    
+    let message = `📋 Loan Reminder\n\n`;
+    message += `Borrower: ${loan.borrowerName}\n`;
+    message += `Original Loan Date: ${formatDate(loan.loanDate)}\n\n`;
+    
+    message += `💰 Financial Summary:\n`;
+    message += `Original Loan: ${originalAmount.toFixed(2)}\n`;
+    
+    if (loan.loanAdditions && loan.loanAdditions.length > 0) {
+      const totalAdditions = loan.loanAdditions.reduce((sum: number, add: any) => sum + add.amount, 0);
+      message += `Additional Loans: ${totalAdditions.toFixed(2)}\n`;
+      message += `Total Loaned: ${loan.amount.toFixed(2)}\n`;
+    }
+    
+    if (loan.payments && loan.payments.length > 0) {
+      message += `Total Paid: ${loan.amountPaid.toFixed(2)}\n`;
+    }
+    
+    message += `Remaining Balance: ${remaining.toFixed(2)}\n\n`;
+    
+    if (loan.loanAdditions && loan.loanAdditions.length > 0) {
+      message += `📝 Loan History:\n`;
+      message += `• ${formatDate(loan.loanDate)} - ${originalAmount.toFixed(2)} (Original)\n`;
+      
+      [...loan.loanAdditions]
+        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .forEach((addition: any) => {
+          message += `• ${formatDate(addition.date)} - ${addition.amount.toFixed(2)} (Addition)\n`;
+        });
+      message += `\n`;
+    }
+    
+    if (loan.payments && loan.payments.length > 0) {
+      message += `💵 Payment History:\n`;
+      loan.payments.forEach((payment: any) => {
+        message += `• ${formatDate(payment.date)} - ${payment.amount.toFixed(2)}\n`;
+      });
+    }
+    
+    await Clipboard.setStringAsync(message);
+    Alert.alert('Copied!', 'Loan information has been copied to clipboard');
+  };
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -281,6 +328,16 @@ const handleAddToLoan = async (loanId: string) => {
                         <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
                       </View>
                       <View style={styles.loanHeaderActions}>
+                        <Pressable
+                          onPress={() => handleCopyLoanInfo(loan)}
+                          style={({ pressed }) => [
+                            styles.copyButton,
+                            pressed && styles.copyButtonPressed,
+                          ]}
+                          testID={`copy-loan-${loan.id}`}
+                        >
+                          <Copy size={18} color="#10B981" />
+                        </Pressable>
                         <Pressable
                           onPress={() => handleEditLoan(loan.id)}
                           style={({ pressed }) => [
@@ -836,6 +893,14 @@ const styles = StyleSheet.create({
   loanHeaderActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  copyButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  copyButtonPressed: {
+    opacity: 0.7,
   },
   editButton: {
     padding: 8,
