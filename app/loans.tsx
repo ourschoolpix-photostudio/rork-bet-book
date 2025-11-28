@@ -80,7 +80,8 @@ export default function LoansScreen() {
         const month = numbers.slice(0, 2);
         const day = numbers.slice(2, 4);
         const year = numbers.slice(4, 8);
-        dateToUse = new Date(`${year}-${month}-${day}`).toISOString();
+        const utcDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+        dateToUse = utcDate.toISOString();
       }
     }
     
@@ -112,7 +113,8 @@ const handleAddToLoan = async (loanId: string) => {
         const month = numbers.slice(0, 2);
         const day = numbers.slice(2, 4);
         const year = numbers.slice(4, 8);
-        dateToUse = new Date(`${year}-${month}-${day}`).toISOString();
+        const utcDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+        dateToUse = utcDate.toISOString();
       }
     }
     
@@ -131,9 +133,9 @@ const handleAddToLoan = async (loanId: string) => {
     setLoanAmount((originalAmount * 100).toString());
     
     const date = new Date(loan.loanDate);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = String(date.getFullYear());
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const year = String(date.getUTCFullYear());
     setLoanDate(`${month}${day}${year}`);
     
     setShowEditLoanModal(loanId);
@@ -154,7 +156,8 @@ const handleAddToLoan = async (loanId: string) => {
         const month = numbers.slice(0, 2);
         const day = numbers.slice(2, 4);
         const year = numbers.slice(4, 8);
-        dateToUse = new Date(`${year}-${month}-${day}`).toISOString();
+        const utcDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+        dateToUse = utcDate.toISOString();
         console.log('Edit loan - converted date:', dateToUse);
       }
     }
@@ -214,7 +217,12 @@ const handleAddToLoan = async (loanId: string) => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      timeZone: 'UTC'
+    });
   };
 
   const handleArchiveLoan = (loanId: string) => {
