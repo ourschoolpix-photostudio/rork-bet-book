@@ -191,6 +191,34 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     await loadLoans();
   }, [loadLoans]);
 
+  const archiveLoan = useCallback(async (loanId: string) => {
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    const updatedLoan: Loan = {
+      ...loan,
+      isArchived: true,
+    };
+
+    const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
+    setLoans(updatedLoans);
+    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+  }, [loans]);
+
+  const unarchiveLoan = useCallback(async (loanId: string) => {
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    const updatedLoan: Loan = {
+      ...loan,
+      isArchived: false,
+    };
+
+    const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
+    setLoans(updatedLoans);
+    await AsyncStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(updatedLoans));
+  }, [loans]);
+
   return useMemo(() => ({
     loans,
     isLoading,
@@ -202,5 +230,7 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
     reloadLoans,
     addLoanAddition,
     deleteLoanAddition,
-  }), [loans, isLoading, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, reloadLoans, addLoanAddition, deleteLoanAddition]);
+    archiveLoan,
+    unarchiveLoan,
+  }), [loans, isLoading, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, reloadLoans, addLoanAddition, deleteLoanAddition, archiveLoan, unarchiveLoan]);
 });

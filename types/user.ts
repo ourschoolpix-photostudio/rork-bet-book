@@ -37,6 +37,7 @@ export interface Loan {
   createdAt: string;
   payments: LoanPayment[];
   loanAdditions: LoanAddition[];
+  isArchived?: boolean;
 }
 
 export interface LoanPayment {

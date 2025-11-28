@@ -3,7 +3,7 @@ import { useLoans } from '@/contexts/LoanContext';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle, Copy } from 'lucide-react-native';
+import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle, Copy, Archive, ArchiveRestore } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoansScreen() {
   const { currentUser } = useAuth();
-  const { loans, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, addLoanAddition, deleteLoanAddition } = useLoans();
+  const { loans, addLoan, addPayment, deleteLoan, deletePayment, updateLoan, addLoanAddition, deleteLoanAddition, archiveLoan, unarchiveLoan } = useLoans();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showAddLoanModal, setShowAddLoanModal] = useState<boolean>(false);
@@ -26,11 +26,14 @@ export default function LoansScreen() {
 
   const [addToLoanAmount, setAddToLoanAmount] = useState<string>('');
   const [addToLoanDate, setAddToLoanDate] = useState<string>('');
+  const [showArchivedLoans, setShowArchivedLoans] = useState<boolean>(false);
 
   const userLoans = loans
     .filter(l => l.userId === currentUser?.id)
+    .filter(l => showArchivedLoans ? l.isArchived === true : l.isArchived !== true)
     .sort((a, b) => new Date(a.loanDate).getTime() - new Date(b.loanDate).getTime());
   const totalLoansRemaining = userLoans.reduce((sum, loan) => sum + (loan.amount - loan.amountPaid), 0);
+  const archivedCount = loans.filter(l => l.userId === currentUser?.id && l.isArchived === true).length;
 
   const handleCurrencyChange = (text: string, setter: (value: string) => void) => {
     const numbers = text.replace(/[^0-9]/g, '');
@@ -214,6 +217,24 @@ const handleAddToLoan = async (loanId: string) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const handleArchiveLoan = (loanId: string) => {
+    Alert.alert(
+      'Archive Loan',
+      'Move this paid-off loan to the archive?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Archive',
+          onPress: () => archiveLoan(loanId),
+        },
+      ]
+    );
+  };
+
+  const handleUnarchiveLoan = (loanId: string) => {
+    unarchiveLoan(loanId);
+  };
+
   const handleCopyLoanInfo = async (loan: any) => {
     const remaining = loan.amount - loan.amountPaid;
     const originalAmount = loan.originalAmount || loan.amount;
@@ -288,6 +309,21 @@ const handleAddToLoan = async (loanId: string) => {
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>LOANED OUT</Text>
             <Text style={styles.headerTotal}>${totalLoansRemaining.toFixed(2)}</Text>
+            {archivedCount > 0 && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.archiveToggle,
+                  pressed && styles.archiveTogglePressed,
+                ]}
+                onPress={() => setShowArchivedLoans(!showArchivedLoans)}
+                testID="toggle-archive-view"
+              >
+                <Archive size={14} color="#FFD700" />
+                <Text style={styles.archiveToggleText}>
+                  {showArchivedLoans ? 'Show Active' : `View Archive (${archivedCount})`}
+                </Text>
+              </Pressable>
+            )}
           </View>
           <Pressable
             style={({ pressed }) => [
@@ -463,6 +499,32 @@ const handleAddToLoan = async (loanId: string) => {
                           <Text style={[styles.actionButtonText, styles.addToLoanButtonText]}>Add to Loan</Text>
                         </Pressable>
                       </View>
+                    )}
+                    {isPaidOff && !showArchivedLoans && (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.archiveButton,
+                          pressed && styles.actionButtonPressed,
+                        ]}
+                        onPress={() => handleArchiveLoan(loan.id)}
+                        testID={`archive-loan-${loan.id}`}
+                      >
+                        <Archive size={18} color="#FFD700" />
+                        <Text style={styles.archiveButtonText}>Archive Loan</Text>
+                      </Pressable>
+                    )}
+                    {showArchivedLoans && (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.unarchiveButton,
+                          pressed && styles.actionButtonPressed,
+                        ]}
+                        onPress={() => handleUnarchiveLoan(loan.id)}
+                        testID={`unarchive-loan-${loan.id}`}
+                      >
+                        <ArchiveRestore size={18} color="#9D4EDD" />
+                        <Text style={styles.unarchiveButtonText}>Restore to Active</Text>
+                      </Pressable>
                     )}
                   </View>
                 );
@@ -1041,6 +1103,56 @@ const styles = StyleSheet.create({
   },
   addToLoanButtonText: {
     color: '#FFD700',
+  },
+  archiveToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    marginTop: 8,
+  },
+  archiveTogglePressed: {
+    opacity: 0.7,
+  },
+  archiveToggleText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#FFD700',
+  },
+  archiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderRadius: 12,
+    padding: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  archiveButtonText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+  },
+  unarchiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(157, 78, 221, 0.15)',
+    borderRadius: 12,
+    padding: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#9D4EDD',
+  },
+  unarchiveButtonText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#9D4EDD',
   },
   modalOverlay: {
     flex: 1,
