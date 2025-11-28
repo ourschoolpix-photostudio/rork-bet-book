@@ -3,8 +3,8 @@ import { useLoans } from '@/contexts/LoanContext';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle, Copy, Archive, ArchiveRestore } from 'lucide-react-native';
-import { useState } from 'react';
+import { ArrowLeft, Plus, Trash2, DollarSign, Pencil, PlusCircle, Copy, Archive, ArchiveRestore, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { useState, useMemo } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,11 +27,22 @@ export default function LoansScreen() {
   const [addToLoanAmount, setAddToLoanAmount] = useState<string>('');
   const [addToLoanDate, setAddToLoanDate] = useState<string>('');
   const [showArchivedLoans, setShowArchivedLoans] = useState<boolean>(false);
+  const [expandedLoanIds, setExpandedLoanIds] = useState<Set<string>>(new Set());
 
-  const userLoans = loans
-    .filter(l => l.userId === currentUser?.id)
-    .filter(l => showArchivedLoans ? l.isArchived === true : l.isArchived !== true)
-    .sort((a, b) => new Date(a.loanDate).getTime() - new Date(b.loanDate).getTime());
+  const userLoans = useMemo(() => {
+    return loans
+      .filter(l => l.userId === currentUser?.id)
+      .filter(l => showArchivedLoans ? l.isArchived === true : l.isArchived !== true)
+      .sort((a, b) => {
+        if (showArchivedLoans) {
+          const nameCompare = a.borrowerName.localeCompare(b.borrowerName);
+          if (nameCompare !== 0) return nameCompare;
+          return new Date(a.loanDate).getTime() - new Date(b.loanDate).getTime();
+        }
+        return new Date(a.loanDate).getTime() - new Date(b.loanDate).getTime();
+      });
+  }, [loans, currentUser?.id, showArchivedLoans]);
+
   const totalLoansRemaining = userLoans.reduce((sum, loan) => sum + (loan.amount - loan.amountPaid), 0);
   const archivedCount = loans.filter(l => l.userId === currentUser?.id && l.isArchived === true).length;
 
@@ -289,6 +300,18 @@ const handleAddToLoan = async (loanId: string) => {
     Alert.alert('Copied!', 'Loan information has been copied to clipboard');
   };
 
+  const toggleExpanded = (loanId: string) => {
+    if (showArchivedLoans) {
+      const newSet = new Set(expandedLoanIds);
+      if (expandedLoanIds.has(loanId)) {
+        newSet.delete(loanId);
+      } else {
+        newSet.add(loanId);
+      }
+      setExpandedLoanIds(newSet);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -363,176 +386,197 @@ const handleAddToLoan = async (loanId: string) => {
               {userLoans.map((loan) => {
                 const remaining = loan.amount - loan.amountPaid;
                 const isPaidOff = remaining <= 0;
+                const isExpanded = expandedLoanIds.has(loan.id);
 
                 return (
                   <View key={loan.id} style={styles.loanCard}>
-                    <View style={styles.loanHeader}>
-                      <View style={styles.loanHeaderLeft}>
-                        <Text style={styles.borrowerName}>{loan.borrowerName}</Text>
-                        <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
-                      </View>
-                      <View style={styles.loanHeaderActions}>
-                        <Pressable
-                          onPress={() => handleCopyLoanInfo(loan)}
-                          style={({ pressed }) => [
-                            styles.copyButton,
-                            pressed && styles.copyButtonPressed,
-                          ]}
-                          testID={`copy-loan-${loan.id}`}
-                        >
-                          <Copy size={18} color="#FFD700" />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => handleEditLoan(loan.id)}
-                          style={({ pressed }) => [
-                            styles.editButton,
-                            pressed && styles.editButtonPressed,
-                          ]}
-                          testID={`edit-loan-${loan.id}`}
-                        >
-                          <Pencil size={18} color="#9D4EDD" />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => handleDeleteLoan(loan.id)}
-                          style={({ pressed }) => [
-                            styles.deleteButton,
-                            pressed && styles.deleteButtonPressed,
-                          ]}
-                          testID={`delete-loan-${loan.id}`}
-                        >
-                          <Trash2 size={20} color="#000000" />
-                        </Pressable>
-                      </View>
-                    </View>
-
-                    <View style={styles.loanStats}>
-                      <View style={styles.loanStatItem}>
-                        <Text style={styles.loanStatLabel}>Loaned</Text>
-                        <Text style={styles.loanStatValue}>${loan.amount.toFixed(2)}</Text>
-                      </View>
-                      <View style={styles.loanStatItem}>
-                        <Text style={styles.loanStatLabel}>Paid</Text>
-                        <Text style={styles.loanStatValue}>${loan.amountPaid.toFixed(2)}</Text>
-                      </View>
-                      <View style={styles.loanStatItem}>
-                        <Text style={styles.loanStatLabel}>Remaining</Text>
-                        <Text style={[styles.loanStatValue, isPaidOff ? styles.paidOffText : styles.remainingText]}>
-                          ${remaining.toFixed(2)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.paymentsSection}>
-                      <Text style={styles.paymentsSectionTitle}>Loan History</Text>
-                      <View style={styles.paymentRow}>
-                        <View style={styles.paymentInfo}>
-                          <Text style={styles.paymentAmount}>${(loan.originalAmount || loan.amount).toFixed(2)}</Text>
-                          <Text style={styles.paymentDate}>{formatDate(loan.loanDate)}</Text>
+                    <Pressable
+                      onPress={() => toggleExpanded(loan.id)}
+                      style={styles.loanHeaderWrapper}
+                      disabled={!showArchivedLoans}
+                    >
+                      <View style={styles.loanHeader}>
+                        <View style={styles.loanHeaderLeft}>
+                          <Text style={styles.borrowerName}>{loan.borrowerName}</Text>
+                          <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
                         </View>
-                        <View style={styles.originalLoanBadge}>
-                          <Text style={styles.originalLoanBadgeText}>Original</Text>
-                        </View>
+                        {showArchivedLoans && (
+                          <View style={styles.expandIcon}>
+                            {isExpanded ? (
+                              <ChevronUp size={20} color="#9D4EDD" />
+                            ) : (
+                              <ChevronDown size={20} color="#9D4EDD" />
+                            )}
+                          </View>
+                        )}
                       </View>
-                      {loan.loanAdditions && loan.loanAdditions.length > 0 && (
-                        [...loan.loanAdditions]
-                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                          .map((addition) => (
-                          <View key={addition.id} style={styles.paymentRow}>
+                    </Pressable>
+
+                    {(!showArchivedLoans || isExpanded) && (
+                      <>
+                        <View style={styles.loanHeaderActionsRow}>
+                          <Pressable
+                            onPress={() => handleCopyLoanInfo(loan)}
+                            style={({ pressed }) => [
+                              styles.copyButton,
+                              pressed && styles.copyButtonPressed,
+                            ]}
+                            testID={`copy-loan-${loan.id}`}
+                          >
+                            <Copy size={18} color="#FFD700" />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleEditLoan(loan.id)}
+                            style={({ pressed }) => [
+                              styles.editButton,
+                              pressed && styles.editButtonPressed,
+                            ]}
+                            testID={`edit-loan-${loan.id}`}
+                          >
+                            <Pencil size={18} color="#9D4EDD" />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleDeleteLoan(loan.id)}
+                            style={({ pressed }) => [
+                              styles.deleteButton,
+                              pressed && styles.deleteButtonPressed,
+                            ]}
+                            testID={`delete-loan-${loan.id}`}
+                          >
+                            <Trash2 size={20} color="#000000" />
+                          </Pressable>
+                        </View>
+
+                        <View style={styles.loanStats}>
+                          <View style={styles.loanStatItem}>
+                            <Text style={styles.loanStatLabel}>Loaned</Text>
+                            <Text style={styles.loanStatValue}>${loan.amount.toFixed(2)}</Text>
+                          </View>
+                          <View style={styles.loanStatItem}>
+                            <Text style={styles.loanStatLabel}>Paid</Text>
+                            <Text style={styles.loanStatValue}>${loan.amountPaid.toFixed(2)}</Text>
+                          </View>
+                          <View style={styles.loanStatItem}>
+                            <Text style={styles.loanStatLabel}>Remaining</Text>
+                            <Text style={[styles.loanStatValue, isPaidOff ? styles.paidOffText : styles.remainingText]}>
+                              ${remaining.toFixed(2)}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.paymentsSection}>
+                          <Text style={styles.paymentsSectionTitle}>Loan History</Text>
+                          <View style={styles.paymentRow}>
                             <View style={styles.paymentInfo}>
-                              <Text style={styles.paymentAmount}>${addition.amount.toFixed(2)}</Text>
-                              <Text style={styles.paymentDate}>{formatDate(addition.date)}</Text>
+                              <Text style={styles.paymentAmount}>${(loan.originalAmount || loan.amount).toFixed(2)}</Text>
+                              <Text style={styles.paymentDate}>{formatDate(loan.loanDate)}</Text>
                             </View>
+                            <View style={styles.originalLoanBadge}>
+                              <Text style={styles.originalLoanBadgeText}>Original</Text>
+                            </View>
+                          </View>
+                          {loan.loanAdditions && loan.loanAdditions.length > 0 && (
+                            [...loan.loanAdditions]
+                              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                              .map((addition) => (
+                              <View key={addition.id} style={styles.paymentRow}>
+                                <View style={styles.paymentInfo}>
+                                  <Text style={styles.paymentAmount}>${addition.amount.toFixed(2)}</Text>
+                                  <Text style={styles.paymentDate}>{formatDate(addition.date)}</Text>
+                                </View>
+                                <Pressable
+                                  onPress={() => handleDeleteLoanAddition(loan.id, addition.id)}
+                                  style={({ pressed }) => [
+                                    styles.deletePaymentButton,
+                                    pressed && styles.deletePaymentButtonPressed,
+                                  ]}
+                                  testID={`delete-addition-${addition.id}`}
+                                >
+                                  <Trash2 size={16} color="rgba(36, 0, 70, 0.6)" />
+                                </Pressable>
+                              </View>
+                            ))
+                          )}
+                        </View>
+
+                        {loan.payments.length > 0 && (
+                          <View style={styles.paymentsSection}>
+                            <Text style={styles.paymentsSectionTitle}>Payment History</Text>
+                            {loan.payments.map((payment) => (
+                              <View key={payment.id} style={styles.paymentRow}>
+                                <View style={styles.paymentInfo}>
+                                  <Text style={styles.paymentAmount}>${payment.amount.toFixed(2)}</Text>
+                                  <Text style={styles.paymentDate}>{formatDate(payment.date)}</Text>
+                                </View>
+                                <Pressable
+                                  onPress={() => handleDeletePayment(loan.id, payment.id)}
+                                  style={({ pressed }) => [
+                                    styles.deletePaymentButton,
+                                    pressed && styles.deletePaymentButtonPressed,
+                                  ]}
+                                  testID={`delete-payment-${payment.id}`}
+                                >
+                                  <Trash2 size={16} color="rgba(36, 0, 70, 0.6)" />
+                                </Pressable>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                        {!isPaidOff && (
+                          <View style={styles.actionsRow}>
                             <Pressable
-                              onPress={() => handleDeleteLoanAddition(loan.id, addition.id)}
                               style={({ pressed }) => [
-                                styles.deletePaymentButton,
-                                pressed && styles.deletePaymentButtonPressed,
+                                styles.actionButton,
+                                pressed && styles.actionButtonPressed,
                               ]}
-                              testID={`delete-addition-${addition.id}`}
+                              onPress={() => setShowAddPaymentModal(loan.id)}
+                              testID={`add-payment-${loan.id}`}
                             >
-                              <Trash2 size={16} color="rgba(36, 0, 70, 0.6)" />
+                              <Plus size={18} color="#9D4EDD" />
+                              <Text style={styles.actionButtonText}>Add Payment</Text>
+                            </Pressable>
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.actionButton,
+                                styles.addToLoanButton,
+                                pressed && styles.actionButtonPressed,
+                              ]}
+                              onPress={() => setShowAddToLoanModal(loan.id)}
+                              testID={`add-to-loan-${loan.id}`}
+                            >
+                              <PlusCircle size={18} color="#10B981" />
+                              <Text style={[styles.actionButtonText, styles.addToLoanButtonText]}>Add to Loan</Text>
                             </Pressable>
                           </View>
-                        ))
-                      )}
-                    </View>
-
-                    {loan.payments.length > 0 && (
-                      <View style={styles.paymentsSection}>
-                        <Text style={styles.paymentsSectionTitle}>Payment History</Text>
-                        {loan.payments.map((payment) => (
-                          <View key={payment.id} style={styles.paymentRow}>
-                            <View style={styles.paymentInfo}>
-                              <Text style={styles.paymentAmount}>${payment.amount.toFixed(2)}</Text>
-                              <Text style={styles.paymentDate}>{formatDate(payment.date)}</Text>
-                            </View>
-                            <Pressable
-                              onPress={() => handleDeletePayment(loan.id, payment.id)}
-                              style={({ pressed }) => [
-                                styles.deletePaymentButton,
-                                pressed && styles.deletePaymentButtonPressed,
-                              ]}
-                              testID={`delete-payment-${payment.id}`}
-                            >
-                              <Trash2 size={16} color="rgba(36, 0, 70, 0.6)" />
-                            </Pressable>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-
-                    {!isPaidOff && (
-                      <View style={styles.actionsRow}>
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.actionButton,
-                            pressed && styles.actionButtonPressed,
-                          ]}
-                          onPress={() => setShowAddPaymentModal(loan.id)}
-                          testID={`add-payment-${loan.id}`}
-                        >
-                          <Plus size={18} color="#9D4EDD" />
-                          <Text style={styles.actionButtonText}>Add Payment</Text>
-                        </Pressable>
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.actionButton,
-                            styles.addToLoanButton,
-                            pressed && styles.actionButtonPressed,
-                          ]}
-                          onPress={() => setShowAddToLoanModal(loan.id)}
-                          testID={`add-to-loan-${loan.id}`}
-                        >
-                          <PlusCircle size={18} color="#10B981" />
-                          <Text style={[styles.actionButtonText, styles.addToLoanButtonText]}>Add to Loan</Text>
-                        </Pressable>
-                      </View>
-                    )}
-                    {isPaidOff && !showArchivedLoans && (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.archiveButton,
-                          pressed && styles.actionButtonPressed,
-                        ]}
-                        onPress={() => handleArchiveLoan(loan.id)}
-                        testID={`archive-loan-${loan.id}`}
-                      >
-                        <Archive size={18} color="#FFD700" />
-                        <Text style={styles.archiveButtonText}>Archive Loan</Text>
-                      </Pressable>
-                    )}
-                    {showArchivedLoans && (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.unarchiveButton,
-                          pressed && styles.actionButtonPressed,
-                        ]}
-                        onPress={() => handleUnarchiveLoan(loan.id)}
-                        testID={`unarchive-loan-${loan.id}`}
-                      >
-                        <ArchiveRestore size={18} color="#9D4EDD" />
-                        <Text style={styles.unarchiveButtonText}>Restore to Active</Text>
-                      </Pressable>
+                        )}
+                        {isPaidOff && !showArchivedLoans && (
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.archiveButton,
+                              pressed && styles.actionButtonPressed,
+                            ]}
+                            onPress={() => handleArchiveLoan(loan.id)}
+                            testID={`archive-loan-${loan.id}`}
+                          >
+                            <Archive size={18} color="#FFD700" />
+                            <Text style={styles.archiveButtonText}>Archive Loan</Text>
+                          </Pressable>
+                        )}
+                        {showArchivedLoans && (
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.unarchiveButton,
+                              pressed && styles.actionButtonPressed,
+                            ]}
+                            onPress={() => handleUnarchiveLoan(loan.id)}
+                            testID={`unarchive-loan-${loan.id}`}
+                          >
+                            <ArchiveRestore size={18} color="#9D4EDD" />
+                            <Text style={styles.unarchiveButtonText}>Restore to Active</Text>
+                          </Pressable>
+                        )}
+                      </>
                     )}
                   </View>
                 );
@@ -951,6 +995,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
     gap: 16,
   },
+  loanHeaderWrapper: {
+    marginBottom: 0,
+  },
   loanHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -960,9 +1007,13 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  loanHeaderActions: {
+  expandIcon: {
+    padding: 4,
+  },
+  loanHeaderActionsRow: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 12,
   },
   copyButton: {
     padding: 8,
