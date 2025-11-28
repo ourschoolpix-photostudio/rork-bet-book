@@ -172,6 +172,7 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
       originalAmount: amount,
       amount: amount + totalAdditions,
       loanDate,
+      isArchived: loan.isArchived,
     };
 
     const updatedLoans = loans.map(l => l.id === loanId ? updatedLoan : l);
@@ -182,6 +183,7 @@ export const [LoanProvider, useLoans] = createContextHook(() => {
       console.log('Saving loans JSON:', jsonString.substring(0, 100));
       await AsyncStorage.setItem(LOANS_STORAGE_KEY, jsonString);
       console.log('Loan updated successfully');
+      console.log('Loan isArchived status:', loan.isArchived);
     } catch (error) {
       console.error('Error saving updated loan:', error);
     }
