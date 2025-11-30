@@ -818,7 +818,7 @@ const styles = StyleSheet.create({
   vehicleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 16,
   },
   archiveHeader: {
@@ -832,9 +832,10 @@ const styles = StyleSheet.create({
   },
   vehicleHeaderLeft: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
     flex: 1,
+    marginRight: 12,
   },
   archiveHeaderLeft: {
     flexDirection: 'row',
@@ -890,6 +891,7 @@ const styles = StyleSheet.create({
   vehicleActions: {
     alignItems: 'flex-end',
     gap: 8,
+    flexShrink: 0,
   },
   totalExpenses: {
     fontSize: 18,
