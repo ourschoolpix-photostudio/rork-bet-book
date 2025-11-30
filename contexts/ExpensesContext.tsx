@@ -298,7 +298,8 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     startingMileage: number,
     color?: string,
     licensePlate?: string,
-    yearStartMileage?: number
+    yearStartMileage?: number,
+    yearEndingMileage?: number
   ) => {
     const newVehicle: Vehicle = {
       id: `vehicle-${Date.now()}`,
@@ -312,6 +313,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
       startingMileage,
       currentMileage: startingMileage,
       yearStartMileage: yearStartMileage || startingMileage,
+      yearEndingMileage,
       createdAt: new Date().toISOString(),
       isActive: true,
     };
@@ -331,11 +333,12 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     currentMileage: number,
     color?: string,
     licensePlate?: string,
-    yearStartMileage?: number
+    yearStartMileage?: number,
+    yearEndingMileage?: number
   ) => {
     const updatedVehicles = vehicles.map(v =>
       v.id === vehicleId
-        ? { ...v, name, make, model, year, color, licensePlate, startingMileage, currentMileage, yearStartMileage }
+        ? { ...v, name, make, model, year, color, licensePlate, startingMileage, currentMileage, yearStartMileage, yearEndingMileage }
         : v
     );
     setVehicles(updatedVehicles);

@@ -14,7 +14,8 @@ interface AddVehicleModalProps {
     startingMileage: number,
     color?: string,
     licensePlate?: string,
-    yearStartMileage?: number
+    yearStartMileage?: number,
+    yearEndingMileage?: number
   ) => Promise<void>;
   editingVehicle?: Vehicle | null;
 }
@@ -28,6 +29,7 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
   const [licensePlate, setLicensePlate] = useState<string>('');
   const [startingMileage, setStartingMileage] = useState<string>('');
   const [yearStartMileage, setYearStartMileage] = useState<string>('');
+  const [yearEndingMileage, setYearEndingMileage] = useState<string>('');
 
   useEffect(() => {
     if (editingVehicle) {
@@ -39,6 +41,7 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
       setLicensePlate(editingVehicle.licensePlate || '');
       setStartingMileage(editingVehicle.startingMileage.toString());
       setYearStartMileage(editingVehicle.yearStartMileage?.toString() || editingVehicle.startingMileage.toString());
+      setYearEndingMileage(editingVehicle.yearEndingMileage?.toString() || '');
     } else {
       setName('');
       setMake('');
@@ -48,6 +51,7 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
       setLicensePlate('');
       setStartingMileage('');
       setYearStartMileage('');
+      setYearEndingMileage('');
     }
   }, [editingVehicle, visible]);
 
@@ -55,6 +59,7 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
     const parsedYear = parseInt(year);
     const parsedStartingMileage = parseInt(startingMileage);
     const parsedYearStartMileage = yearStartMileage ? parseInt(yearStartMileage) : undefined;
+    const parsedYearEndingMileage = yearEndingMileage ? parseInt(yearEndingMileage) : undefined;
 
     if (!name.trim() || !make.trim() || !model.trim()) {
       return;
@@ -76,7 +81,8 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
       parsedStartingMileage,
       color.trim() || undefined,
       licensePlate.trim() || undefined,
-      parsedYearStartMileage
+      parsedYearStartMileage,
+      parsedYearEndingMileage
     );
 
     setName('');
@@ -87,6 +93,7 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
     setLicensePlate('');
     setStartingMileage('');
     setYearStartMileage('');
+    setYearEndingMileage('');
     onClose();
   };
 
@@ -214,7 +221,7 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
                   />
                 </View>
 
-                <View style={[styles.inputGroup, styles.lastInputGroup]}>
+                <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Year Start Mileage (Optional)</Text>
                   <Text style={styles.inputHint}>Mileage at the beginning of this year for tracking purposes</Text>
                   <TextInput
@@ -223,6 +230,19 @@ export default function AddVehicleModal({ visible, onClose, onSubmit, editingVeh
                     placeholderTextColor="rgba(36, 0, 70, 0.4)"
                     value={yearStartMileage}
                     onChangeText={(text) => setYearStartMileage(text.replace(/[^0-9]/g, ''))}
+                    keyboardType="number-pad"
+                  />
+                </View>
+
+                <View style={[styles.inputGroup, styles.lastInputGroup]}>
+                  <Text style={styles.inputLabel}>Year Ending Mileage (Optional)</Text>
+                  <Text style={styles.inputHint}>Mileage at the end of the year - edit this at year end to calculate total miles driven</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter at end of year"
+                    placeholderTextColor="rgba(36, 0, 70, 0.4)"
+                    value={yearEndingMileage}
+                    onChangeText={(text) => setYearEndingMileage(text.replace(/[^0-9]/g, ''))}
                     keyboardType="number-pad"
                   />
                 </View>

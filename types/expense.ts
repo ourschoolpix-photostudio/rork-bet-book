@@ -66,6 +66,7 @@ export interface Vehicle {
   startingMileage: number;
   currentMileage: number;
   yearStartMileage?: number;
+  yearEndingMileage?: number;
   createdAt: string;
   isActive: boolean;
 }

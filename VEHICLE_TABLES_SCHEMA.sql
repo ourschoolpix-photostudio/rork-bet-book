@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   starting_mileage INTEGER NOT NULL CHECK (starting_mileage >= 0),
   current_mileage INTEGER NOT NULL CHECK (current_mileage >= 0),
   year_start_mileage INTEGER CHECK (year_start_mileage >= 0),
+  year_ending_mileage INTEGER CHECK (year_ending_mileage >= 0),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL,
   is_active BOOLEAN DEFAULT true,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -144,7 +145,8 @@ SELECT
   v.model,
   v.current_mileage,
   v.year_start_mileage,
-  v.current_mileage - COALESCE(v.year_start_mileage, v.starting_mileage) as year_miles_driven,
+  v.year_ending_mileage,
+  COALESCE(v.year_ending_mileage, v.current_mileage) - COALESCE(v.year_start_mileage, v.starting_mileage) as year_miles_driven,
   COUNT(ve.id) as total_expenses,
   COALESCE(SUM(ve.amount), 0) as total_expense_amount,
   COALESCE(SUM(CASE WHEN ve.category = 'Gas' THEN ve.amount ELSE 0 END), 0) as gas_expenses,
@@ -220,7 +222,7 @@ BEGIN
   RAISE NOTICE '   • Track multiple vehicles per user';
   RAISE NOTICE '   • Support for 7 expense categories (Gas, Repair, Maintenance, etc.)';
   RAISE NOTICE '   • Detailed gas tracking with gallons and price per gallon';
-  RAISE NOTICE '   • Year-to-date mileage tracking';
+  RAISE NOTICE '   • Year-to-date mileage tracking with year ending mileage support';
   RAISE NOTICE '   • Cascade delete - removing vehicle removes all its expenses';
   RAISE NOTICE '';
   RAISE NOTICE '✨ Your vehicle expense tracking is ready to use!';

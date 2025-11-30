@@ -52,7 +52,8 @@ export default function VehiclesScreen() {
     startingMileage: number,
     color?: string,
     licensePlate?: string,
-    yearStartMileage?: number
+    yearStartMileage?: number,
+    yearEndingMileage?: number
   ) => {
     if (currentUser) {
       await addVehicle(
@@ -64,7 +65,8 @@ export default function VehiclesScreen() {
         startingMileage,
         color,
         licensePlate,
-        yearStartMileage
+        yearStartMileage,
+        yearEndingMileage
       );
     }
   };
@@ -82,7 +84,8 @@ export default function VehiclesScreen() {
     startingMileage: number,
     color?: string,
     licensePlate?: string,
-    yearStartMileage?: number
+    yearStartMileage?: number,
+    yearEndingMileage?: number
   ) => {
     if (editingVehicle) {
       await updateVehicle(
@@ -95,7 +98,8 @@ export default function VehiclesScreen() {
         editingVehicle.currentMileage,
         color,
         licensePlate,
-        yearStartMileage
+        yearStartMileage,
+        yearEndingMileage
       );
     }
   };
@@ -216,10 +220,14 @@ export default function VehiclesScreen() {
     return getVehicleExpenses(vehicleId).reduce((sum, e) => sum + e.amount, 0);
   };
 
-  const getCurrentYear = () => new Date().getFullYear();
-
   const getYearMileage = (vehicle: Vehicle) => {
     const yearStart = vehicle.yearStartMileage || vehicle.startingMileage;
+    const yearEnd = vehicle.yearEndingMileage;
+    
+    if (yearEnd && yearEnd > yearStart) {
+      return yearEnd - yearStart;
+    }
+    
     const current = vehicle.currentMileage;
     return current - yearStart;
   };
@@ -327,9 +335,16 @@ export default function VehiclesScreen() {
                             Current: {vehicle.currentMileage.toLocaleString()} mi
                           </Text>
                           <Text style={styles.mileageText}>
-                            {getCurrentYear()} YTD: {yearMileage.toLocaleString()} mi
+                            Year Driven: {yearMileage.toLocaleString()} mi
                           </Text>
                         </View>
+                        {vehicle.yearEndingMileage && vehicle.yearEndingMileage > 0 && (
+                          <View style={styles.yearEndBadge}>
+                            <Text style={styles.yearEndText}>
+                              Year End: {vehicle.yearEndingMileage.toLocaleString()} mi
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                     <View style={styles.vehicleActions}>
@@ -585,6 +600,21 @@ const styles = StyleSheet.create({
   mileageText: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  yearEndBadge: {
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    borderRadius: 6,
+    alignSelf: 'flex-start' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+  },
+  yearEndText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#FFD700',
   },
   vehicleActions: {
     alignItems: 'flex-end',
