@@ -27,6 +27,8 @@ const STORAGE_KEYS = [
   '@casino_tracker_expenses',
   '@casino_tracker_recurring_bills',
   '@casino_tracker_utilities',
+  '@casino_tracker_vehicles',
+  '@casino_tracker_vehicle_expenses',
   '@casino_tracker_supabase_url',
   '@casino_tracker_supabase_key',
 ];

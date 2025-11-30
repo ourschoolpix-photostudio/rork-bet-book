@@ -1,0 +1,692 @@
+import { useAuth } from '@/contexts/AuthContext';
+import { useExpenses } from '@/contexts/ExpensesContext';
+import { Vehicle, VehicleExpense } from '@/types/expense';
+import { WALLPAPER_URL } from '@/constants/wallpaper';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Car, Plus, Edit2, Trash2, ChevronRight, DollarSign } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AddVehicleModal from '@/components/AddVehicleModal';
+import VehicleExpenseModal from '@/components/VehicleExpenseModal';
+
+export default function VehiclesScreen() {
+  const { currentUser } = useAuth();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { vehicles, vehicleExpenses, addVehicle, updateVehicle, deleteVehicle, addVehicleExpense, updateVehicleExpense, deleteVehicleExpense } = useExpenses();
+
+  const [showAddVehicleModal, setShowAddVehicleModal] = useState<boolean>(false);
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [editingExpense, setEditingExpense] = useState<VehicleExpense | null>(null);
+  const [expandedVehicles, setExpandedVehicles] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!currentUser) {
+      router.replace('/login');
+    }
+  }, [currentUser, router]);
+
+  const userVehicles = vehicles.filter(v => v.userId === currentUser?.id && v.isActive);
+  const userExpenses = vehicleExpenses.filter(e => e.userId === currentUser?.id);
+
+  const toggleVehicleExpanded = (vehicleId: string) => {
+    setExpandedVehicles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(vehicleId)) {
+        newSet.delete(vehicleId);
+      } else {
+        newSet.add(vehicleId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddVehicle = async (
+    name: string,
+    make: string,
+    model: string,
+    year: number,
+    startingMileage: number,
+    color?: string,
+    licensePlate?: string,
+    yearStartMileage?: number
+  ) => {
+    if (currentUser) {
+      await addVehicle(
+        currentUser.id,
+        name,
+        make,
+        model,
+        year,
+        startingMileage,
+        color,
+        licensePlate,
+        yearStartMileage
+      );
+    }
+  };
+
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setShowAddVehicleModal(true);
+  };
+
+  const handleUpdateVehicle = async (
+    name: string,
+    make: string,
+    model: string,
+    year: number,
+    startingMileage: number,
+    color?: string,
+    licensePlate?: string,
+    yearStartMileage?: number
+  ) => {
+    if (editingVehicle) {
+      await updateVehicle(
+        editingVehicle.id,
+        name,
+        make,
+        model,
+        year,
+        startingMileage,
+        editingVehicle.currentMileage,
+        color,
+        licensePlate,
+        yearStartMileage
+      );
+    }
+  };
+
+  const handleDeleteVehicle = (vehicleId: string) => {
+    Alert.alert(
+      'Delete Vehicle',
+      'Are you sure you want to delete this vehicle? This will also delete all associated expenses.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteVehicle(vehicleId);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleAddExpense = async (
+    vehicleId: string,
+    category: any,
+    amount: number,
+    description: string,
+    date: Date,
+    merchant?: string,
+    mileage?: number,
+    gallons?: number,
+    pricePerGallon?: number,
+    notes?: string
+  ) => {
+    if (currentUser) {
+      await addVehicleExpense(
+        currentUser.id,
+        vehicleId,
+        category,
+        amount,
+        description,
+        date,
+        merchant,
+        mileage,
+        gallons,
+        pricePerGallon,
+        notes
+      );
+    }
+  };
+
+  const handleUpdateExpense = async (
+    vehicleId: string,
+    category: any,
+    amount: number,
+    description: string,
+    date: Date,
+    merchant?: string,
+    mileage?: number,
+    gallons?: number,
+    pricePerGallon?: number,
+    notes?: string
+  ) => {
+    if (editingExpense) {
+      await updateVehicleExpense(
+        editingExpense.id,
+        category,
+        amount,
+        description,
+        date,
+        merchant,
+        mileage,
+        gallons,
+        pricePerGallon,
+        notes
+      );
+    }
+  };
+
+  const handleDeleteExpense = (expenseId: string) => {
+    Alert.alert(
+      'Delete Expense',
+      'Are you sure you want to delete this expense?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteVehicleExpense(expenseId);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditExpense = (expense: VehicleExpense) => {
+    setEditingExpense(expense);
+    setShowAddExpenseModal(true);
+  };
+
+  const handleCloseVehicleModal = () => {
+    setShowAddVehicleModal(false);
+    setEditingVehicle(null);
+  };
+
+  const handleCloseExpenseModal = () => {
+    setShowAddExpenseModal(false);
+    setEditingExpense(null);
+  };
+
+  const getVehicleExpenses = (vehicleId: string) => {
+    return userExpenses
+      .filter(e => e.vehicleId === vehicleId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  const getVehicleTotalExpenses = (vehicleId: string) => {
+    return getVehicleExpenses(vehicleId).reduce((sum, e) => sum + e.amount, 0);
+  };
+
+  const getCurrentYear = () => new Date().getFullYear();
+
+  const getYearMileage = (vehicle: Vehicle) => {
+    const yearStart = vehicle.yearStartMileage || vehicle.startingMileage;
+    const current = vehicle.currentMileage;
+    return current - yearStart;
+  };
+
+  if (!currentUser) {
+    return null;
+  }
+
+  return (
+    <View style={styles.container}>
+      <ImageBackground
+        source={{ uri: WALLPAPER_URL }}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      >
+        <View style={styles.purpleOverlay} />
+      </ImageBackground>
+      <LinearGradient
+        colors={['rgba(157, 78, 221, 0.7)', 'rgba(123, 44, 191, 0.7)', 'rgba(90, 24, 154, 0.7)', 'rgba(36, 0, 70, 0.7)', 'rgba(16, 0, 43, 0.7)']}
+        style={styles.gradientOverlay}
+      />
+
+      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+        <View style={styles.headerTop}>
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>VEHICLE EXPENSES</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.topSection}>
+        <View style={styles.actionButtons}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={() => setShowAddVehicleModal(true)}
+          >
+            <Plus size={18} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Add Vehicle</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={() => setShowAddExpenseModal(true)}
+            disabled={userVehicles.length === 0}
+          >
+            <DollarSign size={18} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Add Expense</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.listContainer}>
+        <Text style={styles.listTitle}>My Vehicles</Text>
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {userVehicles.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Car size={48} color="#FFFFFF" />
+              <Text style={styles.emptyText}>No vehicles yet</Text>
+              <Text style={styles.emptySubtext}>
+                Add a vehicle to start tracking expenses
+              </Text>
+            </View>
+          ) : (
+            userVehicles.map((vehicle) => {
+              const isExpanded = expandedVehicles.has(vehicle.id);
+              const expenses = getVehicleExpenses(vehicle.id);
+              const totalExpenses = getVehicleTotalExpenses(vehicle.id);
+              const yearMileage = getYearMileage(vehicle);
+
+              return (
+                <View key={vehicle.id} style={styles.vehicleCard}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.vehicleHeader,
+                      pressed && styles.vehicleHeaderPressed,
+                    ]}
+                    onPress={() => toggleVehicleExpanded(vehicle.id)}
+                  >
+                    <View style={styles.vehicleHeaderLeft}>
+                      <View style={styles.vehicleIconContainer}>
+                        <ChevronRight
+                          size={20}
+                          color="#FFFFFF"
+                          style={{
+                            transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
+                          }}
+                        />
+                      </View>
+                      <View style={styles.vehicleInfo}>
+                        <Text style={styles.vehicleName}>{vehicle.name}</Text>
+                        <Text style={styles.vehicleDetails}>
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </Text>
+                        <View style={styles.mileageRow}>
+                          <Text style={styles.mileageText}>
+                            Current: {vehicle.currentMileage.toLocaleString()} mi
+                          </Text>
+                          <Text style={styles.mileageText}>
+                            {getCurrentYear()} YTD: {yearMileage.toLocaleString()} mi
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.vehicleActions}>
+                      <Text style={styles.totalExpenses}>${totalExpenses.toFixed(2)}</Text>
+                      <View style={styles.vehicleButtons}>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.iconButton,
+                            pressed && styles.iconButtonPressed,
+                          ]}
+                          onPress={() => handleEditVehicle(vehicle)}
+                        >
+                          <Edit2 size={16} color="#FFFFFF" />
+                        </Pressable>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.iconButton,
+                            pressed && styles.iconButtonPressed,
+                          ]}
+                          onPress={() => handleDeleteVehicle(vehicle.id)}
+                        >
+                          <Trash2 size={16} color="#FFFFFF" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  </Pressable>
+
+                  {isExpanded && (
+                    <View style={styles.expensesList}>
+                      {expenses.length === 0 ? (
+                        <View style={styles.noExpenses}>
+                          <Text style={styles.noExpensesText}>No expenses yet</Text>
+                        </View>
+                      ) : (
+                        expenses.map((expense) => (
+                          <Pressable
+                            key={expense.id}
+                            style={({ pressed }) => [
+                              styles.expenseItem,
+                              pressed && styles.expenseItemPressed,
+                            ]}
+                            onPress={() => handleEditExpense(expense)}
+                          >
+                            <View style={styles.expenseInfo}>
+                              <Text style={styles.expenseCategory}>{expense.category}</Text>
+                              <Text style={styles.expenseDescription}>{expense.description}</Text>
+                              {expense.merchant && (
+                                <Text style={styles.expenseMerchant}>{expense.merchant}</Text>
+                              )}
+                              {expense.mileage && (
+                                <Text style={styles.expenseMileage}>
+                                  Mileage: {expense.mileage.toLocaleString()} mi
+                                </Text>
+                              )}
+                              {expense.gallons && expense.pricePerGallon && (
+                                <Text style={styles.expenseGas}>
+                                  {expense.gallons.toFixed(2)} gal @ ${expense.pricePerGallon.toFixed(2)}/gal
+                                </Text>
+                              )}
+                              {expense.notes && (
+                                <Text style={styles.expenseNotes}>{expense.notes}</Text>
+                              )}
+                              <Text style={styles.expenseDate}>
+                                {new Date(expense.date).toLocaleDateString()}
+                              </Text>
+                            </View>
+                            <View style={styles.expenseRight}>
+                              <Text style={styles.expenseAmount}>${expense.amount.toFixed(2)}</Text>
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.deleteButton,
+                                  pressed && styles.deleteButtonPressed,
+                                ]}
+                                onPress={() => handleDeleteExpense(expense.id)}
+                              >
+                                <Trash2 size={16} color="#FFFFFF" />
+                              </Pressable>
+                            </View>
+                          </Pressable>
+                        ))
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+      </View>
+
+      <AddVehicleModal
+        visible={showAddVehicleModal}
+        onClose={handleCloseVehicleModal}
+        onSubmit={editingVehicle ? handleUpdateVehicle : handleAddVehicle}
+        editingVehicle={editingVehicle}
+      />
+
+      <VehicleExpenseModal
+        visible={showAddExpenseModal}
+        onClose={handleCloseExpenseModal}
+        onSubmit={editingExpense ? handleUpdateExpense : handleAddExpense}
+        vehicles={userVehicles}
+        editingExpense={editingExpense}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  purpleOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(157, 78, 221, 0.3)',
+  },
+  gradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(157, 78, 221, 0.9)',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+  },
+  topSection: {
+    padding: 20,
+    gap: 16,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#9D4EDD',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  actionButtonPressed: {
+    opacity: 0.7,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: '#D4A5F5',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  listTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center' as const,
+  },
+  vehicleCard: {
+    backgroundColor: '#9D4EDD',
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  vehicleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  vehicleHeaderPressed: {
+    opacity: 0.7,
+  },
+  vehicleHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  vehicleIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  vehicleName: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  vehicleDetails: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 6,
+  },
+  mileageRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  mileageText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  vehicleActions: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  totalExpenses: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+  },
+  vehicleButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  iconButton: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  iconButtonPressed: {
+    opacity: 0.6,
+  },
+  expensesList: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 8,
+  },
+  noExpenses: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  noExpensesText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  expenseItem: {
+    flexDirection: 'row',
+    backgroundColor: '#5A189A',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    gap: 12,
+  },
+  expenseItemPressed: {
+    opacity: 0.8,
+    backgroundColor: '#7B2CBF',
+  },
+  expenseInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  expenseCategory: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  expenseDescription: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+  },
+  expenseMerchant: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  expenseMileage: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.75)',
+  },
+  expenseGas: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.75)',
+  },
+  expenseNotes: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontStyle: 'italic' as const,
+  },
+  expenseDate: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 2,
+  },
+  expenseRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  deleteButton: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  deleteButtonPressed: {
+    opacity: 0.6,
+  },
+});

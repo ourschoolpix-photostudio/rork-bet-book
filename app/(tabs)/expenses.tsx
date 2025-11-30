@@ -4,7 +4,7 @@ import { ExpenseCategory, Expense } from '@/types/expense';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap, Copy } from 'lucide-react-native';
+import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap, Copy, Car } from 'lucide-react-native';
 import { useEffect, useState, useRef } from 'react';
 import { Alert, ImageBackground, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -285,6 +285,17 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
             >
               <Receipt size={18} color="#FFFFFF" />
               <Text style={styles.actionButtonText}>Scan Receipt</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.actionButton,
+                pressed && styles.actionButtonPressed,
+              ]}
+              onPress={() => router.push('/vehicles')}
+            >
+              <Car size={18} color="#FFFFFF" />
+              <Text style={styles.actionButtonText}>Vehicle Expenses</Text>
             </Pressable>
 
             <Pressable

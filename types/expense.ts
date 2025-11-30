@@ -53,3 +53,38 @@ export interface MonthlyUtilities {
   water: number;
   createdAt: string;
 }
+
+export interface Vehicle {
+  id: string;
+  userId: string;
+  name: string;
+  make: string;
+  model: string;
+  year: number;
+  color?: string;
+  licensePlate?: string;
+  startingMileage: number;
+  currentMileage: number;
+  yearStartMileage?: number;
+  createdAt: string;
+  isActive: boolean;
+}
+
+export type VehicleExpenseCategory = 'Gas' | 'Auto Repair' | 'Maintenance' | 'Insurance' | 'Registration' | 'Car Wash' | 'Parking';
+
+export interface VehicleExpense {
+  id: string;
+  userId: string;
+  vehicleId: string;
+  category: VehicleExpenseCategory;
+  amount: number;
+  description: string;
+  merchant?: string;
+  date: string;
+  mileage?: number;
+  gallons?: number;
+  pricePerGallon?: number;
+  notes?: string;
+  receiptImage?: string;
+  createdAt: string;
+}
