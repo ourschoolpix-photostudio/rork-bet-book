@@ -32,6 +32,7 @@ function RootLayoutNav() {
       <Stack.Screen name="expenses" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="supabase-settings" options={{ headerShown: false }} />
+      <Stack.Screen name="vehicles" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );
