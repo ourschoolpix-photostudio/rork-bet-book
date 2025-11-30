@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Expense, RecurringBill, ExpenseCategory, ExpenseType, MonthlyUtilities, Vehicle, VehicleExpense, VehicleExpenseCategory } from '@/types/expense';
+import { Expense, RecurringBill, ExpenseCategory, ExpenseType, MonthlyUtilities, Vehicle, VehicleExpense, VehicleExpenseCategory, VehicleYearArchive } from '@/types/expense';
 import { getEasternStartOfDay } from '@/lib/dateUtils';
 
 const EST_TIMEZONE = 'America/New_York';
@@ -36,6 +36,7 @@ const RECURRING_BILLS_STORAGE_KEY = '@casino_tracker_recurring_bills';
 const UTILITIES_STORAGE_KEY = '@casino_tracker_utilities';
 const VEHICLES_STORAGE_KEY = '@casino_tracker_vehicles';
 const VEHICLE_EXPENSES_STORAGE_KEY = '@casino_tracker_vehicle_expenses';
+const VEHICLE_ARCHIVES_STORAGE_KEY = '@casino_tracker_vehicle_archives';
 
 export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -43,6 +44,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
   const [utilities, setUtilities] = useState<MonthlyUtilities[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleExpenses, setVehicleExpenses] = useState<VehicleExpense[]>([]);
+  const [vehicleArchives, setVehicleArchives] = useState<VehicleYearArchive[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const loadExpenses = useCallback(async () => {
@@ -130,15 +132,32 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     }
   }, []);
 
+  const loadVehicleArchives = useCallback(async () => {
+    try {
+      const vehicleArchivesJson = await AsyncStorage.getItem(VEHICLE_ARCHIVES_STORAGE_KEY);
+      if (vehicleArchivesJson) {
+        try {
+          setVehicleArchives(JSON.parse(vehicleArchivesJson));
+        } catch (parseError) {
+          console.error('Error parsing vehicle archives JSON, clearing corrupted data:', parseError);
+          await AsyncStorage.removeItem(VEHICLE_ARCHIVES_STORAGE_KEY);
+          setVehicleArchives([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading vehicle archives:', error);
+    }
+  }, []);
+
   const loadAllData = useCallback(async () => {
     try {
-      await Promise.all([loadExpenses(), loadRecurringBills(), loadUtilities(), loadVehicles(), loadVehicleExpenses()]);
+      await Promise.all([loadExpenses(), loadRecurringBills(), loadUtilities(), loadVehicles(), loadVehicleExpenses(), loadVehicleArchives()]);
     } catch (error) {
       console.error('Error loading expenses data:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [loadExpenses, loadRecurringBills, loadUtilities, loadVehicles, loadVehicleExpenses]);
+  }, [loadExpenses, loadRecurringBills, loadUtilities, loadVehicles, loadVehicleExpenses, loadVehicleArchives]);
 
   useEffect(() => {
     loadAllData();
@@ -379,6 +398,11 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     notes?: string,
     receiptImage?: string
   ) => {
+    const expenseDate = new Date(date);
+    const year = expenseDate.getFullYear();
+    const month = expenseDate.getMonth() + 1;
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+
     const newExpense: VehicleExpense = {
       id: `vehicle-expense-${Date.now()}`,
       userId,
@@ -393,6 +417,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
       pricePerGallon,
       notes,
       receiptImage,
+      monthKey,
       createdAt: new Date().toISOString(),
     };
 
@@ -426,9 +451,14 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     pricePerGallon?: number,
     notes?: string
   ) => {
+    const expenseDate = new Date(date);
+    const year = expenseDate.getFullYear();
+    const month = expenseDate.getMonth() + 1;
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+
     const updatedExpenses = vehicleExpenses.map(e =>
       e.id === expenseId
-        ? { ...e, category, amount, description, date: date.toISOString(), merchant, mileage, gallons, pricePerGallon, notes }
+        ? { ...e, category, amount, description, date: date.toISOString(), merchant, mileage, gallons, pricePerGallon, notes, monthKey }
         : e
     );
     setVehicleExpenses(updatedExpenses);
@@ -457,6 +487,60 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     await AsyncStorage.setItem(VEHICLE_EXPENSES_STORAGE_KEY, JSON.stringify(updatedExpenses));
   }, [vehicleExpenses]);
 
+  const archiveVehicleYear = useCallback(async (vehicleId: string, year: number) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return;
+
+    const yearExpenses = vehicleExpenses.filter(e => {
+      const expenseYear = new Date(e.date).getFullYear();
+      return e.vehicleId === vehicleId && expenseYear === year;
+    });
+
+    const monthlyExpenses: Record<string, VehicleExpense[]> = {};
+    yearExpenses.forEach(expense => {
+      if (!monthlyExpenses[expense.monthKey]) {
+        monthlyExpenses[expense.monthKey] = [];
+      }
+      monthlyExpenses[expense.monthKey].push(expense);
+    });
+
+    const totalExpenses = yearExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const startMileage = vehicle.yearStartMileage || vehicle.startingMileage;
+    const endMileage = vehicle.yearEndingMileage || vehicle.currentMileage;
+
+    const archive: VehicleYearArchive = {
+      id: `archive-${vehicleId}-${year}-${Date.now()}`,
+      userId: vehicle.userId,
+      vehicleId,
+      year,
+      startMileage,
+      endMileage,
+      totalExpenses,
+      monthlyExpenses,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedArchives = [...vehicleArchives, archive];
+    setVehicleArchives(updatedArchives);
+    await AsyncStorage.setItem(VEHICLE_ARCHIVES_STORAGE_KEY, JSON.stringify(updatedArchives));
+
+    const updatedExpenses = vehicleExpenses.filter(e => {
+      const expenseYear = new Date(e.date).getFullYear();
+      return !(e.vehicleId === vehicleId && expenseYear === year);
+    });
+    setVehicleExpenses(updatedExpenses);
+    await AsyncStorage.setItem(VEHICLE_EXPENSES_STORAGE_KEY, JSON.stringify(updatedExpenses));
+
+    const newYearStartMileage = endMileage;
+    const updatedVehicles = vehicles.map(v =>
+      v.id === vehicleId
+        ? { ...v, yearStartMileage: newYearStartMileage, yearEndingMileage: undefined }
+        : v
+    );
+    setVehicles(updatedVehicles);
+    await AsyncStorage.setItem(VEHICLES_STORAGE_KEY, JSON.stringify(updatedVehicles));
+  }, [vehicles, vehicleExpenses, vehicleArchives]);
+
   const reloadAllData = useCallback(async () => {
     await loadAllData();
   }, [loadAllData]);
@@ -467,6 +551,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     utilities,
     vehicles,
     vehicleExpenses,
+    vehicleArchives,
     isLoading,
     addExpense,
     updateExpense,
@@ -483,6 +568,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     addVehicleExpense,
     updateVehicleExpense,
     deleteVehicleExpense,
+    archiveVehicleYear,
     reloadAllData,
   }), [
     expenses,
@@ -490,6 +576,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     utilities,
     vehicles,
     vehicleExpenses,
+    vehicleArchives,
     isLoading,
     addExpense,
     updateExpense,
@@ -506,6 +593,7 @@ export const [ExpensesProvider, useExpenses] = createContextHook(() => {
     addVehicleExpense,
     updateVehicleExpense,
     deleteVehicleExpense,
+    archiveVehicleYear,
     reloadAllData,
   ]);
 });

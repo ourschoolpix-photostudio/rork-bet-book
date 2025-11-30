@@ -1,5 +1,6 @@
 -- =====================================================
 -- Vehicle Expense Tracking - Supabase Database Schema
+-- WITH MONTHLY TRACKING AND YEARLY ARCHIVE SUPPORT
 -- =====================================================
 -- This script creates tables for vehicle expense tracking
 -- Run this in your Supabase SQL Editor
@@ -45,7 +46,7 @@ CREATE POLICY "Enable all operations for all users" ON vehicles
 
 -- =====================================================
 -- 2. VEHICLE EXPENSES TABLE
--- Stores expenses related to vehicles
+-- Stores expenses related to vehicles with monthly tracking
 -- =====================================================
 CREATE TABLE IF NOT EXISTS vehicle_expenses (
   id TEXT PRIMARY KEY,
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS vehicle_expenses (
   description TEXT NOT NULL,
   merchant TEXT,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
+  month_key TEXT NOT NULL,
   mileage INTEGER CHECK (mileage >= 0),
   gallons NUMERIC(10, 3) CHECK (gallons >= 0),
   price_per_gallon NUMERIC(10, 3) CHECK (price_per_gallon >= 0),
@@ -69,6 +71,7 @@ CREATE INDEX IF NOT EXISTS idx_vehicle_expenses_user_id ON vehicle_expenses(user
 CREATE INDEX IF NOT EXISTS idx_vehicle_expenses_vehicle_id ON vehicle_expenses(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_vehicle_expenses_date ON vehicle_expenses(date DESC);
 CREATE INDEX IF NOT EXISTS idx_vehicle_expenses_category ON vehicle_expenses(category);
+CREATE INDEX IF NOT EXISTS idx_vehicle_expenses_month_key ON vehicle_expenses(month_key);
 CREATE INDEX IF NOT EXISTS idx_vehicle_expenses_created_at ON vehicle_expenses(created_at DESC);
 
 -- Add RLS (Row Level Security)
@@ -76,6 +79,37 @@ ALTER TABLE vehicle_expenses ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Enable all operations for all users" ON vehicle_expenses;
 CREATE POLICY "Enable all operations for all users" ON vehicle_expenses
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+-- =====================================================
+-- 3. VEHICLE YEAR ARCHIVES TABLE
+-- Stores archived yearly vehicle expense data
+-- =====================================================
+CREATE TABLE IF NOT EXISTS vehicle_year_archives (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  vehicle_id TEXT NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL CHECK (year >= 1900 AND year <= 2100),
+  start_mileage INTEGER NOT NULL CHECK (start_mileage >= 0),
+  end_mileage INTEGER NOT NULL CHECK (end_mileage >= 0),
+  total_expenses NUMERIC(10, 2) NOT NULL CHECK (total_expenses >= 0),
+  monthly_expenses JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  UNIQUE(vehicle_id, year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_vehicle_archives_user_id ON vehicle_year_archives(user_id);
+CREATE INDEX IF NOT EXISTS idx_vehicle_archives_vehicle_id ON vehicle_year_archives(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_vehicle_archives_year ON vehicle_year_archives(year DESC);
+CREATE INDEX IF NOT EXISTS idx_vehicle_archives_created_at ON vehicle_year_archives(created_at DESC);
+
+-- Add RLS (Row Level Security)
+ALTER TABLE vehicle_year_archives ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable all operations for all users" ON vehicle_year_archives;
+CREATE POLICY "Enable all operations for all users" ON vehicle_year_archives
   FOR ALL
   USING (true)
   WITH CHECK (true);
@@ -134,7 +168,31 @@ CREATE TRIGGER update_mileage_on_update
 -- USEFUL VIEWS FOR VEHICLE TRACKING
 -- =====================================================
 
--- View for vehicle expense summaries
+-- View for current year vehicle expense summaries by month
+CREATE OR REPLACE VIEW vehicle_monthly_expense_summary AS
+SELECT 
+  v.id as vehicle_id,
+  v.user_id,
+  v.name as vehicle_name,
+  v.year,
+  v.make,
+  v.model,
+  v.current_mileage,
+  v.year_start_mileage,
+  v.year_ending_mileage,
+  ve.month_key,
+  COUNT(ve.id) as total_expenses_count,
+  COALESCE(SUM(ve.amount), 0) as month_total,
+  COALESCE(SUM(CASE WHEN ve.category = 'Gas' THEN ve.amount ELSE 0 END), 0) as gas_expenses,
+  COALESCE(SUM(CASE WHEN ve.category = 'Auto Repair' THEN ve.amount ELSE 0 END), 0) as repair_expenses,
+  COALESCE(SUM(CASE WHEN ve.category = 'Maintenance' THEN ve.amount ELSE 0 END), 0) as maintenance_expenses
+FROM vehicles v
+LEFT JOIN vehicle_expenses ve ON v.id = ve.vehicle_id
+WHERE v.is_active = true
+GROUP BY v.id, v.user_id, v.name, v.year, v.make, v.model, v.current_mileage, v.year_start_mileage, v.year_ending_mileage, ve.month_key
+ORDER BY ve.month_key DESC;
+
+-- View for vehicle expense summaries (current year total)
 CREATE OR REPLACE VIEW vehicle_expense_summary AS
 SELECT 
   v.id as vehicle_id,
@@ -162,7 +220,7 @@ SELECT
 FROM vehicles v
 LEFT JOIN vehicle_expenses ve ON v.id = ve.vehicle_id
 WHERE v.is_active = true
-GROUP BY v.id, v.user_id, v.name, v.year, v.make, v.model, v.current_mileage, v.year_start_mileage;
+GROUP BY v.id, v.user_id, v.name, v.year, v.make, v.model, v.current_mileage, v.year_start_mileage, v.year_ending_mileage, v.starting_mileage;
 
 -- View for recent vehicle expenses
 CREATE OR REPLACE VIEW recent_vehicle_expenses AS
@@ -196,26 +254,49 @@ LEFT JOIN vehicle_expenses ve ON v.id = ve.vehicle_id AND ve.category = 'Gas'
 WHERE v.is_active = true
 GROUP BY v.id, v.user_id, v.name;
 
+-- View for archived year summaries
+CREATE OR REPLACE VIEW vehicle_archive_summary AS
+SELECT 
+  vya.id as archive_id,
+  vya.user_id,
+  vya.vehicle_id,
+  v.name as vehicle_name,
+  v.year as vehicle_year,
+  v.make as vehicle_make,
+  v.model as vehicle_model,
+  vya.year as archive_year,
+  vya.start_mileage,
+  vya.end_mileage,
+  vya.end_mileage - vya.start_mileage as miles_driven,
+  vya.total_expenses,
+  vya.created_at
+FROM vehicle_year_archives vya
+JOIN vehicles v ON vya.vehicle_id = v.id
+ORDER BY vya.year DESC, v.name ASC;
+
 -- =====================================================
 -- COMPLETION MESSAGE
 -- =====================================================
 
 DO $$ 
 BEGIN
-  RAISE NOTICE '✅ Vehicle expense tracking schema created successfully!';
-  RAISE NOTICE '📊 Created 2 tables with proper indexes and RLS policies';
+  RAISE NOTICE '✅ Vehicle expense tracking schema with monthly tracking and archives created successfully!';
+  RAISE NOTICE '📊 Created 3 tables with proper indexes and RLS policies';
   RAISE NOTICE '🔒 Row Level Security enabled on all tables';
   RAISE NOTICE '⚡ Triggers for updated_at and automatic mileage updates are active';
-  RAISE NOTICE '📈 Created 3 summary views for statistics and reporting';
+  RAISE NOTICE '📈 Created 5 summary views for statistics and reporting';
   RAISE NOTICE '';
   RAISE NOTICE '📋 Tables created:';
   RAISE NOTICE '   1. vehicles - Store vehicle information';
-  RAISE NOTICE '   2. vehicle_expenses - Store vehicle-related expenses';
+  RAISE NOTICE '   2. vehicle_expenses - Store vehicle-related expenses with monthly tracking';
+  RAISE NOTICE '   3. vehicle_year_archives - Store archived yearly expense data';
   RAISE NOTICE '';
   RAISE NOTICE '📊 Views created:';
-  RAISE NOTICE '   1. vehicle_expense_summary - Comprehensive vehicle expense summaries';
-  RAISE NOTICE '   2. recent_vehicle_expenses - Last 100 vehicle expenses with vehicle details';
-  RAISE NOTICE '   3. gas_fillup_stats - Gas fill-up statistics per vehicle';
+  RAISE NOTICE '   1. vehicle_monthly_expense_summary - Monthly expense summaries per vehicle';
+  RAISE NOTICE '   2. vehicle_expense_summary - Comprehensive vehicle expense summaries';
+  RAISE NOTICE '   3. recent_vehicle_expenses - Last 100 vehicle expenses with vehicle details';
+  RAISE NOTICE '   4. gas_fillup_stats - Gas fill-up statistics per vehicle';
+  RAISE NOTICE '   5. vehicle_archive_summary - Archived year summaries';
   RAISE NOTICE '';
   RAISE NOTICE '🚗 Features:';
   RAISE NOTICE '   • Automatic mileage tracking based on expense entries';
@@ -223,7 +304,10 @@ BEGIN
   RAISE NOTICE '   • Support for 7 expense categories (Gas, Repair, Maintenance, etc.)';
   RAISE NOTICE '   • Detailed gas tracking with gallons and price per gallon';
   RAISE NOTICE '   • Year-to-date mileage tracking with year ending mileage support';
-  RAISE NOTICE '   • Cascade delete - removing vehicle removes all its expenses';
+  RAISE NOTICE '   • Monthly expense organization for easy tracking';
+  RAISE NOTICE '   • Yearly archive system to separate historical data';
+  RAISE NOTICE '   • Automatic year rollover without re-adding vehicles';
+  RAISE NOTICE '   • Cascade delete - removing vehicle removes all its expenses and archives';
   RAISE NOTICE '';
-  RAISE NOTICE '✨ Your vehicle expense tracking is ready to use!';
+  RAISE NOTICE '✨ Your vehicle expense tracking with monthly organization is ready to use!';
 END $$;

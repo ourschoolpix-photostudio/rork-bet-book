@@ -88,4 +88,17 @@ export interface VehicleExpense {
   notes?: string;
   receiptImage?: string;
   createdAt: string;
+  monthKey: string;
+}
+
+export interface VehicleYearArchive {
+  id: string;
+  userId: string;
+  vehicleId: string;
+  year: number;
+  startMileage: number;
+  endMileage: number;
+  totalExpenses: number;
+  monthlyExpenses: Record<string, VehicleExpense[]>;
+  createdAt: string;
 }
