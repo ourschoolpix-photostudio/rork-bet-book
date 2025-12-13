@@ -202,3 +202,20 @@ export function formatGameTimeEST(dateString: string): string {
     });
   }
 }
+
+/**
+ * Format a number as currency with commas
+ */
+export function formatCurrency(amount: number, decimals: number = 2): string {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+/**
+ * Format a number with commas (no decimals)
+ */
+export function formatNumber(num: number): string {
+  return num.toLocaleString('en-US');
+}

@@ -8,6 +8,7 @@ import { useState, useMemo } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatCurrency } from '@/lib/dateUtils';
 
 export default function LoansScreen() {
   const { currentUser } = useAuth();
@@ -263,28 +264,28 @@ const handleAddToLoan = async (loanId: string) => {
     message += `Original Loan Date: ${formatDate(loan.loanDate)}\n\n`;
     
     message += `💰 Financial Summary:\n`;
-    message += `Original Loan: ${originalAmount.toFixed(2)}\n`;
+    message += `Original Loan: ${formatCurrency(originalAmount)}\n`;
     
     if (loan.loanAdditions && loan.loanAdditions.length > 0) {
       const totalAdditions = loan.loanAdditions.reduce((sum: number, add: any) => sum + add.amount, 0);
-      message += `Additional Loans: ${totalAdditions.toFixed(2)}\n`;
-      message += `Total Loaned: ${loan.amount.toFixed(2)}\n`;
+      message += `Additional Loans: ${formatCurrency(totalAdditions)}\n`;
+      message += `Total Loaned: ${formatCurrency(loan.amount)}\n`;
     }
     
     if (loan.payments && loan.payments.length > 0) {
-      message += `Total Paid: ${loan.amountPaid.toFixed(2)}\n`;
+      message += `Total Paid: ${formatCurrency(loan.amountPaid)}\n`;
     }
     
-    message += `Remaining Balance: ${remaining.toFixed(2)}\n\n`;
+    message += `Remaining Balance: ${formatCurrency(remaining)}\n\n`;
     
     if (loan.loanAdditions && loan.loanAdditions.length > 0) {
       message += `📝 Loan History:\n`;
-      message += `• ${formatDate(loan.loanDate)} - ${originalAmount.toFixed(2)} (Original)\n`;
+      message += `• ${formatDate(loan.loanDate)} - ${formatCurrency(originalAmount)} (Original)\n`;
       
       [...loan.loanAdditions]
         .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .forEach((addition: any) => {
-          message += `• ${formatDate(addition.date)} - ${addition.amount.toFixed(2)} (Addition)\n`;
+          message += `• ${formatDate(addition.date)} - ${formatCurrency(addition.amount)} (Addition)\n`;
         });
       message += `\n`;
     }
@@ -292,7 +293,7 @@ const handleAddToLoan = async (loanId: string) => {
     if (loan.payments && loan.payments.length > 0) {
       message += `💵 Payment History:\n`;
       loan.payments.forEach((payment: any) => {
-        message += `• ${formatDate(payment.date)} - ${payment.amount.toFixed(2)}\n`;
+        message += `• ${formatDate(payment.date)} - ${formatCurrency(payment.amount)}\n`;
       });
     }
     
@@ -339,7 +340,7 @@ const handleAddToLoan = async (loanId: string) => {
           </Pressable>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>LOANED OUT</Text>
-            <Text style={styles.headerTotal}>${totalLoansRemaining.toFixed(2)}</Text>
+            <Text style={styles.headerTotal}>${formatCurrency(totalLoansRemaining)}</Text>
             {archivedCount > 0 && (
               <Pressable
                 style={({ pressed }) => [
@@ -450,16 +451,16 @@ const handleAddToLoan = async (loanId: string) => {
                         <View style={styles.loanStats}>
                           <View style={styles.loanStatItem}>
                             <Text style={styles.loanStatLabel}>Loaned</Text>
-                            <Text style={styles.loanStatValue}>${loan.amount.toFixed(2)}</Text>
+                            <Text style={styles.loanStatValue}>${formatCurrency(loan.amount)}</Text>
                           </View>
                           <View style={styles.loanStatItem}>
                             <Text style={styles.loanStatLabel}>Paid</Text>
-                            <Text style={styles.loanStatValue}>${loan.amountPaid.toFixed(2)}</Text>
+                            <Text style={styles.loanStatValue}>${formatCurrency(loan.amountPaid)}</Text>
                           </View>
                           <View style={styles.loanStatItem}>
                             <Text style={styles.loanStatLabel}>Remaining</Text>
                             <Text style={[styles.loanStatValue, isPaidOff ? styles.paidOffText : styles.remainingText]}>
-                              ${remaining.toFixed(2)}
+                              ${formatCurrency(remaining)}
                             </Text>
                           </View>
                         </View>
@@ -468,7 +469,7 @@ const handleAddToLoan = async (loanId: string) => {
                           <Text style={styles.paymentsSectionTitle}>Loan History</Text>
                           <View style={styles.paymentRow}>
                             <View style={styles.paymentInfo}>
-                              <Text style={styles.paymentAmount}>${(loan.originalAmount || loan.amount).toFixed(2)}</Text>
+                              <Text style={styles.paymentAmount}>${formatCurrency(loan.originalAmount || loan.amount)}</Text>
                               <Text style={styles.paymentDate}>{formatDate(loan.loanDate)}</Text>
                             </View>
                             <View style={styles.originalLoanBadge}>
@@ -481,7 +482,7 @@ const handleAddToLoan = async (loanId: string) => {
                               .map((addition) => (
                               <View key={addition.id} style={styles.paymentRow}>
                                 <View style={styles.paymentInfo}>
-                                  <Text style={styles.paymentAmount}>${addition.amount.toFixed(2)}</Text>
+                                  <Text style={styles.paymentAmount}>${formatCurrency(addition.amount)}</Text>
                                   <Text style={styles.paymentDate}>{formatDate(addition.date)}</Text>
                                 </View>
                                 <Pressable
@@ -505,7 +506,7 @@ const handleAddToLoan = async (loanId: string) => {
                             {loan.payments.map((payment) => (
                               <View key={payment.id} style={styles.paymentRow}>
                                 <View style={styles.paymentInfo}>
-                                  <Text style={styles.paymentAmount}>${payment.amount.toFixed(2)}</Text>
+                                  <Text style={styles.paymentAmount}>${formatCurrency(payment.amount)}</Text>
                                   <Text style={styles.paymentDate}>{formatDate(payment.date)}</Text>
                                 </View>
                                 <Pressable

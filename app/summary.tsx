@@ -8,6 +8,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, Receipt, Calendar, Che
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
+import { formatCurrency } from '@/lib/dateUtils';
 
 export default function SummaryScreen() {
   const { currentUser, completedSessions } = useAuth();
@@ -104,7 +105,7 @@ export default function SummaryScreen() {
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>SUMMARY</Text>
             <Text style={[styles.headerTotal, grandNet >= 0 ? styles.positiveNet : styles.negativeNet]}>
-              {grandNet >= 0 ? '+' : ''}${grandNet.toFixed(2)}
+              {grandNet >= 0 ? '+' : ''}${formatCurrency(grandNet)}
             </Text>
           </View>
           <View style={styles.placeholder} />
@@ -121,18 +122,18 @@ export default function SummaryScreen() {
               <Text style={styles.grandTotalLabel}>Grand Total</Text>
             </View>
             <Text style={[styles.grandTotalValue, grandNet >= 0 ? styles.positiveValue : styles.negativeValue]}>
-              {grandNet >= 0 ? '+' : ''}${grandNet.toFixed(2)}
+              {grandNet >= 0 ? '+' : ''}${formatCurrency(grandNet)}
             </Text>
             <View style={styles.grandTotalStats}>
               <View style={styles.grandTotalStatItem}>
                 <TrendingUp size={20} color="#10B981" />
                 <Text style={styles.grandTotalStatLabel}>Total Won</Text>
-                <Text style={styles.grandTotalStatValue}>${grandTotalWinnings.toFixed(2)}</Text>
+                <Text style={styles.grandTotalStatValue}>${formatCurrency(grandTotalWinnings)}</Text>
               </View>
               <View style={styles.grandTotalStatItem}>
                 <TrendingDown size={20} color="#EF4444" />
                 <Text style={styles.grandTotalStatLabel}>Total Lost</Text>
-                <Text style={styles.grandTotalStatValue}>${grandTotalLosses.toFixed(2)}</Text>
+                <Text style={styles.grandTotalStatValue}>${formatCurrency(grandTotalLosses)}</Text>
               </View>
             </View>
           </View>
@@ -144,17 +145,17 @@ export default function SummaryScreen() {
               <View style={styles.categoryHeader}>
                 <Text style={styles.categoryName}>Casino Sessions</Text>
                 <Text style={[styles.categoryNet, casinoNet >= 0 ? styles.positiveNet : styles.negativeNet]}>
-                  {casinoNet >= 0 ? '+' : ''}${casinoNet.toFixed(2)}
+                  {casinoNet >= 0 ? '+' : ''}${formatCurrency(casinoNet)}
                 </Text>
               </View>
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Won</Text>
-                  <Text style={styles.categoryStatValue}>${casinoStats.totalWinnings.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(casinoStats.totalWinnings)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Lost</Text>
-                  <Text style={styles.categoryStatValue}>${casinoStats.totalLosses.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(casinoStats.totalLosses)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Sessions</Text>
@@ -167,17 +168,17 @@ export default function SummaryScreen() {
               <View style={styles.categoryHeader}>
                 <Text style={styles.categoryName}>Personal Bets</Text>
                 <Text style={[styles.categoryNet, betsNet >= 0 ? styles.positiveNet : styles.negativeNet]}>
-                  {betsNet >= 0 ? '+' : ''}${betsNet.toFixed(2)}
+                  {betsNet >= 0 ? '+' : ''}${formatCurrency(betsNet)}
                 </Text>
               </View>
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Won</Text>
-                  <Text style={styles.categoryStatValue}>${betsWon.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(betsWon)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Lost</Text>
-                  <Text style={styles.categoryStatValue}>${betsLost.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(betsLost)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Bets</Text>
@@ -190,17 +191,17 @@ export default function SummaryScreen() {
               <View style={styles.categoryHeader}>
                 <Text style={styles.categoryName}>Sports Bets</Text>
                 <Text style={[styles.categoryNet, sportsBetsNet >= 0 ? styles.positiveNet : styles.negativeNet]}>
-                  {sportsBetsNet >= 0 ? '+' : ''}${sportsBetsNet.toFixed(2)}
+                  {sportsBetsNet >= 0 ? '+' : ''}${formatCurrency(sportsBetsNet)}
                 </Text>
               </View>
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Won</Text>
-                  <Text style={styles.categoryStatValue}>${sportsBetsWon.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(sportsBetsWon)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Lost</Text>
-                  <Text style={styles.categoryStatValue}>${sportsBetsLost.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(sportsBetsLost)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Bets</Text>
@@ -219,20 +220,20 @@ export default function SummaryScreen() {
                   <DollarSign size={20} color="#240046" />
                   <Text style={styles.categoryName}>Total Monthly Spending</Text>
                 </View>
-                <Text style={styles.grandTotalExpenseValue}>${totalMonthlyExpenses.toFixed(2)}</Text>
+                <Text style={styles.grandTotalExpenseValue}>${formatCurrency(totalMonthlyExpenses)}</Text>
               </View>
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Recurring Bills</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(monthlyRecurringTotal)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Utilities</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyUtilitiesTotal.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(monthlyUtilitiesTotal)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Other Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${additionalExpensesTotal.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(additionalExpensesTotal)}</Text>
                 </View>
               </View>
             </View>
@@ -243,14 +244,14 @@ export default function SummaryScreen() {
                   <Calendar size={20} color="#240046" />
                   <Text style={styles.categoryName}>Monthly Recurring Bills</Text>
                 </View>
-                <Text style={styles.expenseValue}>${monthlyRecurringTotal.toFixed(2)}</Text>
+                <Text style={styles.expenseValue}>${formatCurrency(monthlyRecurringTotal)}</Text>
               </View>
               {activeRecurringBills.length > 0 ? (
                 <View style={styles.itemsList}>
                   {activeRecurringBills.map((bill) => (
                     <View key={bill.id} style={styles.itemRow}>
                       <Text style={styles.itemName}>{bill.name}</Text>
-                      <Text style={styles.itemAmount}>${bill.amount.toFixed(2)}</Text>
+                      <Text style={styles.itemAmount}>${formatCurrency(bill.amount)}</Text>
                     </View>
                   ))}
                 </View>
@@ -269,21 +270,21 @@ export default function SummaryScreen() {
                   <Receipt size={20} color="#240046" />
                   <Text style={styles.categoryName}>Monthly Utilities</Text>
                 </View>
-                <Text style={styles.expenseValue}>${monthlyUtilitiesTotal.toFixed(2)}</Text>
+                <Text style={styles.expenseValue}>${formatCurrency(monthlyUtilitiesTotal)}</Text>
               </View>
               {currentUtilities ? (
                 <View style={styles.itemsList}>
                   <View style={styles.itemRow}>
                     <Text style={styles.itemName}>Electric</Text>
-                    <Text style={styles.itemAmount}>${currentUtilities.electric.toFixed(2)}</Text>
+                    <Text style={styles.itemAmount}>${formatCurrency(currentUtilities.electric)}</Text>
                   </View>
                   <View style={styles.itemRow}>
                     <Text style={styles.itemName}>Natural Gas</Text>
-                    <Text style={styles.itemAmount}>${currentUtilities.naturalGas.toFixed(2)}</Text>
+                    <Text style={styles.itemAmount}>${formatCurrency(currentUtilities.naturalGas)}</Text>
                   </View>
                   <View style={styles.itemRow}>
                     <Text style={styles.itemName}>Water</Text>
-                    <Text style={styles.itemAmount}>${currentUtilities.water.toFixed(2)}</Text>
+                    <Text style={styles.itemAmount}>${formatCurrency(currentUtilities.water)}</Text>
                   </View>
                 </View>
               ) : (
@@ -301,16 +302,16 @@ export default function SummaryScreen() {
                   <Receipt size={20} color="#240046" />
                   <Text style={styles.categoryName}>Monthly Expenses</Text>
                 </View>
-                <Text style={styles.expenseValue}>${additionalExpensesTotal.toFixed(2)}</Text>
+                <Text style={styles.expenseValue}>${formatCurrency(additionalExpensesTotal)}</Text>
               </View>
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Total Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyExpenses.total.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(monthlyExpenses.total)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>YTD Expenses</Text>
-                  <Text style={styles.categoryStatValue}>${ytdExpenses.total.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(ytdExpenses.total)}</Text>
                 </View>
               </View>
             </View>
@@ -325,11 +326,11 @@ export default function SummaryScreen() {
               <View style={styles.categoryStats}>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>Monthly Business</Text>
-                  <Text style={styles.categoryStatValue}>${monthlyBusinessExpenses.total.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(monthlyBusinessExpenses.total)}</Text>
                 </View>
                 <View style={styles.categoryStatItem}>
                   <Text style={styles.categoryStatLabel}>YTD Business</Text>
-                  <Text style={styles.categoryStatValue}>${ytdBusinessExpenses.total.toFixed(2)}</Text>
+                  <Text style={styles.categoryStatValue}>${formatCurrency(ytdBusinessExpenses.total)}</Text>
                 </View>
               </View>
             </View>
@@ -376,7 +377,7 @@ export default function SummaryScreen() {
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.monthCardTotal}>${monthGroup.total.toFixed(2)}</Text>
+                      <Text style={styles.monthCardTotal}>${formatCurrency(monthGroup.total)}</Text>
                     </Pressable>
 
                     {isExpanded && (
@@ -393,7 +394,7 @@ export default function SummaryScreen() {
                                 {new Date(expense.date).toLocaleDateString()}
                               </Text>
                             </View>
-                            <Text style={styles.expenseRowAmount}>${expense.amount.toFixed(2)}</Text>
+                            <Text style={styles.expenseRowAmount}>${formatCurrency(expense.amount)}</Text>
                           </View>
                         ))}
                       </View>
