@@ -512,20 +512,18 @@ export default function LottoScreen() {
 
             {powerballNumbers.length > 0 && (
               <View style={styles.numbersContainer}>
-                <View style={styles.mainNumbers}>
+                <View style={styles.allNumbersRow}>
                   {powerballNumbers.map((num, index) => (
                     <View key={index} style={styles.numberBall}>
                       <Text style={styles.numberText}>{num}</Text>
                     </View>
                   ))}
-                </View>
-                {powerballPowerball !== null && (
-                  <View style={styles.specialBallContainer}>
+                  {powerballPowerball !== null && (
                     <View style={[styles.numberBall, styles.powerballBall]}>
                       <Text style={styles.numberText}>{powerballPowerball}</Text>
                     </View>
-                  </View>
-                )}
+                  )}
+                </View>
               </View>
             )}
 
@@ -653,20 +651,18 @@ export default function LottoScreen() {
 
             {megaMillionsNumbers.length > 0 && (
               <View style={styles.numbersContainer}>
-                <View style={styles.mainNumbers}>
+                <View style={styles.allNumbersRow}>
                   {megaMillionsNumbers.map((num, index) => (
                     <View key={index} style={styles.numberBall}>
                       <Text style={styles.numberText}>{num}</Text>
                     </View>
                   ))}
-                </View>
-                {megaMillionsMegaBall !== null && (
-                  <View style={styles.specialBallContainer}>
+                  {megaMillionsMegaBall !== null && (
                     <View style={[styles.numberBall, styles.megaBall]}>
                       <Text style={styles.numberText}>{megaMillionsMegaBall}</Text>
                     </View>
-                  </View>
-                )}
+                  )}
+                </View>
               </View>
             )}
 
@@ -839,6 +835,12 @@ const styles = StyleSheet.create({
   numbersContainer: {
     gap: 16,
   },
+  allNumbersRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
   mainNumbers: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -849,9 +851,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   numberBall: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -872,7 +874,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF3C7',
   },
   numberText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700' as const,
     color: '#240046',
   },
