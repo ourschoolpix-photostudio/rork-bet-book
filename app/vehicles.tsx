@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: 'rgba(157, 78, 221, 0.9)',
+    backgroundColor: '#3D1F66',
   },
   headerTop: {
     flexDirection: 'row',
