@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useSportsBets } from '@/contexts/SportsBetsContext';
+import { useSportsBets, SportsBet } from '@/contexts/SportsBetsContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Plus, Trash2, Trophy, Pencil, Calendar, DollarSign, Key } from 'lucide-react-native';
@@ -18,18 +18,18 @@ interface NFLGame {
   completed: boolean;
   homeScore?: number;
   awayScore?: number;
-  bookmakers: Array<{
+  bookmakers: {
     key: string;
     title: string;
-    markets: Array<{
+    markets: {
       key: string;
-      outcomes: Array<{
+      outcomes: {
         name: string;
         price: number;
         point?: number;
-      }>;
-    }>;
-  }>;
+      }[];
+    }[];
+  }[];
 }
 
 export default function SportsScreen() {
@@ -58,7 +58,7 @@ export default function SportsScreen() {
   const [apiKey, setApiKey] = useState<string>('');
   const [newApiKeyInput, setNewApiKeyInput] = useState<string>('');
   const [showApiKeyExpired, setShowApiKeyExpired] = useState<boolean>(false);
-  const [expandedBets, setExpandedBets] = useState<Set<string>>(new Set());
+  const [expandedSports, setExpandedSports] = useState<Set<string>>(new Set());
 
   const userBets = sportsBets.filter(b => b.userId === currentUser?.id);
   const totalWon = userBets.filter(b => b.won === true).reduce((sum, bet) => {
@@ -102,7 +102,7 @@ export default function SportsScreen() {
       }
     };
     loadCachedGames();
-  }, []);
+  }, [selectedSport]);
 
   useEffect(() => {
     if (cachedGamesData[selectedSport]) {
@@ -280,7 +280,7 @@ export default function SportsScreen() {
     } finally {
       setLoadingGames(false);
     }
-  }, [selectedSport, apiKey]);
+  }, [selectedSport, apiKey, cachedGamesData]);
 
 
 
@@ -563,167 +563,200 @@ export default function SportsScreen() {
             </View>
           ) : (
             <View style={styles.betsList}>
-              {userBets.map((bet) => {
-                const isDetermined = bet.won !== null;
-                const isExpanded = expandedBets.has(bet.id);
+              {(() => {
+                const pendingBets = userBets.filter(bet => bet.won === null);
+                const pastBets = userBets.filter(bet => bet.won !== null);
                 
-                if (isDetermined && !isExpanded) {
-                  return (
-                    <Pressable
-                      key={bet.id}
-                      style={({ pressed }) => [
-                        styles.betCardCollapsed,
-                        pressed && styles.betCardCollapsedPressed,
-                      ]}
-                      onPress={() => {
-                        setExpandedBets(prev => {
-                          const next = new Set(prev);
-                          next.add(bet.id);
-                          return next;
-                        });
-                      }}
-                      testID={`collapsed-bet-${bet.id}`}
-                    >
-                      <View style={styles.collapsedContent}>
-                        <View style={styles.collapsedLeft}>
-                          <Text style={styles.collapsedSport}>{bet.sport}</Text>
-                          <Text style={styles.collapsedTeams}>{bet.teams}</Text>
-                          <Text style={[styles.collapsedResult, bet.won ? styles.collapsedWon : styles.collapsedLost]}>
-                            {bet.won ? '+' : '-'}${bet.won ? ((bet.payout || 0) - bet.amount).toFixed(2) : bet.amount.toFixed(2)}
-                          </Text>
+                const groupedPastBets = pastBets.reduce((acc, bet) => {
+                  const sportKey = bet.sport.toUpperCase();
+                  if (!acc[sportKey]) {
+                    acc[sportKey] = [];
+                  }
+                  acc[sportKey].push(bet);
+                  return acc;
+                }, {} as Record<string, SportsBet[]>);
+
+                const sortedSportKeys = Object.keys(groupedPastBets).sort();
+
+                return (
+                  <>
+                    {pendingBets.map((bet) => (
+                      <View key={bet.id} style={styles.betCard}>
+                        <View style={styles.betHeader}>
+                          <View style={styles.betHeaderLeft}>
+                            <View style={styles.betTitleRow}>
+                              <Text style={styles.sportName}>{bet.sport}</Text>
+                              <View style={[styles.resultBadge, styles.pendingBadge]}>
+                                <Text style={styles.resultBadgeText}>PENDING</Text>
+                              </View>
+                            </View>
+                            <Text style={styles.betTeams}>{bet.teams}</Text>
+                            <Text style={styles.betType}>{bet.betType}</Text>
+                            {bet.odds && (
+                              <Text style={styles.betOdds}>Odds: {bet.odds > 0 ? '+' : ''}{bet.odds}</Text>
+                            )}
+                            <Text style={styles.betDate}>{formatDate(bet.betDate)}</Text>
+                          </View>
+                          <View style={styles.betHeaderActions}>
+                            <Pressable
+                              onPress={() => handleEditBet(bet.id)}
+                              style={({ pressed }) => [
+                                styles.editButton,
+                                pressed && styles.editButtonPressed,
+                              ]}
+                              testID={`edit-sports-bet-${bet.id}`}
+                            >
+                              <Pencil size={18} color="#9D4EDD" />
+                            </Pressable>
+                            <Pressable
+                              onPress={() => handleDeleteBet(bet.id)}
+                              style={({ pressed }) => [
+                                styles.deleteButton,
+                                pressed && styles.deleteButtonPressed,
+                              ]}
+                              testID={`delete-sports-bet-${bet.id}`}
+                            >
+                              <Trash2 size={20} color="#000000" />
+                            </Pressable>
+                          </View>
                         </View>
-                        <View style={styles.collapsedActions}>
-                          <Pressable
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleEditBet(bet.id);
-                            }}
-                            style={({ pressed }) => [
-                              styles.collapsedIconButton,
-                              pressed && styles.editButtonPressed,
-                            ]}
-                            testID={`edit-sports-bet-${bet.id}`}
-                          >
-                            <Pencil size={16} color="#9D4EDD" />
-                          </Pressable>
-                          <Pressable
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleDeleteBet(bet.id);
-                            }}
-                            style={({ pressed }) => [
-                              styles.collapsedIconButton,
-                              pressed && styles.deleteButtonPressed,
-                            ]}
-                            testID={`delete-sports-bet-${bet.id}`}
-                          >
-                            <Trash2 size={16} color="#000000" />
-                          </Pressable>
+
+                        <View style={styles.betResultActions}>
+                          <View style={styles.betAmountRow}>
+                            <Text style={styles.betAmountLabel}>Bet Amount:</Text>
+                            <Text style={styles.betAmountValue}>${bet.amount.toFixed(2)}</Text>
+                          </View>
+                          {bet.payout !== undefined && bet.payout > 0 && (
+                            <View style={styles.betAmountRow}>
+                              <Text style={styles.betAmountLabel}>Potential Profit:</Text>
+                              <Text style={[styles.betAmountValue, styles.wonAmount]}>+${(bet.payout - bet.amount).toFixed(2)}</Text>
+                            </View>
+                          )}
+                          <View style={styles.resultButtonsContainer}>
+                            <Pressable
+                              onPress={() => updateSportsBet(bet.id, bet.sport, bet.teams, bet.betType, bet.amount, false, bet.betDate, bet.odds, bet.payout)}
+                              style={({ pressed }) => [
+                                styles.resultButton,
+                                styles.lostButtonSelected,
+                                pressed && styles.resultButtonPressed,
+                              ]}
+                              testID={`mark-lost-${bet.id}`}
+                            >
+                              <Text style={[styles.resultButtonText, styles.resultButtonTextSelected]}>Lost</Text>
+                            </Pressable>
+                            <Pressable
+                              onPress={() => updateSportsBet(bet.id, bet.sport, bet.teams, bet.betType, bet.amount, true, bet.betDate, bet.odds, bet.payout)}
+                              style={({ pressed }) => [
+                                styles.resultButton,
+                                styles.wonButtonSelected,
+                                pressed && styles.resultButtonPressed,
+                              ]}
+                              testID={`mark-won-${bet.id}`}
+                            >
+                              <Text style={[styles.resultButtonText, styles.resultButtonTextSelected]}>Won</Text>
+                            </Pressable>
+                          </View>
                         </View>
                       </View>
-                    </Pressable>
-                  );
-                }
-                
-                return (
-                  <Pressable
-                    key={bet.id}
-                    style={({ pressed }) => [
-                      styles.betCard,
-                      isDetermined && pressed && styles.betCardPressed,
-                    ]}
-                    onPress={() => {
-                      if (isDetermined) {
-                        setExpandedBets(prev => {
-                          const next = new Set(prev);
-                          next.delete(bet.id);
-                          return next;
-                        });
-                      }
-                    }}
-                    disabled={!isDetermined}
-                    testID={`expanded-bet-${bet.id}`}
-                  >
-                    <View style={styles.betHeader}>
-                      <View style={styles.betHeaderLeft}>
-                        <View style={styles.betTitleRow}>
-                          <Text style={styles.sportName}>{bet.sport}</Text>
-                          {bet.won === null && (
-                            <View style={[styles.resultBadge, styles.pendingBadge]}>
-                              <Text style={styles.resultBadgeText}>PENDING</Text>
+                    ))}
+
+                    {sortedSportKeys.map((sportKey) => {
+                      const bets = groupedPastBets[sportKey];
+                      const isExpanded = expandedSports.has(sportKey);
+                      
+                      const totalWonInSport = bets.filter(b => b.won === true).reduce((sum, bet) => {
+                        const profit = (bet.payout || 0) - bet.amount;
+                        return sum + profit;
+                      }, 0);
+                      const totalLostInSport = bets.filter(b => b.won === false).reduce((sum, bet) => sum + bet.amount, 0);
+                      const netInSport = totalWonInSport - totalLostInSport;
+
+                      return (
+                        <View key={sportKey}>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.sportGroupCard,
+                              pressed && styles.sportGroupCardPressed,
+                            ]}
+                            onPress={() => {
+                              setExpandedSports(prev => {
+                                const next = new Set(prev);
+                                if (next.has(sportKey)) {
+                                  next.delete(sportKey);
+                                } else {
+                                  next.add(sportKey);
+                                }
+                                return next;
+                              });
+                            }}
+                            testID={`sport-group-${sportKey}`}
+                          >
+                            <View style={styles.sportGroupHeader}>
+                              <View style={styles.sportGroupLeft}>
+                                <Text style={styles.sportGroupTitle}>{sportKey}</Text>
+                                <Text style={styles.sportGroupCount}>{bets.length} bet{bets.length !== 1 ? 's' : ''}</Text>
+                              </View>
+                              <View style={styles.sportGroupRight}>
+                                <Text style={[styles.sportGroupTotal, netInSport >= 0 ? styles.sportGroupPositive : styles.sportGroupNegative]}>
+                                  {netInSport >= 0 ? '+' : ''}${netInSport.toFixed(2)}
+                                </Text>
+                                <Text style={styles.sportGroupArrow}>{isExpanded ? '▼' : '▶'}</Text>
+                              </View>
+                            </View>
+                          </Pressable>
+
+                          {isExpanded && (
+                            <View style={styles.sportGroupBets}>
+                              {bets.map((bet) => (
+                                <View key={bet.id} style={styles.sportGroupBetCard}>
+                                  <View style={styles.betHeader}>
+                                    <View style={styles.betHeaderLeft}>
+                                      <Text style={styles.betTeams}>{bet.teams}</Text>
+                                      <Text style={styles.betType}>{bet.betType}</Text>
+                                      {bet.odds && (
+                                        <Text style={styles.betOdds}>Odds: {bet.odds > 0 ? '+' : ''}{bet.odds}</Text>
+                                      )}
+                                      <Text style={styles.betDate}>{formatDate(bet.betDate)}</Text>
+                                      <View style={styles.betResultRow}>
+                                        <Text style={styles.betAmountLabel}>Bet: ${bet.amount.toFixed(2)}</Text>
+                                        <Text style={[styles.betResultAmount, bet.won ? styles.collapsedWon : styles.collapsedLost]}>
+                                          {bet.won ? '+' : '-'}${bet.won ? ((bet.payout || 0) - bet.amount).toFixed(2) : bet.amount.toFixed(2)}
+                                        </Text>
+                                      </View>
+                                    </View>
+                                    <View style={styles.betHeaderActions}>
+                                      <Pressable
+                                        onPress={() => handleEditBet(bet.id)}
+                                        style={({ pressed }) => [
+                                          styles.editButton,
+                                          pressed && styles.editButtonPressed,
+                                        ]}
+                                        testID={`edit-sports-bet-${bet.id}`}
+                                      >
+                                        <Pencil size={18} color="#9D4EDD" />
+                                      </Pressable>
+                                      <Pressable
+                                        onPress={() => handleDeleteBet(bet.id)}
+                                        style={({ pressed }) => [
+                                          styles.deleteButton,
+                                          pressed && styles.deleteButtonPressed,
+                                        ]}
+                                        testID={`delete-sports-bet-${bet.id}`}
+                                      >
+                                        <Trash2 size={20} color="#000000" />
+                                      </Pressable>
+                                    </View>
+                                  </View>
+                                </View>
+                              ))}
                             </View>
                           )}
                         </View>
-                        <Text style={styles.betTeams}>{bet.teams}</Text>
-                        <Text style={styles.betType}>{bet.betType}</Text>
-                        {bet.odds && (
-                          <Text style={styles.betOdds}>Odds: {bet.odds > 0 ? '+' : ''}{bet.odds}</Text>
-                        )}
-                        <Text style={styles.betDate}>{formatDate(bet.betDate)}</Text>
-                      </View>
-                      <View style={styles.betHeaderActions}>
-                        <Pressable
-                          onPress={() => handleEditBet(bet.id)}
-                          style={({ pressed }) => [
-                            styles.editButton,
-                            pressed && styles.editButtonPressed,
-                          ]}
-                          testID={`edit-sports-bet-${bet.id}`}
-                        >
-                          <Pencil size={18} color="#9D4EDD" />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => handleDeleteBet(bet.id)}
-                          style={({ pressed }) => [
-                            styles.deleteButton,
-                            pressed && styles.deleteButtonPressed,
-                          ]}
-                          testID={`delete-sports-bet-${bet.id}`}
-                        >
-                          <Trash2 size={20} color="#000000" />
-                        </Pressable>
-                      </View>
-                    </View>
-
-                    <View style={styles.betResultActions}>
-                      <View style={styles.betAmountRow}>
-                        <Text style={styles.betAmountLabel}>Bet Amount:</Text>
-                        <Text style={styles.betAmountValue}>${bet.amount.toFixed(2)}</Text>
-                      </View>
-                      {bet.payout !== undefined && bet.payout > 0 && (
-                        <View style={styles.betAmountRow}>
-                          <Text style={styles.betAmountLabel}>Potential Profit:</Text>
-                          <Text style={[styles.betAmountValue, styles.wonAmount]}>+${(bet.payout - bet.amount).toFixed(2)}</Text>
-                        </View>
-                      )}
-                      <View style={styles.resultButtonsContainer}>
-                        <Pressable
-                          onPress={() => updateSportsBet(bet.id, bet.sport, bet.teams, bet.betType, bet.amount, false, bet.betDate, bet.odds, bet.payout)}
-                          style={({ pressed }) => [
-                            styles.resultButton,
-                            styles.lostButtonSelected,
-                            pressed && styles.resultButtonPressed,
-                          ]}
-                          testID={`mark-lost-${bet.id}`}
-                        >
-                          <Text style={[styles.resultButtonText, styles.resultButtonTextSelected]}>Lost</Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={() => updateSportsBet(bet.id, bet.sport, bet.teams, bet.betType, bet.amount, true, bet.betDate, bet.odds, bet.payout)}
-                          style={({ pressed }) => [
-                            styles.resultButton,
-                            styles.wonButtonSelected,
-                            pressed && styles.resultButtonPressed,
-                          ]}
-                          testID={`mark-won-${bet.id}`}
-                        >
-                          <Text style={[styles.resultButtonText, styles.resultButtonTextSelected]}>Won</Text>
-                        </Pressable>
-                      </View>
-                    </View>
-                  </Pressable>
+                      );
+                    })}
+                  </>
                 );
-              })}
+              })()}
             </View>
           )}
 
@@ -2104,5 +2137,80 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 6,
     backgroundColor: 'rgba(157, 78, 221, 0.1)',
+  },
+  sportGroupCard: {
+    backgroundColor: 'rgba(157, 78, 221, 0.85)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginBottom: 12,
+  },
+  sportGroupCardPressed: {
+    opacity: 0.8,
+  },
+  sportGroupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sportGroupLeft: {
+    flex: 1,
+    gap: 4,
+  },
+  sportGroupTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  sportGroupCount: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500' as const,
+  },
+  sportGroupRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sportGroupTotal: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  sportGroupPositive: {
+    color: '#FFD700',
+  },
+  sportGroupNegative: {
+    color: '#EF4444',
+  },
+  sportGroupArrow: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '700' as const,
+  },
+  sportGroupBets: {
+    marginTop: 12,
+    gap: 8,
+  },
+  sportGroupBetCard: {
+    backgroundColor: 'rgba(220, 190, 255, 0.95)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  betResultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(157, 78, 221, 0.2)',
+  },
+  betResultAmount: {
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
 });
