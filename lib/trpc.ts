@@ -75,7 +75,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
             
             try {
               JSON.parse(text);
-            } catch (e) {
+            } catch {
               throw new Error(`Server returned invalid JSON (Status: ${res.status}): ${text.substring(0, 100)}`);
             }
           } else {
@@ -92,7 +92,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
               } else {
                 try {
                   JSON.parse(text);
-                } catch (e) {
+                } catch {
                   console.error('⚠️ WARNING: Response is not valid JSON:', text.substring(0, 100));
                   throw new Error(`Server returned invalid JSON: ${text.substring(0, 100)}`);
                 }

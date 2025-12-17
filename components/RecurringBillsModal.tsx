@@ -1,6 +1,6 @@
 import { ExpenseCategory } from '@/types/expense';
 import { useRecurringBillsByUser } from '@/contexts/ExpensesContext';
-import { X, Plus, Trash2, Edit, Calendar } from 'lucide-react-native';
+import { X, Plus, Trash2, Calendar } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, FlatList, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 

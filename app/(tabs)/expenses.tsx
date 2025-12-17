@@ -5,13 +5,12 @@ import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Plus, Receipt, CreditCard, ChevronDown, Trash2, BarChart3, ChevronRight, Zap, Copy, Car } from 'lucide-react-native';
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Alert, ImageBackground, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ReceiptScannerModal from '@/components/ReceiptScannerModal';
 import RecurringBillsModal from '@/components/RecurringBillsModal';
-import React from "react";
 
 const categories: ExpenseCategory[] = [
   'Auto Repair',

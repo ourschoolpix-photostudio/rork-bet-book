@@ -119,7 +119,7 @@ CREATE INDEX IF NOT EXISTS idx_backups_created_at ON backups(created_at DESC);`;
               setUrl('');
               setKey('');
               Alert.alert('Success', 'Supabase credentials cleared');
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to clear credentials');
             }
           },

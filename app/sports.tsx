@@ -90,11 +90,17 @@ export default function SportsScreen() {
       try {
         const cachedData = await AsyncStorage.getItem('@sports_games_cache');
         if (cachedData) {
-          const parsed = JSON.parse(cachedData);
-          setCachedGamesData(parsed);
-          if (parsed[selectedSport]) {
-            setNflGames(parsed[selectedSport].nfl || []);
-            setLiveGames(parsed[selectedSport].live || []);
+          try {
+            const parsed = JSON.parse(cachedData);
+            setCachedGamesData(parsed);
+            if (parsed[selectedSport]) {
+              setNflGames(parsed[selectedSport].nfl || []);
+              setLiveGames(parsed[selectedSport].live || []);
+            }
+          } catch (parseError) {
+            console.error('Error parsing cached games, clearing corrupted cache:', parseError);
+            await AsyncStorage.removeItem('@sports_games_cache');
+            setCachedGamesData({});
           }
         }
       } catch (error) {
