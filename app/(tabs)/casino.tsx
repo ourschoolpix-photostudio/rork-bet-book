@@ -176,16 +176,9 @@ export default function CasinoScreen() {
     const start = new Date(startTime);
     const end = endTime ? new Date(endTime) : new Date();
     const diffMs = end.getTime() - start.getTime();
-    const hours = diffMs / (1000 * 60 * 60);
     const minutes = diffMs / (1000 * 60);
-    
-    if (hours < 1) {
-      const winsPerMinute = winLoss / minutes;
-      return `${winsPerMinute.toFixed(2)}/min`;
-    } else {
-      const winsPerHour = winLoss / hours;
-      return `${winsPerHour.toFixed(2)}/hr`;
-    }
+    const winsPerMinute = winLoss / minutes;
+    return `${winsPerMinute.toFixed(2)}/min`;
   };
 
   const totalStats = completedSessions.reduce(
