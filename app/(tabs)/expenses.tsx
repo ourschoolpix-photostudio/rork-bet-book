@@ -150,6 +150,9 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
   const { deleteExpense, addExpense, updateExpense, addRecurringBill, deleteRecurringBill, updateUtilities } = useExpenses();
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const standardTotal = expenses.filter(e => (e.expenseType || 'standard') === 'standard').reduce((sum, exp) => sum + exp.amount, 0);
+  const businessTotal = expenses.filter(e => e.expenseType === 'business').reduce((sum, exp) => sum + exp.amount, 0);
+  const vacationTotal = expenses.filter(e => e.expenseType === 'vacation').reduce((sum, exp) => sum + exp.amount, 0);
 
   const toggleMonth = (monthKey: string) => {
     setExpandedMonths(prev => {
@@ -247,7 +250,22 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
             <Text style={styles.summaryLabel}>
               {selectedCategory ? `${selectedCategory} Total` : 'Total Expenses'}
             </Text>
-            <Text style={styles.summaryAmount}>${totalExpenses.toFixed(2)}</Text>
+            <Text style={styles.summaryAmount}>${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+          </View>
+
+          <View style={styles.typesSummaryRow}>
+            <View style={styles.typeSummaryCard}>
+              <Text style={styles.typeSummaryLabel}>Standard</Text>
+              <Text style={styles.typeSummaryAmount}>${standardTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+            </View>
+            <View style={styles.typeSummaryCard}>
+              <Text style={styles.typeSummaryLabel}>Business</Text>
+              <Text style={styles.typeSummaryAmount}>${businessTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+            </View>
+            <View style={styles.typeSummaryCard}>
+              <Text style={styles.typeSummaryLabel}>Vacation</Text>
+              <Text style={styles.typeSummaryAmount}>${vacationTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+            </View>
           </View>
 
           <Pressable
@@ -1619,5 +1637,31 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 8,
     marginLeft: 4,
+  },
+  typesSummaryRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  typeSummaryCard: {
+    flex: 1,
+    backgroundColor: '#7B2CBF',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  typeSummaryLabel: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  typeSummaryAmount: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
 });
