@@ -183,30 +183,35 @@ export default function LottoScreen() {
       
       const patterns = [
         /\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
-        /jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
-        /estimated jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
-        /\$(\d{3,})\s*(Million|Billion)/gi,
         />(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)</gi,
+        /jackpot[^$<>]*[>$](\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
+        /estimated[^$<>]*[>$](\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
+        /class=["'][^"']*jackpot[^"']*["'][^>]*>\s*[^\d]*(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /<span[^>]*>\s*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /<div[^>]*>\s*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /"jackpot"[^}]*:(\d+(?:,\d+)*(?:\.\d+)?)/gi,
+        /'jackpot'[^}]*:(\d+(?:,\d+)*(?:\.\d+)?)/gi,
       ];
       
       for (const pattern of patterns) {
         const matches = Array.from(html.matchAll(pattern));
-        console.log(`Pattern ${pattern} found ${matches.length} matches`);
+        console.log(`MM Pattern found ${matches.length} matches`);
         
         for (const match of matches) {
           const amount = match[1];
-          const unit = match[2];
+          const unit = match[2] || 'Million';
           const numericValue = parseFloat(amount.replace(/,/g, ''));
           
-          console.log(`Found: ${amount} ${unit} (${numericValue})`);
+          console.log(`MM Found: ${amount} ${unit} (${numericValue})`);
           
-          if (numericValue >= 20 && numericValue <= 2000) {
+          if (numericValue >= 20 && numericValue <= 5000) {
             const normalizedUnit = unit.toLowerCase().startsWith('b') ? 'Billion' : 'Million';
             return `${amount} ${normalizedUnit}`;
           }
         }
       }
       
+      console.log('No valid Mega Millions jackpot found in HTML');
       return 'TBD';
     } catch (error) {
       console.error('Error scraping Mega Millions jackpot:', error);
