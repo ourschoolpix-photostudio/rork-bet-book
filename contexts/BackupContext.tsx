@@ -99,12 +99,12 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         .single();
       
       if (error) {
-        console.error('❌ Supabase error details:', JSON.stringify({
+        console.error('❌ Supabase error details:', {
           message: error.message,
           code: error.code,
           details: error.details,
           hint: error.hint,
-        }, null, 2));
+        });
         
         let errorMsg = `Supabase error: ${error.message}`;
         
@@ -132,17 +132,11 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       let errorMessage = 'Failed to create cloud backup.';
       
       if (error instanceof Error) {
-        console.error('❌ Error name:', error.name);
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error stack:', error.stack);
-        
         errorMessage += '\n\n' + error.message;
         
-        if (error.message.includes('fetch') || error.message.includes('Network')) {
-          errorMessage += '\n\nPossible causes:\n• Check your internet connection\n• Verify your Supabase URL is correct\n• Make sure the URL starts with https://\n• Check if the Supabase project is active';
+        if (error.message.includes('fetch')) {
+          errorMessage += '\n\nPlease check your internet connection and Supabase URL.';
         }
-      } else {
-        console.error('❌ Non-Error object:', JSON.stringify(error, null, 2));
       }
       
       Alert.alert('Backup Error', errorMessage);
@@ -344,7 +338,6 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
           .order('created_at', { ascending: false });
         
         if (error) {
-          console.error('❌ List backups error:', JSON.stringify(error, null, 2));
           throw new Error(`Supabase error: ${error.message}`);
         }
         
@@ -396,7 +389,6 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
         .single();
       
       if (error || !backupRecord) {
-        console.error('❌ Fetch backup error:', JSON.stringify(error, null, 2));
         throw new Error(`Failed to fetch backup: ${error?.message || 'Not found'}`);
       }
       
