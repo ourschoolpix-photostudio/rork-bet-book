@@ -64,7 +64,10 @@ export default function NewSessionModal({ visible, onClose, onSubmit }: NewSessi
   const displayAddOn = parseFloat(addOnAmount) / 100 || 0;
 
   const handleSubmit = () => {
-    const finalCasinoName = customCasinoName || (selectedState === 'Cruise' && cruiseShipName ? cruiseShipName : selectedCasino);
+    let finalCasinoName = customCasinoName || selectedCasino;
+    if (selectedState === 'Cruise' && cruiseShipName && !customCasinoName) {
+      finalCasinoName = `${selectedCasino} - ${cruiseShipName}`;
+    }
     if (selectedState && finalCasinoName && startAmount) {
       const start = parseFloat(startAmount) / 100;
       const addOn = parseFloat(addOnAmount) / 100 || 0;

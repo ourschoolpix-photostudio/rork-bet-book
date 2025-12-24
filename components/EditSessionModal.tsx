@@ -65,7 +65,41 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
   useEffect(() => {
     if (visible) {
       setSelectedState(initialData.state);
-      setSelectedCasino(initialData.casinoName);
+      
+      if (initialData.state === 'Cruise') {
+        const cruiseName = initialData.casinoName;
+        const cruiseLine = CASINOS_BY_STATE['Cruise']?.find(c => c.name === cruiseName);
+        
+        if (cruiseLine) {
+          setSelectedCasino(cruiseLine.name);
+          setCruiseShipName('');
+          setCustomCasinoName('');
+        } else {
+          const parts = cruiseName.split(' - ');
+          if (parts.length === 2) {
+            const [line, ship] = parts;
+            const foundLine = CASINOS_BY_STATE['Cruise']?.find(c => c.name === line);
+            if (foundLine) {
+              setSelectedCasino(foundLine.name);
+              setCruiseShipName(ship);
+              setCustomCasinoName('');
+            } else {
+              setSelectedCasino('');
+              setCustomCasinoName(line);
+              setCruiseShipName(ship);
+            }
+          } else {
+            setSelectedCasino('');
+            setCustomCasinoName(cruiseName);
+            setCruiseShipName('');
+          }
+        }
+      } else {
+        setSelectedCasino(initialData.casinoName);
+        setCustomCasinoName('');
+        setCruiseShipName('');
+      }
+      
       setGameType(initialData.gameType);
       setStartAmount((initialData.startAmount * 100).toString());
       setAddOnAmount((initialData.addOnAmount * 100).toString());
@@ -73,8 +107,6 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
       setBorrowFrom(initialData.borrowFrom || '');
       setSearchQuery('');
       setShowCasinoList(false);
-      setCustomCasinoName('');
-      setCruiseShipName('');
       
       const startDate = new Date(initialData.startDate);
       const startYear = startDate.getFullYear();
@@ -134,7 +166,10 @@ export default function EditSessionModal({ visible, onClose, onSubmit, initialDa
   const totalInvestment = calculateTotalInvestment();
 
   const handleSubmit = () => {
-    const finalCasinoName = customCasinoName || (selectedState === 'Cruise' && cruiseShipName ? cruiseShipName : selectedCasino);
+    let finalCasinoName = customCasinoName || selectedCasino;
+    if (selectedState === 'Cruise' && cruiseShipName && !customCasinoName) {
+      finalCasinoName = `${selectedCasino} - ${cruiseShipName}`;
+    }
     const isValidStart = selectedState && finalCasinoName && startAmount && startDateString && startTime;
     const isValidEnd = !isCompleted || (endDateString && endTime);
     
