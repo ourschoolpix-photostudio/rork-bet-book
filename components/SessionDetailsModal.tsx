@@ -18,6 +18,16 @@ interface SessionDetailsModalProps {
 export default function SessionDetailsModal({ visible, onClose, session }: SessionDetailsModalProps) {
   if (!session) return null;
 
+  const parseCruiseName = (casinoName: string) => {
+    const parts = casinoName.split(' - ');
+    if (parts.length === 2) {
+      return { cruiseLine: parts[0], shipName: parts[1] };
+    }
+    return null;
+  };
+
+  const cruiseInfo = parseCruiseName(session.casinoName);
+
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -42,7 +52,7 @@ export default function SessionDetailsModal({ visible, onClose, session }: Sessi
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{session.casinoName}</Text>
+            <Text style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{cruiseInfo ? cruiseInfo.cruiseLine : session.casinoName}</Text>
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [
@@ -56,6 +66,13 @@ export default function SessionDetailsModal({ visible, onClose, session }: Sessi
           </View>
 
           <View style={styles.modalBody}>
+            {cruiseInfo && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Ship Name</Text>
+                <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">{cruiseInfo.shipName}</Text>
+              </View>
+            )}
+
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Location</Text>
               <Text style={styles.detailValue}>{session.state}</Text>

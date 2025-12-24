@@ -16,6 +16,14 @@ export default function CasinoScreen() {
   const { addBorrow } = useBorrows();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const parseCruiseName = (casinoName: string) => {
+    const parts = casinoName.split(' - ');
+    if (parts.length === 2) {
+      return { cruiseLine: parts[0], shipName: parts[1] };
+    }
+    return null;
+  };
   const [showNewSessionModal, setShowNewSessionModal] = useState<boolean>(false);
   const [showEditSessionModal, setShowEditSessionModal] = useState<boolean>(false);
   const [showEndSessionModal, setShowEndSessionModal] = useState<boolean>(false);
@@ -311,7 +319,14 @@ export default function CasinoScreen() {
               >
                 <View style={styles.sessionHeader}>
                   <View style={styles.sessionHeaderLeft}>
-                    <Text style={styles.sessionCasino}>{currentSession.casinoName}</Text>
+                    {parseCruiseName(currentSession.casinoName) ? (
+                      <>
+                        <Text style={styles.sessionCasino} numberOfLines={1} ellipsizeMode="tail">{parseCruiseName(currentSession.casinoName)!.cruiseLine}</Text>
+                        <Text style={styles.sessionShipName} numberOfLines={1} ellipsizeMode="tail">{parseCruiseName(currentSession.casinoName)!.shipName}</Text>
+                      </>
+                    ) : (
+                      <Text style={styles.sessionCasino} numberOfLines={1} ellipsizeMode="tail">{currentSession.casinoName}</Text>
+                    )}
                     <View style={styles.sessionMeta}>
                       <MapPin size={14} color="rgba(36, 0, 70, 0.6)" />
                       <Text style={styles.sessionMetaText}>{currentSession.state}</Text>
@@ -479,7 +494,14 @@ export default function CasinoScreen() {
                   >
                     <View style={styles.sessionHeader}>
                       <View style={styles.sessionHeaderLeft}>
-                        <Text style={styles.sessionCasino}>{session.casinoName}</Text>
+                        {parseCruiseName(session.casinoName) ? (
+                          <>
+                            <Text style={styles.sessionCasino} numberOfLines={1} ellipsizeMode="tail">{parseCruiseName(session.casinoName)!.cruiseLine}</Text>
+                            <Text style={styles.sessionShipName} numberOfLines={1} ellipsizeMode="tail">{parseCruiseName(session.casinoName)!.shipName}</Text>
+                          </>
+                        ) : (
+                          <Text style={styles.sessionCasino} numberOfLines={1} ellipsizeMode="tail">{session.casinoName}</Text>
+                        )}
                         <View style={styles.sessionMeta}>
                           <MapPin size={14} color="rgba(36, 0, 70, 0.6)" />
                           <Text style={styles.sessionMetaText}>{session.state}</Text>
@@ -1012,6 +1034,11 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700' as const,
     color: '#240046',
+  },
+  sessionShipName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: 'rgba(36, 0, 70, 0.7)',
   },
   sessionMeta: {
     flexDirection: 'row',
