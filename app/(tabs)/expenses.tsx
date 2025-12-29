@@ -1054,9 +1054,9 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
       <ReceiptScannerModal
         visible={showReceiptScanner}
         onClose={() => setShowReceiptScanner(false)}
-        onSubmit={async (category, amount, description, date, merchant, notes) => {
+        onSubmit={async (category, amount, description, date, merchant, notes, expenseType) => {
           if (currentUser) {
-            await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes);
+            await addExpense(currentUser.id, category, amount, description, date, merchant, false, notes, expenseType);
           }
         }}
       />
