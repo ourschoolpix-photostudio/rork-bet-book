@@ -60,6 +60,78 @@ export default function StatsScreen() {
     }))
     .sort((a, b) => b.totalSessions - a.totalSessions);
 
+  const timeOfDayStats = completedSessions.reduce((acc, session) => {
+    const date = new Date(session.startTime);
+    const hour = date.getHours();
+    let timeOfDay: string;
+    
+    if (hour >= 5 && hour < 12) {
+      timeOfDay = 'Morning (5am-12pm)';
+    } else if (hour >= 12 && hour < 17) {
+      timeOfDay = 'Afternoon (12pm-5pm)';
+    } else if (hour >= 17 && hour < 21) {
+      timeOfDay = 'Evening (5pm-9pm)';
+    } else {
+      timeOfDay = 'Night (9pm-5am)';
+    }
+    
+    if (!acc[timeOfDay]) {
+      acc[timeOfDay] = { wins: 0, losses: 0, totalSessions: 0, totalWinnings: 0, totalLosses: 0 };
+    }
+    
+    acc[timeOfDay].totalSessions++;
+    const winLoss = session.winLoss || 0;
+    if (winLoss > 0) {
+      acc[timeOfDay].wins++;
+      acc[timeOfDay].totalWinnings += winLoss;
+    } else if (winLoss < 0) {
+      acc[timeOfDay].losses++;
+      acc[timeOfDay].totalLosses += Math.abs(winLoss);
+    }
+    
+    return acc;
+  }, {} as Record<string, { wins: number; losses: number; totalSessions: number; totalWinnings: number; totalLosses: number }>);
+
+  const timeOfDayArray = Object.entries(timeOfDayStats)
+    .map(([time, stats]) => ({
+      time,
+      ...stats,
+      winPercentage: stats.totalSessions > 0 ? (stats.wins / stats.totalSessions) * 100 : 0,
+      netProfit: stats.totalWinnings - stats.totalLosses,
+    }))
+    .sort((a, b) => b.winPercentage - a.winPercentage);
+
+  const dayOfWeekStats = completedSessions.reduce((acc, session) => {
+    const date = new Date(session.startTime);
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayNames[date.getDay()];
+    
+    if (!acc[dayOfWeek]) {
+      acc[dayOfWeek] = { wins: 0, losses: 0, totalSessions: 0, totalWinnings: 0, totalLosses: 0 };
+    }
+    
+    acc[dayOfWeek].totalSessions++;
+    const winLoss = session.winLoss || 0;
+    if (winLoss > 0) {
+      acc[dayOfWeek].wins++;
+      acc[dayOfWeek].totalWinnings += winLoss;
+    } else if (winLoss < 0) {
+      acc[dayOfWeek].losses++;
+      acc[dayOfWeek].totalLosses += Math.abs(winLoss);
+    }
+    
+    return acc;
+  }, {} as Record<string, { wins: number; losses: number; totalSessions: number; totalWinnings: number; totalLosses: number }>);
+
+  const dayOfWeekArray = Object.entries(dayOfWeekStats)
+    .map(([day, stats]) => ({
+      day,
+      ...stats,
+      winPercentage: stats.totalSessions > 0 ? (stats.wins / stats.totalSessions) * 100 : 0,
+      netProfit: stats.totalWinnings - stats.totalLosses,
+    }))
+    .sort((a, b) => b.winPercentage - a.winPercentage);
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -101,42 +173,124 @@ export default function StatsScreen() {
               <Text style={styles.emptyStateText}>No completed sessions yet</Text>
             </View>
           ) : (
-            <View style={styles.venueList}>
-              <Text style={styles.sectionTitle}>Win/Loss by Venue</Text>
-              {venueStatsArray.map((venue) => (
-                <View key={venue.venue} style={styles.venueCard}>
-                  <Text style={styles.venueName}>{venue.venue}</Text>
-                  <View style={styles.statsRow}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>Total Sessions</Text>
-                      <Text style={styles.statValue}>{venue.totalSessions}</Text>
+            <>
+              <View style={styles.venueList}>
+                <Text style={styles.sectionTitle}>Best Time to Play</Text>
+                {timeOfDayArray.map((timeSlot, index) => (
+                  <View key={timeSlot.time} style={styles.venueCard}>
+                    <View style={styles.rankBadgeContainer}>
+                      {index === 0 && <Text style={styles.crownEmoji}>👑</Text>}
+                      <Text style={styles.venueName}>{timeSlot.time}</Text>
                     </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>Wins</Text>
-                      <Text style={[styles.statValue, styles.winValue]}>{venue.wins}</Text>
+                    <View style={styles.statsRow}>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Sessions</Text>
+                        <Text style={styles.statValue}>{timeSlot.totalSessions}</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Wins</Text>
+                        <Text style={[styles.statValue, styles.winValue]}>{timeSlot.wins}</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Losses</Text>
+                        <Text style={[styles.statValue, styles.lossValue]}>{timeSlot.losses}</Text>
+                      </View>
                     </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>Losses</Text>
-                      <Text style={[styles.statValue, styles.lossValue]}>{venue.losses}</Text>
+                    <View style={styles.percentageRow}>
+                      <View style={styles.percentageItem}>
+                        <Text style={styles.percentageLabel}>Win %</Text>
+                        <Text style={[styles.percentageValue, styles.winPercentage]}>
+                          {timeSlot.winPercentage.toFixed(1)}%
+                        </Text>
+                      </View>
+                      <View style={styles.percentageItem}>
+                        <Text style={styles.percentageLabel}>Net Profit</Text>
+                        <Text style={[styles.percentageValue, timeSlot.netProfit >= 0 ? styles.winPercentage : styles.lossPercentage]}>
+                          {timeSlot.netProfit >= 0 ? '+' : ''}${timeSlot.netProfit.toFixed(2)}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                  <View style={styles.percentageRow}>
-                    <View style={styles.percentageItem}>
-                      <Text style={styles.percentageLabel}>Win %</Text>
-                      <Text style={[styles.percentageValue, styles.winPercentage]}>
-                        {venue.winPercentage.toFixed(1)}%
-                      </Text>
+                ))}
+              </View>
+
+              <View style={styles.venueList}>
+                <Text style={styles.sectionTitle}>Best Day of Week</Text>
+                {dayOfWeekArray.map((daySlot, index) => (
+                  <View key={daySlot.day} style={styles.venueCard}>
+                    <View style={styles.rankBadgeContainer}>
+                      {index === 0 && <Text style={styles.crownEmoji}>👑</Text>}
+                      <Text style={styles.venueName}>{daySlot.day}</Text>
                     </View>
-                    <View style={styles.percentageItem}>
-                      <Text style={styles.percentageLabel}>Loss %</Text>
-                      <Text style={[styles.percentageValue, styles.lossPercentage]}>
-                        {venue.lossPercentage.toFixed(1)}%
-                      </Text>
+                    <View style={styles.statsRow}>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Sessions</Text>
+                        <Text style={styles.statValue}>{daySlot.totalSessions}</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Wins</Text>
+                        <Text style={[styles.statValue, styles.winValue]}>{daySlot.wins}</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Losses</Text>
+                        <Text style={[styles.statValue, styles.lossValue]}>{daySlot.losses}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.percentageRow}>
+                      <View style={styles.percentageItem}>
+                        <Text style={styles.percentageLabel}>Win %</Text>
+                        <Text style={[styles.percentageValue, styles.winPercentage]}>
+                          {daySlot.winPercentage.toFixed(1)}%
+                        </Text>
+                      </View>
+                      <View style={styles.percentageItem}>
+                        <Text style={styles.percentageLabel}>Net Profit</Text>
+                        <Text style={[styles.percentageValue, daySlot.netProfit >= 0 ? styles.winPercentage : styles.lossPercentage]}>
+                          {daySlot.netProfit >= 0 ? '+' : ''}${daySlot.netProfit.toFixed(2)}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+
+              <View style={styles.venueList}>
+                <Text style={styles.sectionTitle}>Win/Loss by Venue</Text>
+                {venueStatsArray.map((venue) => (
+                  <View key={venue.venue} style={styles.venueCard}>
+                    <Text style={styles.venueName}>{venue.venue}</Text>
+                    <View style={styles.statsRow}>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Total Sessions</Text>
+                        <Text style={styles.statValue}>{venue.totalSessions}</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Wins</Text>
+                        <Text style={[styles.statValue, styles.winValue]}>{venue.wins}</Text>
+                      </View>
+                      <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Losses</Text>
+                        <Text style={[styles.statValue, styles.lossValue]}>{venue.losses}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.percentageRow}>
+                      <View style={styles.percentageItem}>
+                        <Text style={styles.percentageLabel}>Win %</Text>
+                        <Text style={[styles.percentageValue, styles.winPercentage]}>
+                          {venue.winPercentage.toFixed(1)}%
+                        </Text>
+                      </View>
+                      <View style={styles.percentageItem}>
+                        <Text style={styles.percentageLabel}>Loss %</Text>
+                        <Text style={[styles.percentageValue, styles.lossPercentage]}>
+                          {venue.lossPercentage.toFixed(1)}%
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </>
           )}
         </ScrollView>
       </View>
@@ -283,5 +437,14 @@ const styles = StyleSheet.create({
   },
   lossPercentage: {
     color: '#F87171',
+  },
+  rankBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  crownEmoji: {
+    fontSize: 20,
   },
 });
