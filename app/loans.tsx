@@ -399,7 +399,7 @@ const handleAddToLoan = async (loanId: string) => {
                           {isExpanded ? (
                             <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
                           ) : (
-                            <Text style={styles.remainingAmount}>Owed: ${formatCurrency(remaining)}</Text>
+                            <Text style={styles.remainingAmount}>${formatCurrency(remaining)}</Text>
                           )}
                         </View>
                         <View style={styles.expandIcon}>
