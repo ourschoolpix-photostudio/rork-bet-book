@@ -396,8 +396,10 @@ const handleAddToLoan = async (loanId: string) => {
                       <View style={styles.loanHeader}>
                         <View style={styles.loanHeaderLeft}>
                           <Text style={styles.borrowerName}>{loan.borrowerName}</Text>
-                          {isExpanded && (
+                          {isExpanded ? (
                             <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
+                          ) : (
+                            <Text style={styles.remainingAmount}>Owed: ${formatCurrency(remaining)}</Text>
                           )}
                         </View>
                         <View style={styles.expandIcon}>
@@ -1038,6 +1040,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(36, 0, 70, 0.7)',
     fontWeight: '500' as const,
+  },
+  remainingAmount: {
+    fontSize: 14,
+    color: '#EF4444',
+    fontWeight: '600' as const,
   },
   deleteButton: {
     padding: 8,
