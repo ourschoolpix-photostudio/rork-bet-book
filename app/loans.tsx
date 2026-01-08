@@ -302,15 +302,13 @@ const handleAddToLoan = async (loanId: string) => {
   };
 
   const toggleExpanded = (loanId: string) => {
-    if (showArchivedLoans) {
-      const newSet = new Set(expandedLoanIds);
-      if (expandedLoanIds.has(loanId)) {
-        newSet.delete(loanId);
-      } else {
-        newSet.add(loanId);
-      }
-      setExpandedLoanIds(newSet);
+    const newSet = new Set(expandedLoanIds);
+    if (expandedLoanIds.has(loanId)) {
+      newSet.delete(loanId);
+    } else {
+      newSet.add(loanId);
     }
+    setExpandedLoanIds(newSet);
   };
 
   return (
@@ -394,26 +392,25 @@ const handleAddToLoan = async (loanId: string) => {
                     <Pressable
                       onPress={() => toggleExpanded(loan.id)}
                       style={styles.loanHeaderWrapper}
-                      disabled={!showArchivedLoans}
                     >
                       <View style={styles.loanHeader}>
                         <View style={styles.loanHeaderLeft}>
                           <Text style={styles.borrowerName}>{loan.borrowerName}</Text>
-                          <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
+                          {isExpanded && (
+                            <Text style={styles.loanDate}>Loaned on {formatDate(loan.loanDate)}</Text>
+                          )}
                         </View>
-                        {showArchivedLoans && (
-                          <View style={styles.expandIcon}>
-                            {isExpanded ? (
-                              <ChevronUp size={20} color="#9D4EDD" />
-                            ) : (
-                              <ChevronDown size={20} color="#9D4EDD" />
-                            )}
-                          </View>
-                        )}
+                        <View style={styles.expandIcon}>
+                          {isExpanded ? (
+                            <ChevronUp size={20} color="#9D4EDD" />
+                          ) : (
+                            <ChevronDown size={20} color="#9D4EDD" />
+                          )}
+                        </View>
                       </View>
                     </Pressable>
 
-                    {(!showArchivedLoans || isExpanded) && (
+                    {isExpanded && (
                       <>
                         <View style={styles.loanHeaderActionsRow}>
                           <Pressable
