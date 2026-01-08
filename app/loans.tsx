@@ -1044,7 +1044,7 @@ const styles = StyleSheet.create({
   remainingAmount: {
     fontSize: 14,
     color: '#EF4444',
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
   },
   deleteButton: {
     padding: 8,
