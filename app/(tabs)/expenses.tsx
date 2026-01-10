@@ -149,10 +149,12 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
   const expensesByMonth = useExpensesByMonth(currentUser?.id || '');
   const { deleteExpense, addExpense, updateExpense, addRecurringBill, deleteRecurringBill, updateUtilities } = useExpenses();
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const standardTotal = expenses.filter(e => (e.expenseType || 'standard') === 'standard').reduce((sum, exp) => sum + exp.amount, 0);
-  const businessTotal = expenses.filter(e => e.expenseType === 'business').reduce((sum, exp) => sum + exp.amount, 0);
-  const vacationTotal = expenses.filter(e => e.expenseType === 'vacation').reduce((sum, exp) => sum + exp.amount, 0);
+  const currentYear = new Date().getFullYear();
+  const currentYearExpenses = expenses.filter(exp => new Date(exp.date).getFullYear() === currentYear);
+  const totalExpenses = currentYearExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const standardTotal = currentYearExpenses.filter(e => (e.expenseType || 'standard') === 'standard').reduce((sum, exp) => sum + exp.amount, 0);
+  const businessTotal = currentYearExpenses.filter(e => e.expenseType === 'business').reduce((sum, exp) => sum + exp.amount, 0);
+  const vacationTotal = currentYearExpenses.filter(e => e.expenseType === 'vacation').reduce((sum, exp) => sum + exp.amount, 0);
 
   const toggleMonth = (monthKey: string) => {
     setExpandedMonths(prev => {
@@ -248,7 +250,7 @@ function UtilitiesSection({ userId, monthKey, onUpdateUtilities }: {
         <View style={styles.topSection}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>
-              {selectedCategory ? `${selectedCategory} Total` : 'Total Expenses'}
+              {selectedCategory ? `${selectedCategory} Total (${currentYear})` : `Total Expenses (${currentYear})`}
             </Text>
             <Text style={styles.summaryAmount}>${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
           </View>
