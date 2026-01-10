@@ -13,7 +13,7 @@ import { useBets } from './BetsContext';
 import { useSportsBets } from './SportsBetsContext';
 import { useExpenses } from './ExpensesContext';
 import { BackupRecord } from '@/lib/supabase';
-import { useSettings } from './SettingsContext';
+import { useSettings, StorageMode } from './SettingsContext';
 
 const STORAGE_KEYS = [
   '@casino_tracker_users',
@@ -47,7 +47,16 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
   const { reloadBets } = useBets();
   const { reloadSportsBets } = useSportsBets();
   const { reloadAllData: reloadExpenses } = useExpenses();
-  const { supabaseClient, isSupabaseConfigured, reloadSettings } = useSettings();
+  const { 
+    supabaseClient, 
+    isSupabaseConfigured, 
+    reloadSettings,
+    updateLocalSyncTimestamp,
+    updateCloudSyncTimestamp,
+    localSyncTimestamp,
+    cloudSyncTimestamp,
+    setStorageMode,
+  } = useSettings();
 
   const createBackupToCloud = useCallback(async (): Promise<boolean> => {
     try {
@@ -121,6 +130,8 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
       console.log('✅ Backup uploaded successfully:', data);
       
+      await updateCloudSyncTimestamp();
+      
       Alert.alert(
         'Success', 
         `Backup created successfully to cloud!\n\nBackup ID: ${backupId}\nTimestamp: ${new Date(backupData.timestamp).toLocaleString()}`
@@ -142,7 +153,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Backup Error', errorMessage);
       return false;
     }
-  }, [supabaseClient, isSupabaseConfigured]);
+  }, [supabaseClient, isSupabaseConfigured, updateCloudSyncTimestamp]);
 
   const createBackupToDevice = useCallback(async (): Promise<boolean> => {
     try {
@@ -166,6 +177,8 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
 
       const fileName = `casino-tracker-backup-${Date.now()}.json`;
       const fileContent = JSON.stringify(backupData, null, 2);
+
+      await updateLocalSyncTimestamp();
 
       if (Platform.OS === 'web') {
         const blob = new Blob([fileContent], { type: 'application/json' });
@@ -203,7 +216,7 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
       Alert.alert('Backup Error', 'Failed to create device backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
       return false;
     }
-  }, []);
+  }, [updateLocalSyncTimestamp]);
 
   const createBackup = useCallback(async (): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -493,11 +506,313 @@ export const [BackupProvider, useBackup] = createContextHook(() => {
     }
   }, [reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses, reloadSettings]);
 
+  const getLatestCloudBackup = useCallback(async (): Promise<BackupData | null> => {
+    try {
+      if (!isSupabaseConfigured || !supabaseClient) {
+        console.log('🔵 Supabase not configured, cannot fetch cloud backup');
+        return null;
+      }
+
+      const { data: backups, error } = await supabaseClient
+        .from('backups')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('❌ Error fetching latest cloud backup:', error);
+        return null;
+      }
+
+      if (!backups || backups.length === 0) {
+        console.log('🔵 No cloud backups found');
+        return null;
+      }
+
+      const backup = backups[0];
+      return {
+        version: backup.version,
+        timestamp: backup.timestamp,
+        data: backup.data,
+      };
+    } catch (error) {
+      console.error('❌ Error getting latest cloud backup:', error);
+      return null;
+    }
+  }, [supabaseClient, isSupabaseConfigured]);
+
+  const getCurrentLocalData = useCallback(async (): Promise<BackupData> => {
+    const backupData: BackupData = {
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      data: {},
+    };
+
+    for (const key of STORAGE_KEYS) {
+      try {
+        const value = await AsyncStorage.getItem(key);
+        backupData.data[key] = value;
+      } catch (error) {
+        console.error(`❌ Error reading ${key}:`, error);
+        backupData.data[key] = null;
+      }
+    }
+
+    return backupData;
+  }, []);
+
+  const syncToCloud = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('🔄 Syncing local data to cloud...');
+      
+      if (!isSupabaseConfigured || !supabaseClient) {
+        console.log('❌ Cannot sync to cloud - Supabase not configured');
+        return false;
+      }
+
+      const localData = await getCurrentLocalData();
+      
+      const backupId = `sync-${Date.now()}`;
+      const record = {
+        id: backupId,
+        version: localData.version,
+        timestamp: localData.timestamp,
+        data: localData.data,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabaseClient
+        .from('backups')
+        .insert(record);
+
+      if (error) {
+        console.error('❌ Error syncing to cloud:', error);
+        return false;
+      }
+
+      await updateCloudSyncTimestamp();
+      console.log('✅ Successfully synced local data to cloud');
+      return true;
+    } catch (error) {
+      console.error('❌ Error in syncToCloud:', error);
+      return false;
+    }
+  }, [supabaseClient, isSupabaseConfigured, getCurrentLocalData, updateCloudSyncTimestamp]);
+
+  const syncFromCloud = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('🔄 Syncing cloud data to local...');
+      
+      const cloudBackup = await getLatestCloudBackup();
+      
+      if (!cloudBackup) {
+        console.log('🔵 No cloud data to sync');
+        return true;
+      }
+
+      for (const [key, value] of Object.entries(cloudBackup.data)) {
+        if (value !== null) {
+          await AsyncStorage.setItem(key, value);
+          console.log(`✅ Synced ${key} from cloud`);
+        }
+      }
+
+      await updateLocalSyncTimestamp();
+      
+      await Promise.all([
+        reloadAllData(),
+        reloadLoans(),
+        reloadBorrows(),
+        reloadBets(),
+        reloadSportsBets(),
+        reloadExpenses(),
+        reloadSettings(),
+      ]);
+
+      console.log('✅ Successfully synced cloud data to local');
+      return true;
+    } catch (error) {
+      console.error('❌ Error in syncFromCloud:', error);
+      return false;
+    }
+  }, [getLatestCloudBackup, updateLocalSyncTimestamp, reloadAllData, reloadLoans, reloadBorrows, reloadBets, reloadSportsBets, reloadExpenses, reloadSettings]);
+
+  const switchStorageMode = useCallback(async (newMode: StorageMode): Promise<boolean> => {
+    try {
+      console.log(`🔄 Switching storage mode to: ${newMode}`);
+      
+      if (newMode === 'supabase') {
+        if (!isSupabaseConfigured) {
+          Alert.alert(
+            'Configuration Required',
+            'Please configure Supabase credentials first before switching to cloud storage.'
+          );
+          return false;
+        }
+
+        const cloudBackup = await getLatestCloudBackup();
+        const localData = await getCurrentLocalData();
+        
+        let shouldSyncFromCloud = false;
+        let shouldSyncToCloud = false;
+        
+        if (cloudBackup && localSyncTimestamp && cloudSyncTimestamp) {
+          const cloudTime = new Date(cloudBackup.timestamp).getTime();
+          const localTime = new Date(localSyncTimestamp).getTime();
+          
+          if (cloudTime > localTime) {
+            shouldSyncFromCloud = true;
+            console.log('☁️ Cloud data is newer, will sync from cloud');
+          } else {
+            shouldSyncToCloud = true;
+            console.log('📱 Local data is newer, will sync to cloud');
+          }
+        } else if (cloudBackup && !localSyncTimestamp) {
+          shouldSyncFromCloud = true;
+          console.log('☁️ No local sync timestamp, syncing from cloud');
+        } else if (!cloudBackup && localData) {
+          shouldSyncToCloud = true;
+          console.log('📱 No cloud backup, syncing to cloud');
+        } else if (cloudBackup && localSyncTimestamp && !cloudSyncTimestamp) {
+          const cloudTime = new Date(cloudBackup.timestamp).getTime();
+          const localTime = new Date(localSyncTimestamp).getTime();
+          
+          if (cloudTime > localTime) {
+            shouldSyncFromCloud = true;
+          } else {
+            shouldSyncToCloud = true;
+          }
+        }
+
+        return new Promise((resolve) => {
+          if (shouldSyncFromCloud) {
+            Alert.alert(
+              'Sync Data',
+              'Cloud data is more recent. Do you want to sync cloud data to your device? This will overwrite local data.',
+              [
+                {
+                  text: 'Keep Local',
+                  style: 'cancel',
+                  onPress: async () => {
+                    await syncToCloud();
+                    await setStorageMode('supabase');
+                    Alert.alert('Success', 'Switched to Supabase storage. Local data synced to cloud.');
+                    resolve(true);
+                  },
+                },
+                {
+                  text: 'Use Cloud Data',
+                  onPress: async () => {
+                    await syncFromCloud();
+                    await setStorageMode('supabase');
+                    Alert.alert('Success', 'Switched to Supabase storage. Cloud data synced to device.');
+                    resolve(true);
+                  },
+                },
+              ]
+            );
+          } else if (shouldSyncToCloud) {
+            Alert.alert(
+              'Sync Data',
+              'Local data will be synced to cloud storage.',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                  onPress: () => resolve(false),
+                },
+                {
+                  text: 'Sync & Switch',
+                  onPress: async () => {
+                    await syncToCloud();
+                    await setStorageMode('supabase');
+                    Alert.alert('Success', 'Switched to Supabase storage. Data synced to cloud.');
+                    resolve(true);
+                  },
+                },
+              ]
+            );
+          } else {
+            Alert.alert(
+              'Switch Storage',
+              'Switch to Supabase cloud storage?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                  onPress: () => resolve(false),
+                },
+                {
+                  text: 'Switch',
+                  onPress: async () => {
+                    await syncToCloud();
+                    await setStorageMode('supabase');
+                    Alert.alert('Success', 'Switched to Supabase storage.');
+                    resolve(true);
+                  },
+                },
+              ]
+            );
+          }
+        });
+      } else {
+        const cloudBackup = await getLatestCloudBackup();
+        
+        if (cloudBackup && cloudSyncTimestamp) {
+          const cloudTime = new Date(cloudBackup.timestamp).getTime();
+          const localTime = localSyncTimestamp ? new Date(localSyncTimestamp).getTime() : 0;
+          
+          if (cloudTime > localTime) {
+            return new Promise((resolve) => {
+              Alert.alert(
+                'Sync Data',
+                'Cloud data is more recent. Do you want to sync it to your device before switching to local storage?',
+                [
+                  {
+                    text: 'Keep Current Local',
+                    style: 'cancel',
+                    onPress: async () => {
+                      await setStorageMode('local');
+                      await updateLocalSyncTimestamp();
+                      Alert.alert('Success', 'Switched to local storage.');
+                      resolve(true);
+                    },
+                  },
+                  {
+                    text: 'Sync Cloud First',
+                    onPress: async () => {
+                      await syncFromCloud();
+                      await setStorageMode('local');
+                      Alert.alert('Success', 'Cloud data synced. Switched to local storage.');
+                      resolve(true);
+                    },
+                  },
+                ]
+              );
+            });
+          }
+        }
+
+        await setStorageMode('local');
+        await updateLocalSyncTimestamp();
+        Alert.alert('Success', 'Switched to local storage.');
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Error switching storage mode:', error);
+      Alert.alert('Error', 'Failed to switch storage mode: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      return false;
+    }
+  }, [isSupabaseConfigured, getLatestCloudBackup, getCurrentLocalData, localSyncTimestamp, cloudSyncTimestamp, syncFromCloud, syncToCloud, setStorageMode, updateLocalSyncTimestamp]);
+
   return useMemo(() => ({
     createBackup,
     createBackupToCloud,
     createBackupToDevice,
     restoreFromCloud,
     restoreFromDevice,
-  }), [createBackup, createBackupToCloud, createBackupToDevice, restoreFromCloud, restoreFromDevice]);
+    switchStorageMode,
+    syncToCloud,
+    syncFromCloud,
+  }), [createBackup, createBackupToCloud, createBackupToDevice, restoreFromCloud, restoreFromDevice, switchStorageMode, syncToCloud, syncFromCloud]);
 });
