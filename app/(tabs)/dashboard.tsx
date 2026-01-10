@@ -1,14 +1,16 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { WALLPAPER_URL } from '@/constants/wallpaper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { LogOut, Edit2, X, DollarSign, Settings } from 'lucide-react-native';
+import { LogOut, Edit2, X, DollarSign, Settings, Smartphone, Cloud } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
   const { currentUser, logout, isLoading, updateProfile } = useAuth();
+  const { storageMode } = useSettings();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showEditProfileModal, setShowEditProfileModal] = useState<boolean>(false);
@@ -80,6 +82,19 @@ export default function DashboardScreen() {
           <View style={styles.headerContent}>
             <View style={styles.usernameRow}>
               <Text style={styles.username}>{currentUser.username}</Text>
+              <View style={[
+                styles.storageIndicator,
+                storageMode === 'local' ? styles.storageIndicatorLocal : styles.storageIndicatorCloud
+              ]}>
+                {storageMode === 'local' ? (
+                  <Smartphone size={12} color="#FFFFFF" />
+                ) : (
+                  <Cloud size={12} color="#FFFFFF" />
+                )}
+                <Text style={styles.storageIndicatorText}>
+                  {storageMode === 'local' ? 'Local' : 'Cloud'}
+                </Text>
+              </View>
               <Pressable
                 style={({ pressed }) => [
                   styles.editProfileButton,
@@ -492,6 +507,25 @@ const styles = StyleSheet.create({
   },
   editProfileButtonPressed: {
     opacity: 0.6,
+  },
+  storageIndicator: {
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  storageIndicatorLocal: {
+    backgroundColor: '#22C55E',
+  },
+  storageIndicatorCloud: {
+    backgroundColor: '#9D4EDD',
+  },
+  storageIndicatorText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,
