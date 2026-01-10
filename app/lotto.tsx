@@ -153,44 +153,70 @@ export default function LottoScreen() {
 
   const scrapePowerballJackpot = async (): Promise<string> => {
     try {
-      const response = await fetch('https://www.powerball.com');
+      const response = await fetch('https://www.lotteryusa.com/powerball/');
       const html = await response.text();
       
-      const jackpotMatch = html.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/i);
-      if (jackpotMatch) {
-        return `${jackpotMatch[1]} ${jackpotMatch[2]}`;
+      const patterns = [
+        /\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /jackpot[^<]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /estimated[^<]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+      ];
+      
+      for (const pattern of patterns) {
+        const matches = Array.from(html.matchAll(pattern));
+        for (const match of matches) {
+          const amount = match[1];
+          const unit = match[2] || 'Million';
+          const numericValue = parseFloat(amount.replace(/,/g, ''));
+          
+          if (numericValue >= 20 && numericValue <= 5000) {
+            const normalizedUnit = unit.toLowerCase().startsWith('b') ? 'Billion' : 'Million';
+            return `${amount} ${normalizedUnit}`;
+          }
+        }
       }
       
-      const altMatch = html.match(/jackpot[^$]*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/i);
-      if (altMatch) {
-        const unit = altMatch[2].toLowerCase().startsWith('b') ? 'Billion' : 'Million';
-        return `${altMatch[1]} ${unit}`;
+      const fallbackResponse = await fetch('https://www.lottonumbers.com/powerball');
+      const fallbackHtml = await fallbackResponse.text();
+      
+      const fallbackPatterns = [
+        /\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /jackpot[\s\S]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+      ];
+      
+      for (const pattern of fallbackPatterns) {
+        const matches = Array.from(fallbackHtml.matchAll(pattern));
+        for (const match of matches) {
+          const amount = match[1];
+          const unit = match[2] || 'Million';
+          const numericValue = parseFloat(amount.replace(/,/g, ''));
+          
+          if (numericValue >= 20 && numericValue <= 5000) {
+            const normalizedUnit = unit.toLowerCase().startsWith('b') ? 'Billion' : 'Million';
+            return `${amount} ${normalizedUnit}`;
+          }
+        }
       }
       
-      return 'TBD';
+      return 'Check powerball.com';
     } catch (error) {
       console.error('Error scraping Powerball jackpot:', error);
-      return 'TBD';
+      return 'Check powerball.com';
     }
   };
 
   const scrapeMegaMillionsJackpot = async (): Promise<string> => {
     try {
-      const response = await fetch('https://www.megamillions.com');
+      const response = await fetch('https://www.lotteryusa.com/mega-millions/');
       const html = await response.text();
       
       console.log('Mega Millions HTML length:', html.length);
       
       const patterns = [
         /\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
-        />(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)</gi,
-        /jackpot[^$<>]*[>$](\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
-        /estimated[^$<>]*[>$](\d+(?:,\d+)*(?:\.\d+)?)\s*(M|Million|B|Billion)/gi,
-        /class=["'][^"']*jackpot[^"']*["'][^>]*>\s*[^\d]*(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
-        /<span[^>]*>\s*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
-        /<div[^>]*>\s*\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
-        /"jackpot"[^}]*:(\d+(?:,\d+)*(?:\.\d+)?)/gi,
-        /'jackpot'[^}]*:(\d+(?:,\d+)*(?:\.\d+)?)/gi,
+        /jackpot[^<]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /estimated[^<]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /next[^<]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
       ];
       
       for (const pattern of patterns) {
@@ -211,11 +237,34 @@ export default function LottoScreen() {
         }
       }
       
-      console.log('No valid Mega Millions jackpot found in HTML');
-      return 'TBD';
+      console.log('No valid Mega Millions jackpot found, trying fallback...');
+      
+      const fallbackResponse = await fetch('https://www.lottonumbers.com/mega-millions');
+      const fallbackHtml = await fallbackResponse.text();
+      
+      const fallbackPatterns = [
+        /\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+        /jackpot[\s\S]*?\$(\d+(?:,\d+)*(?:\.\d+)?)\s*(Million|Billion)/gi,
+      ];
+      
+      for (const pattern of fallbackPatterns) {
+        const matches = Array.from(fallbackHtml.matchAll(pattern));
+        for (const match of matches) {
+          const amount = match[1];
+          const unit = match[2] || 'Million';
+          const numericValue = parseFloat(amount.replace(/,/g, ''));
+          
+          if (numericValue >= 20 && numericValue <= 5000) {
+            const normalizedUnit = unit.toLowerCase().startsWith('b') ? 'Billion' : 'Million';
+            return `${amount} ${normalizedUnit}`;
+          }
+        }
+      }
+      
+      return 'Check megamillions.com';
     } catch (error) {
       console.error('Error scraping Mega Millions jackpot:', error);
-      return 'TBD';
+      return 'Check megamillions.com';
     }
   };
 
