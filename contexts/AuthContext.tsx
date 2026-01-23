@@ -45,18 +45,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       setUsers(loadedUsers);
 
-      if (currentUserJson) {
-        try {
-          const savedUser = JSON.parse(currentUserJson);
-          const user = loadedUsers.find(u => u.id === savedUser.id);
-          if (user) {
-            setCurrentUser(user);
-          }
-        } catch (parseError) {
-          console.error('Error parsing current user JSON, clearing corrupted data:', parseError);
-          await AsyncStorage.removeItem(CURRENT_USER_KEY);
-        }
-      }
+      // Auto-login as Bruce Pham (bypass login)
+      const bruceUser = loadedUsers.find(u => u.id === 'admin-bruce') || ADMIN_USER;
+      setCurrentUser(bruceUser);
+      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(bruceUser));
     } catch (error) {
       console.error('Error loading data:', error);
       setUsers([ADMIN_USER]);
