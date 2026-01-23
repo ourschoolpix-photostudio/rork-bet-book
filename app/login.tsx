@@ -88,7 +88,7 @@ export default function LoginScreen() {
         style={styles.container}
         resizeMode="cover"
       >
-        <View style={styles.overlay} />
+        <View style={styles.overlay} pointerEvents="none" />
         <View style={styles.gradientOverlay}>
           <LinearGradient
             colors={['rgba(157, 78, 221, 0.7)', 'rgba(123, 44, 191, 0.7)', 'rgba(90, 24, 154, 0.7)', 'rgba(36, 0, 70, 0.7)', 'rgba(16, 0, 43, 0.7)']}
@@ -108,7 +108,7 @@ export default function LoginScreen() {
       style={styles.container}
       resizeMode="cover"
     >
-      <View style={styles.overlay} />
+      <View style={styles.overlay} pointerEvents="none" />
       <View style={styles.gradientOverlay}>
         <LinearGradient
           colors={['rgba(157, 78, 221, 0.7)', 'rgba(123, 44, 191, 0.7)', 'rgba(90, 24, 154, 0.7)', 'rgba(36, 0, 70, 0.7)', 'rgba(16, 0, 43, 0.7)']}
