@@ -18,7 +18,7 @@ LogBox.ignoreLogs([
   'Deep imports from the \'react-native\' package are deprecated',
 ]);
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
@@ -27,9 +27,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="bets" options={{ headerShown: false }} />
       <Stack.Screen name="stats" options={{ headerShown: false }} />
-      <Stack.Screen name="expenses" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="supabase-settings" options={{ headerShown: false }} />
       <Stack.Screen name="vehicles" options={{ headerShown: false }} />
