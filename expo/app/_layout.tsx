@@ -52,8 +52,8 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <trpc.Provider client={trpcReactClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <trpc.Provider client={trpcReactClient} queryClient={queryClient}>
         <SettingsProvider>
           <AuthProvider>
             <LoanProvider>
@@ -62,9 +62,9 @@ export default function RootLayout() {
                   <SportsBetsProvider>
                     <ExpensesProvider>
                       <BackupProvider>
-                      <GestureHandlerRootView style={styles.container}>
-                        <RootLayoutNav />
-                      </GestureHandlerRootView>
+                        <GestureHandlerRootView style={styles.container}>
+                          <RootLayoutNav />
+                        </GestureHandlerRootView>
                       </BackupProvider>
                     </ExpensesProvider>
                   </SportsBetsProvider>
@@ -73,8 +73,8 @@ export default function RootLayout() {
             </LoanProvider>
           </AuthProvider>
         </SettingsProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+      </trpc.Provider>
+    </QueryClientProvider>
   );
 }
 
